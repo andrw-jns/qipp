@@ -3,6 +3,7 @@
 " CREATE QIPP PACK"
 ###########################################################################
 
+# TODO ---------------------------------------------------------------
 
 # Packages ----------------------------------------------------------------
 
@@ -16,18 +17,17 @@ library(testthat)
 # library(ReporteRs)
 
 
-
 # Parameters 1--------------------------------------------------------
 
 inOffice <- TRUE
-baseDir  <- ifelse(inOffice, "C:/2017_projects/qipp", "specify a path")
+baseDir  <- ifelse(inOffice, "C:/2017_projects/qipp/", "specify a path")
 setwd(baseDir)
 
 active_ccg <- "05L"
 
-f_year <- 201617
+f_year     <- 201617
 
-qipp_ccgs <- c(# Alphabetical:
+qipp_ccgs  <- c(# Alphabetical:
                "13P", # BXC
                "04X", # BSC
                "04Y", # CAN
@@ -65,7 +65,7 @@ personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
 # Rate of change
 rocParameters <- tibble(
   From = 201213
-  , To = f-year
+  , To = f_year
   )
 
 # Trend
@@ -103,25 +103,50 @@ names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow",
 
 
 # Load data ---------------------------------------------------------------
-setwd(paste0(baseDir, "Data"))
+setwd(paste0(baseDir, "data"))
 
 # List of strategies
 activeStrategies <- read_csv("listActiveStrategies.csv")
-# for powershell:
+# if run from powershell:
 # activeStrategies <- read_csv("listActiveStrategies.csv", col_names = FALSE, skip = 2)
 # colnames(activeStrategies) <- read_csv("listActiveStrategies.csv", n_max = 0) %>% colnames
 
 # How many strategies for each type of data
 
-numStrats <- count(activeStrategies, TableType)
-numberOfStrategies <- numStrats$n
-names(numberOfStrategies) <- numStrats$TableType
-rm(numStrats)
+# numStrats <- count(activeStrategies, TableType)
+# numberOfStrategies <- numStrats$n
+# names(numberOfStrategies) <- numStrats$TableType
+# rm(numStrats)
+
+numberOfStrategies <- activeStrategies %>% 
+  count(TableType)
+
+"WORK IN PROGRESS :"
+# load_sus <- tibble(
+#   ip = "IP[0-9]{4}.csv",
+#   op = "OP[0-9]{4}.csv",
+#   ae = "AE[0-9]{4}.csv"
+# )
+# 
+# filenames <- list.files(pattern = load_sus$ip)
+
+# because of PowerShell: 
+# take_names <- map(filenames, read_csv, n_max = 0) %>% 
+#   map(., colnames)
+# if(length(unique(take_names)) != 1){stop("Inpatient column names are different somewhere.")}
+# 
+# ipData <- map(
+#   filenames,
+#   read_csv,
+#   col_names = take_names[[1]],
+#   na = "NULL",
+#   skip = 2
+# ) %>% 
+#   bind_rows()
 
 
 # Inpatients
-# filesToLoad <- list.files(pattern = "Output_PbR_IP[0-9]{4}.csv")
-filesToLoad <- list.files(pattern = "output_sus_ip[0-9]{4}.csv")
+filesToLoad <- list.files(pattern = "Output_SUS_IP[0-9]{4}.csv")
 ipDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>% 
   lapply(., colnames)
 if(length(unique(ipDataNames)) != 1){stop("Inpatient column names are different somewhere.")}
@@ -130,21 +155,12 @@ ipData <- lapply(
   filesToLoad
   , read_csv
   , col_names = ipDataNames[[1]]
-  #, col_types = c("ddddiiic", paste(rep("i", numberOfStrategies[["IP"]]), collapse = "")) %>% paste(collapse = "")
   , na = "NULL"
   , skip = 2
   ) %>% bind_rows
 
-# If you get a parsing error with ﻿ as the first row of the first file you can use this to help 
-# (you need to do this before you bind_rows)
-#
-# i <- 1L
-# for(i in seq(length(ipData))){
-#   # fix the stupid parsing error from the byte order marker
-#   ipData[[i]][1,1] <- gsub("﻿", "", problems(ipData[[i]])$actual) %>% as.numeric
-# }
-# rm(i)
 rm(filesToLoad, ipDataNames)
+
 
 # A & E
 filesToLoad <- list.files(pattern = "Output_SUS_AE[0-9]{4}.csv")
@@ -156,7 +172,6 @@ aeData <- lapply(
   filesToLoad
   , read_csv
   , col_names = aeDataNames[[1]]
-  #, col_types = c("ddddidic", paste(rep("i", numberOfStrategies[["AE"]]), collapse = "")) %>% paste(collapse = "")
   , na = "NULL"
   , skip = 2
   ) %>% bind_rows
@@ -166,10 +181,6 @@ rm(filesToLoad, aeDataNames)
 
 # Outpatients
 filesToLoad <- list.files(pattern = "Output_SUS_OP[0-9]{4}.csv")
-#filesToLoad <- c("Output_HES_OP0910.csv", "Output_HES_OP1011.csv"
-                 # , "Output_HES_OP1112.csv" , "Output_HES_OP1213.csv"
-                 # , "Output_HES_OP1314.csv", "Output_HES_OP1415.csv")
-
 opDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>%
   lapply(., colnames)
 if(length(unique(opDataNames)) != 1){stop("Outpatient column names are different somewhere.")}
@@ -178,7 +189,6 @@ opData <- lapply(
   filesToLoad
   , read_csv
   , col_names = opDataNames[[1]]
-  #, col_types = c("ddddidic", paste(rep("i", numberOfStrategies[["OP"]]), collapse = "")) %>% paste(collapse = "")
   , na = "NULL"
   , skip = 2
   ) %>% bind_rows
@@ -187,31 +197,30 @@ rm(filesToLoad, opDataNames)
 
 
 # List of CCGs
-setwd(paste0(ifelse(inOffice, "S:/Commissioning Intelligence And Strategy/Strategic Analytics/", "C:/Analytics/"), "Jonathan Spencer/FrequentFiles/Classification/Organisations/CCG"))
+setwd(paste0(ifelse(inOffice, "S:/Commissioning Intelligence And Strategy/Strategic Analytics/", "change file path"), "Jonathan Spencer/FrequentFiles/Classification/Organisations/CCG"))
 
 allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
-  filter(CCGActiveDate <= "2014-04-01") %>% # we're still using the old 3x Newcastle CCGs # AJ : And still !
+  filter(CCGActiveDate <= "2014-04-01") %>% 
+  # we're still using the old 3x Newcastle CCGs 
   select(CCGCode, CCGDescription, ShortName) %>%
   mutate(CCGDescription  = stringr::str_c(CCGDescription, " CCG"))
-  
   
 
 
 setwd(paste0(baseDir, "Data"))
 # CCG populations for cost charts
-# AJ - did manually so no need to remove rows as below
+# AJ - did manually so no need to remove rows as below for powershell
 # ccgPopulation <- read_csv("CCGPopulation.csv", col_names = FALSE, skip = 2)
 # colnames(ccgPopulation) <- read_csv("CCGPopulation.csv", n_max = 0) %>% colnames
 
 ccgPopulation <- read_csv("CCGPopulation.csv")
 
-
-setwd(paste0(baseDir, "R"))
+"How relevant are these checks now: modify/update?"
+setwd(paste0(baseDir, "r"))
 source("checks.R") # big and slow
 
 
-
-# () -----------------------------------------------------------------
+# [CHECKPOINT] -----------------------------------------------------------------
 
 # Rerun from here if running multiple packs
 setwd(paste0(baseDir, "Data"))
