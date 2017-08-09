@@ -62,11 +62,12 @@ funnelParameters <- tibble(
   )
 personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
 
-# Rate of change
-rocParameters <- tibble(
-  From = 201213
-  , To = f_year
-  )
+# 
+# # Rate of change
+# rocParameters <- tibble(
+#   From = 201213
+#   , To = f_year
+#   )
 
 # Trend
 trendParameters <- tibble(
@@ -216,18 +217,15 @@ setwd(paste0(baseDir, "Data"))
 ccgPopulation <- read_csv("CCGPopulation.csv")
 
 "How relevant are these checks now: modify/update?"
-setwd(paste0(baseDir, "r"))
-source("checks.R") # big and slow
+# setwd(paste0(baseDir, "r"))
+# source("checks.R") # big and slow
 
 
 # [CHECKPOINT] -----------------------------------------------------------------
-
 # Rerun from here if running multiple packs
-setwd(paste0(baseDir, "Data"))
+setwd(paste0(baseDir, "data"))
 
-
-
-# List of comparator CCGS
+# CCG selections
 comparatorCCGs2 <- allCCGs %>%
   filter(CCGCode %in% qipp_ccgs,
          CCGCode != active_ccg)
@@ -238,132 +236,102 @@ activeCCGInfo <- allCCGs %>%
   mutate(CCGNameMinusCCG = stringr::str_replace(CCGDescription, " CCG", "")) # %>% 
   # unlist()
 
-# List of comparator CCGs
-# comparatorCCGs <- read_csv("listComparatorCCGs.csv", col_names = FALSE, skip = 2)
-# colnames(comparatorCCGs) <- read_csv("listComparatorCCGs.csv", n_max = 0) %>% colnames
-
-# Active CCG
-# activeCCGInfo <- read_excel(paste0(baseDir, "tables.xlsm"), sheet = "ActiveCCG") %>%
-#   rename(CCGDescription = CCGName, ShortName = CCGShortName)
-# activeCCG <- activeCCGInfo$CCGCode
-# activeCCGInfo %>% unlist
-# if(nrow(activeCCGInfo) != 1){stop("Something went wrong with your choice of active CCG")}
-
-# Add Shropshire as a comparator for telford
-# if(activeCCG == "05X"){
-#   comparatorCCGs <- filter(comparatorCCGs, !(ClosenessRank == 20 & CCGCode == "05X")) # remove old
-#   comparatorCCGs[nrow(comparatorCCGs)+ 1, ] <- list("05X", "05N", 20) # add shropshire
-# }
-
 # What years do we want to run the rate of change for?
-activeMinMaxIp <- ipCheck %>% 
-  filter(CCGCode == active_ccg & !is.na(Spells)) %>%
-  group_by(Strategy) %>%
-  summarise(
-    From = min(FYear, na.rm = TRUE)
-    , To = max(FYear, na.rm = TRUE)
-  ) %>%
-  gather(Type, FYear, -Strategy, convert = TRUE)
-  
-activeMinMaxOp <- opCheck %>% 
-  filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
-  group_by(Strategy) %>%
-  summarise(
-    From = min(FYear, na.rm = TRUE)
-    , To = max(FYear, na.rm = TRUE)
-  ) %>%
-  gather(Type, FYear, -Strategy, convert = TRUE)
-
-activeMinMaxAe <- aeCheck %>% 
-  filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
-  group_by(Strategy) %>%
-  summarise(
-    From = min(FYear, na.rm = TRUE)
-    , To = max(FYear, na.rm = TRUE)
-  ) %>%
-  gather(Type, FYear, -Strategy, convert = TRUE)
-  
-  
-# Make sure that we're not missing any strategies where allll years are NA
-activeMinMaxIp <- activeStrategies %>%
-  filter(TableType == "IP") %>%
-  select(Strategy) %>%
-  left_join(activeMinMaxIp, by = "Strategy")
-
-activeMinMaxOp <- activeStrategies %>%
-  filter(TableType == "OP") %>%
-  select(Strategy) %>%
-  left_join(activeMinMaxOp, by = "Strategy")
-  
-activeMinMaxAe <- activeStrategies %>%
-  filter(TableType == "AE") %>%
-  select(Strategy) %>%
-  left_join(activeMinMaxAe, by = "Strategy")
-  
-
-# This is a list of the Strategies to totally exlude
-activeIPExclude <- activeMinMaxIp %>%
-  filter(is.na(FYear)) %>%
-  select(Strategy) %>% unlist %>% unname
-
-activeOPExclude <- activeMinMaxOp %>%
-  filter(is.na(FYear)) %>%
-  select(Strategy) %>% unlist %>% unname
-
-activeAEExclude <- activeMinMaxAe %>%
-  filter(is.na(FYear)) %>%
-  select(Strategy) %>% unlist %>% unname
-
-
-
-# Check if any comparators need to be excluded
-" AJ - not for SUS - REMOVE SECTION"
-checkWithComparatorsIP <- ipCheck %>%
-  filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
-  filter(!Strategy %in% activeIPExclude) %>% # excluding useless strategies
-  inner_join(ipInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
-  inner_join(activeMinMaxIp, by = c("Strategy", "FYear")) %>%
-  select(-Spells)
-
-checkWithComparatorsOP <- opCheck %>%
-  filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
-  filter(!Strategy %in% activeOPExclude) %>% # excluding useless strategies + FUF
-  inner_join(opInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
-  inner_join(activeMinMaxOp, by = c("Strategy", "FYear")) %>%
-  select(-Attendances)
-  
-checkWithComparatorsAE <- aeCheck %>%
-  filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
-  filter(!Strategy %in% activeAEExclude) %>% # excluding useless strategies
-  inner_join(aeInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
-  inner_join(activeMinMaxAe, by = c("Strategy", "FYear")) %>%
-  select(-Attendances)
-  
-# Do any comparators need to be excluded?
-cat("The following CCG strategy combinations have no activity: \n")
-  if(nrow(checkWithComparatorsIP) > 0){checkWithComparatorsIP}
-  if(nrow(checkWithComparatorsOP) > 0){checkWithComparatorsOP}
-  if(nrow(checkWithComparatorsAE) > 0){checkWithComparatorsAE}
-    
+# activeMinMaxIp <- ipCheck %>% 
+#   filter(CCGCode == active_ccg & !is.na(Spells)) %>%
+#   group_by(Strategy) %>%
+#   summarise(
+#     From = min(FYear, na.rm = TRUE)
+#     , To = max(FYear, na.rm = TRUE)
+#   ) %>%
+#   gather(Type, FYear, -Strategy, convert = TRUE)
+#   
+# activeMinMaxOp <- opCheck %>% 
+#   filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
+#   group_by(Strategy) %>%
+#   summarise(
+#     From = min(FYear, na.rm = TRUE)
+#     , To = max(FYear, na.rm = TRUE)
+#   ) %>%
+#   gather(Type, FYear, -Strategy, convert = TRUE)
+# 
+# activeMinMaxAe <- aeCheck %>% 
+#   filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
+#   group_by(Strategy) %>%
+#   summarise(
+#     From = min(FYear, na.rm = TRUE)
+#     , To = max(FYear, na.rm = TRUE)
+#   ) %>%
+#   gather(Type, FYear, -Strategy, convert = TRUE)
+#   
+#   
+# # Make sure that we're not missing any strategies where allll years are NA
+# activeMinMaxIp <- activeStrategies %>%
+#   filter(TableType == "IP") %>%
+#   select(Strategy) %>%
+#   left_join(activeMinMaxIp, by = "Strategy")
+# 
+# activeMinMaxOp <- activeStrategies %>%
+#   filter(TableType == "OP") %>%
+#   select(Strategy) %>%
+#   left_join(activeMinMaxOp, by = "Strategy")
+#   
+# activeMinMaxAe <- activeStrategies %>%
+#   filter(TableType == "AE") %>%
+#   select(Strategy) %>%
+#   left_join(activeMinMaxAe, by = "Strategy")
+#   
+# 
+# # This is a list of the Strategies to totally exlude
+# activeIPExclude <- activeMinMaxIp %>%
+#   filter(is.na(FYear)) %>%
+#   select(Strategy) %>% unlist %>% unname
+# 
+# activeOPExclude <- activeMinMaxOp %>%
+#   filter(is.na(FYear)) %>%
+#   select(Strategy) %>% unlist %>% unname
+# 
+# activeAEExclude <- activeMinMaxAe %>%
+#   filter(is.na(FYear)) %>%
+#   select(Strategy) %>% unlist %>% unname
+# 
+# 
+# 
+# # Check if any comparators need to be excluded
+# " AJ - not for SUS - REMOVE SECTION"
+# checkWithComparatorsIP <- ipCheck %>%
+#   filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
+#   filter(!Strategy %in% activeIPExclude) %>% # excluding useless strategies
+#   inner_join(ipInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
+#   inner_join(activeMinMaxIp, by = c("Strategy", "FYear")) %>%
+#   select(-Spells)
+# 
+# checkWithComparatorsOP <- opCheck %>%
+#   filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
+#   filter(!Strategy %in% activeOPExclude) %>% # excluding useless strategies + FUF
+#   inner_join(opInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
+#   inner_join(activeMinMaxOp, by = c("Strategy", "FYear")) %>%
+#   select(-Attendances)
+#   
+# checkWithComparatorsAE <- aeCheck %>%
+#   filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
+#   filter(!Strategy %in% activeAEExclude) %>% # excluding useless strategies
+#   inner_join(aeInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
+#   inner_join(activeMinMaxAe, by = c("Strategy", "FYear")) %>%
+#   select(-Attendances)
+#   
+# # Do any comparators need to be excluded?
+# cat("The following CCG strategy combinations have no activity: \n")
+#   if(nrow(checkWithComparatorsIP) > 0){checkWithComparatorsIP}
+#   if(nrow(checkWithComparatorsOP) > 0){checkWithComparatorsOP}
+#   if(nrow(checkWithComparatorsAE) > 0){checkWithComparatorsAE}
+#     
 
 # Munge data ---------------------------------------------------------------
-setwd(paste0(baseDir, "Data"))
-# *** HERE ---------------------------------------------------------------
+# setwd(paste0(baseDir, "data"))
 
 comparatorCCGs2 <- allCCGs %>% 
   filter(CCGCode %in% qipp_ccgs)
-
-# Add activeCCG to comparator CCG list and find the comparator CCGs of the active CCG.
-# comparatorCCGs <- bind_rows(
-#   data.frame(
-#     CCGCode = activeCCG
-#     , NeighbourCCGCode = activeCCG
-#     , ClosenessRank = 0
-#     , stringsAsFactors = FALSE)
-#   ,  comparatorCCGs) %>%
-#   left_join(allCCGs, by = c("NeighbourCCGCode" = "CCGCode")) %>%
-#   filter(CCGCode == activeCCG) %>%
-#   select(-CCGCode)
 
 # Remove rows where the CCGCode is not valid.
 removeInvalidCCGs <- . %>%
@@ -385,22 +353,23 @@ opSmallFUF <- opData %>%
 
 
 # I'm going to call attendances Spells so that I can reuse functions
-colnames(aeSmall) <- gsub("Attendances", "Spells", colnames(aeSmall))
-colnames(opSmall) <- gsub("Attendances", "Spells", colnames(opSmall))
+colnames(aeSmall)    <- gsub("Attendances", "Spells", colnames(aeSmall))
+colnames(opSmall)    <- gsub("Attendances", "Spells", colnames(opSmall))
 colnames(opSmallFUF) <- gsub("Attendances", "Spells", colnames(opSmallFUF))
 
-"run washer needs old naming to work:"
-activeCCG <- active_ccg
-comparatorCCGs <- comparatorCCGs2
+"Removed washer for now"
+"If reinstated, run washer needs old naming to work:"
+# activeCCG <- active_ccg
+# comparatorCCGs <- comparatorCCGs2
 # Run washer to check for outliers
-setwd(paste0(baseDir, "R"))
-source("runWasher.R")
+# setwd(paste0(baseDir, "R"))
+# source("runWasher.R")
 
 # Scan for problems
 # ggplotwashed function from runWasher.R
-ggplotwashed(ipForWasher, ipWashed) 
-ggplotwashed(opForWasher, opWashed)
-ggplotwashed(aeForWasher, aeWashed)
+# ggplotwashed(ipForWasher, ipWashed) 
+# ggplotwashed(opForWasher, opWashed)
+# ggplotwashed(aeForWasher, aeWashed)
 
 
 # How many rows should there be? 
@@ -494,10 +463,10 @@ stopifnot(nrow(opFUF) == nrow(opFUFBase)) # # strategies * # ccgs * # financial 
 rm(opFUFhold, opFUFSpells, opFUFCosts)
 
 # Funnel ------------------------------------------------------------------
-ipFunnelPoints <- ip %>% filter(FYear == rocParameters$To)
-opFunnelPoints <- op %>% filter(FYear == rocParameters$To)
-aeFunnelPoints <- ae %>% filter(FYear == rocParameters$To)
-opFUFFunnelPoints <- opFUF %>% filter(FYear == rocParameters$To)
+ipFunnelPoints <- ip %>% filter(FYear == f_year)
+opFunnelPoints <- op %>% filter(FYear == f_year)
+aeFunnelPoints <- ae %>% filter(FYear == f_year)
+opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year)
 
 ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
 ipFunnelFunnels <- funnel_funnels(ipFunnelSummary, funnelParameters$Smoothness, personYears)
