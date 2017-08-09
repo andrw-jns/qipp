@@ -1,2 +1,2 @@
 # qipp
-Definitive repository for QIPP pack files
+Definitive repository for QIPP pack files.
