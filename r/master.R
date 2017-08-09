@@ -1,93 +1,91 @@
 ############################################################################
-" MASTER_REDUX : TO CREATE QIPP PACK"
-# created:  v2 based on Jonathan's master.R 
-# created:  v3 July 2017 trial with "new" 15/16 data
-# created:  REDUX end July 2017 to trial with SUS data.
-# lastedit  "2017-08-03 12:39:44 BST"
+" MASTER REDUX"
+" CREATE QIPP PACK"
 ###########################################################################
 
-active_ccg <- "05L"
-# from ()---
-
-f_year <- 201617
-
-qipp_ccgs <- c( # Alphabetical:
-  "13P", # BXC
-  "04X", # BSC
-  "04Y", # CAN
-  "05C", # DUD
-  "05D", # EST
-  "05F", # HER
-  "05G", # NST
-  "05J", # RED
-  "05L", # SWB
-  "05N", # SHR
-  "05P", # SOL
-  "05Q", # SES
-  # "05R", # SWK -- CHECK DATA !
-  "05T", # SWC
-  "05V", # SAS
-  "05W", # STO
-  "05X", # TEL
-  "05Y", # WAL
-  # "05H", # WKN -- CHECK DATA!
-  "06A", # WOL#
-  "06D"  # WYR#
-)
-
-
-# Sys.time()
-
-# sessionInfo()
-
-# (*) README  -------------------------------------------------------------
-
-"LOOK AT RATEOF CHANGE PLOT FUNCTION 552"
-
-"NOTE: IN ORDER TO ACCESS THE H:// DRIVE ONE MUST RUN RSTUDIO WITHOUT 
-ADMINISTRATOR PRIVILIDGES OR SEE THIS POST:
-http://woshub.com/how-to-access-mapped-network-drives-from-the-elevated-apps/"
-
-# Detached package "testthat" on line ~ 1779. Clash with dplyr::matches
-
-# Warnings on run through are acceptable and probably relate to the removal of
-# points which create the funnel
-
-# rm(list = ls())
-
-# TODO --------------------------------------------------------------------
-#checks.R is big and slow
-#improve Rate Of Change code
-
-# Parameters --------------------------------------------------------------
-
-inOffice <- TRUE
-baseDir  <- ifelse(inOffice, "H:/QIPP/", "C:/Analytics/H/QIPP/")
-setwd(baseDir)
 
 # Packages ----------------------------------------------------------------
+
 library(readr)
 library(readxl)
-library(dplyr) # , warn.conflicts = FALSE)
+library(dplyr)   # , warn.conflicts = FALSE)
 library(tidyr)   # gather, spread
 library(ggplot2) # ggplot
 library(scales, warn.conflicts = FALSE)
 library(testthat)
+# library(ReporteRs)
 
+
+
+# Parameters 1--------------------------------------------------------
+
+inOffice <- TRUE
+baseDir  <- ifelse(inOffice, "C:/2017_projects/qipp", "specify a path")
+setwd(baseDir)
+
+active_ccg <- "05L"
+
+f_year <- 201617
+
+qipp_ccgs <- c(# Alphabetical:
+               "13P", # BXC
+               "04X", # BSC
+               "04Y", # CAN
+               "05C", # DUD
+               "05D", # EST
+               "05F", # HER
+               "05G", # NST
+               "05J", # RED
+               "05L", # SWB
+               "05N", # SHR
+               "05P", # SOL
+               "05Q", # SES
+               # "05R", # SWK -- OUTSIDE SUS
+               "05T", # SWC
+               "05V", # SAS
+               "05W", # STO
+               "05X", # TEL
+               "05Y", # WAL
+               # "05H", # WKN -- OUTSIDE SUS
+               "06A", # WOL#
+               "06D"  # WYR#
+)
+
+
+# Parameters 2 -------------------------------------------------------------
+
+# Funnel
+funnelParameters <- tibble(
+  Years = 1
+  , RatePerPeople = 100000
+  , Smoothness = 200 #Number of points making up the funnel curve
+  )
+personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
+
+# Rate of change
+rocParameters <- tibble(
+  From = 201213
+  , To = f-year
+  )
+
+# Trend
+trendParameters <- tibble(
+  Significance = 0.95
+  )
+trendCV <- qnorm((1 - trendParameters$Significance)/2, lower.tail = FALSE)
 
 
 # Functions ---------------------------------------------------------------
-setwd(paste0(baseDir, "R"))
+setwd(paste0(baseDir, "r"))
 source("roundingAndChartLimitFunctions.R")
 source("funnelPlotFunctions.R")
 #source("rateOfChangePlotFunctions.R") # needs some other things before loading.
 source("trendPlotFunctions.R")
 source("costPlotFunctions.R")
 source("summaryFunctions.R") 
-"Careful with summary functions <- the year was hard coded"
+"Careful with summary functions <- the year was previously hard coded"
 
-pound <- dollar_format(prefix = "£")
-
+pound <- dollar_format(prefix = "?")
 
 
 # Colours -----------------------------------------------------------------
@@ -102,31 +100,6 @@ colourBlindPalette <- c(
   , "#CC79A7" #pink
 )
 names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow", "blue", "red", "pink")
-
-# Parameters --------------------------------------------------------------
-
-# Funnel
-funnelParameters <- data.frame(
-  Years = 1
-  , RatePerPeople = 100000
-  , Smoothness = 200 #Number of points making up the funnel curve
-)
-personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
-
-# Rate of change
-rocParameters <- data.frame(
-  From = 201213
-  , To = 201617
-  , stringsAsFactors = FALSE
-)
-
-
-# Trend
-trendParameters <- data.frame(
-  Significance = 0.95
-  , stringsAsFactors = FALSE
-)
-trendCV <- qnorm((1 - trendParameters$Significance)/2, lower.tail = FALSE)
 
 
 # Load data ---------------------------------------------------------------
