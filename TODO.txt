@@ -1,0 +1,10 @@
+Here's a list of TODO for the QIPP packs
+
+Move non-essential (one time use) files to separate folder
+Move unused files to archive
+Add washer to OP/AE
+Remove chartLimits and associated functions and revert to base functions
+
+Find some external sources
+Compare rates from SUS, SUS PbR and HES
+Allow for multiple population sources - Resident/Registered/Attribution dataset and ESP/England
