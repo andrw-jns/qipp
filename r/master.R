@@ -669,81 +669,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
  #     , width = 13.3
  #     , units = "cm")
  # 
-# Draw rate of change plot ------------------------------------------------
-  plotRocPoints <- ipRoC %>%
-    filter(Strategy == ipPlottableStrategies$Strategy[i])
-  plotRocFunnels <- ipRoCFunnels %>%
-    filter(Strategy == ipPlottableStrategies$Strategy[i])
-  plotRocSummary <- ipRoCSummary %>%
-    filter(Strategy == ipPlottableStrategies$Strategy[i])
-  
-  plot_ip_funroc[[i]] <- ggplot(data = plotRocFunnels) +
-    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-    geom_hline(aes(yintercept = AverageRateOfChange)) +
-    geom_point(
-      data = plotRocPoints
-      , aes(x = SpellsInBaseYear, y = RateOfChange, colour = IsActiveCCG)
-      , size = 4
-      , shape = 20
-    ) +
-    scale_colour_manual(values = colourBlindPalette[c("blue", "red")] %>% unname) +
-    scale_x_continuous(
-      labels = scales::comma
-      , limits = c(plotRocSummary$NewMinSpells, plotRocSummary$NewMaxSpells)) +
-    scale_y_continuous(
-      labels = scales::percent
-      , limits = c(plotRocSummary$NewMinRateOfChange, plotRocSummary$NewMaxRateOfChange)) +
-    labs(
-      x = paste0("Related spells "
-                 , plotRocPoints %>% 
-                   filter(IsActiveCCG) %>% 
-                   ungroup() %>% 
-                   select(From) %>% 
-                   unlist %>% unname %>% 
-                   FYearIntToChar)
-      , y = paste0("Percentage change")
-      , title = 
-          paste0("Rate of change between "
-          , plotRocPoints %>% 
-            filter(IsActiveCCG) %>% 
-            ungroup() %>% 
-            select(From) %>% 
-            unlist %>% unname %>% 
-            FYearIntToChar
-          , " and "
-          , plotRocPoints %>% 
-            filter(IsActiveCCG) %>% 
-            ungroup() %>% 
-            select(FYear) %>% 
-            unlist %>% unname %>% 
-            FYearIntToChar)
-    ) +
-    theme(
-      axis.line = element_line(colour="grey80")
-      , axis.line.x = element_blank()
-      , axis.text = element_text(colour = "black")
-      , axis.ticks = element_line(colour = "black")
-      , axis.title.y = element_text(size = 10)
-      , legend.position = "none"
-      , plot.background = element_blank()
-      , panel.grid.major.x = element_blank()
-      , panel.grid.major.y = element_line(colour = "grey95")
-      , panel.grid.minor = element_blank()
-      , panel.border = element_blank()
-      , panel.background= element_blank()
-      , plot.title = element_text(hjust = 0)
-    ) 
-  # +
-  #   ggsave(
-  #     filename = paste0("Images/IP_", ipPlottableStrategies$Strategy[i], "_RoC.png")
-  #     , height = 8.9
-  #     , width = 13.3
-  #     , units = "cm") 
- 
-# Draw cost plot ----------------------------------------------------------
+
+ # Draw cost plot ----------------------------------------------------------
   plotCostData <- ipCost %>%
     filter(Strategy == ipPlottableStrategies$Strategy[i])
   
@@ -795,7 +722,53 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     filter(Strategy == ipPlottableStrategies$Strategy[i])
   plotTrendComparators <- ipTrendComparators %>%
     filter(Strategy == ipPlottableStrategies$Strategy[i])
+
+# () -----------------------------------------------------------------
+library(extrafont)
   
+  ggplot()+
+    geom_area(data = plotTrendActive,
+               aes(
+                 FYearIntToChar(FYear),
+                 DSRate,
+                 group = 1
+                 ),
+              alpha = 0.1)+
+    geom_line(data = plotTrendActive,
+              aes(
+                FYearIntToChar(FYear), 
+                DSRate,
+                group = 1
+              ),
+              alpha = 0.4
+              )+
+    # geom_point(data = plotTrendActive,
+    #           aes(
+    #             FYearIntToChar(FYear), 
+    #             DSRate
+    #           ))+
+  
+    geom_line(data = plotTrendComparators %>% 
+                filter(Type == "Average"),
+              aes(
+                FYearIntToChar(FYear), 
+                DSRate,
+                group = 1
+                )
+              ,linetype = "longdash"
+              # fill = "red",
+              # alpha = 0.2
+              )+
+    ylim(0, 1.2*max(plotTrendActive$DSRate, plotTrendComparators$DSRate))+
+    theme_strategy()+
+    labs(x = "Financial Year"
+         , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
+         , title = "Trend in Directly Standardised Rate")+
+    scale_x_discrete(expand = c(0.025,0.025))
+    
+
+# () -----------------------------------------------------------------
+
   plot_ip_trend[[i]] <- ggplot() +
   geom_ribbon(
     data = plotTrendComparators
