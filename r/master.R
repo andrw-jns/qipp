@@ -15,6 +15,62 @@ library(ggplot2) # ggplot
 library(scales, warn.conflicts = FALSE)
 library(testthat)
 # library(ReporteRs)
+library(extrafont)
+
+
+# theme TO GO ELSEWHERE ----------------------------------------------
+
+theme_strategy <- function (base_size = 11, base_family = "Segoe UI Light") {
+  
+  half_line <- base_size/2
+  theme(line = element_line(colour = "black", size = 0.5, linetype = 1, 
+                            lineend = "butt"), rect = element_rect(fill = "white", 
+                                                                   colour = "black", size = 0.5, linetype = 1), text = element_text(family = base_family, 
+                                                                                                                                    face = "plain", colour = "black", size = base_size, lineheight = 0.9, 
+                                                                                                                                    hjust = 0.5, vjust = 0.5, angle = 0, margin = margin(), 
+                                                                                                                                    debug = FALSE), axis.line = element_blank(), axis.line.x = NULL, 
+        axis.line.y = NULL, axis.text = element_text(size = rel(0.8), 
+                                                     colour = "grey30"), axis.text.x = element_text(margin = margin(t = 0.8 * 
+                                                                                                                      half_line/2), vjust = 1), axis.text.x.top = element_text(margin = margin(b = 0.8 * 
+                                                                                                                                                                                                 half_line/2), vjust = 0), axis.text.y = element_text(margin = margin(r = 0.8 * 
+                                                                                                                                                                                                                                                                        half_line/2), hjust = 1), axis.text.y.right = element_text(margin = margin(l = 0.8 * 
+                                                                                                                                                                                                                                                                                                                                                     half_line/2), hjust = 0), axis.ticks = element_blank(), 
+        axis.ticks.length = unit(half_line/2, "pt"), axis.title.x = element_text(margin = margin(t = half_line), 
+                                                                                 vjust = 1), axis.title.x.top = element_text(margin = margin(b = half_line), 
+                                                                                                                             vjust = 0), axis.title.y = element_text(angle = 90, 
+                                                                                                                                                                     margin = margin(r = half_line), vjust = 1), axis.title.y.right = element_text(angle = -90, 
+                                                                                                                                                                                                                                                   margin = margin(l = half_line), vjust = 0), legend.background = element_rect(colour = NA), 
+        legend.spacing = unit(0.4, "cm"), legend.spacing.x = NULL, 
+        legend.spacing.y = NULL, legend.margin = margin(0.2, 
+                                                        0.2, 0.2, 0.2, "cm"), legend.key = element_rect(fill = "grey95", 
+                                                                                                        colour = "white"), legend.key.size = unit(1.2, "lines"), 
+        legend.key.height = NULL, legend.key.width = NULL, legend.text = element_text(size = rel(0.8)), 
+        legend.text.align = NULL, legend.title = element_text(hjust = 0), 
+        legend.title.align = NULL, legend.position = "right", 
+        legend.direction = NULL, legend.justification = "center", 
+        legend.box = NULL, legend.box.margin = margin(0, 0, 0, 
+                                                      0, "cm"), legend.box.background = element_blank(), 
+        legend.box.spacing = unit(0.4, "cm"), panel.background = element_rect(fill = "grey92", 
+                                                                              colour = NA), panel.border = element_blank(), panel.grid.major = element_line(colour = "white"), 
+        panel.grid.minor = element_blank(), 
+        panel.spacing = unit(half_line, "pt"), panel.spacing.x = NULL, 
+        panel.spacing.y = NULL, panel.ontop = FALSE, strip.background = element_rect(fill = "grey85", 
+                                                                                     colour = NA), strip.text = element_text(colour = "grey10", 
+                                                                                                                             size = rel(0.8)), strip.text.x = element_text(margin = margin(t = half_line, 
+                                                                                                                                                                                           b = half_line)), strip.text.y = element_text(angle = -90, 
+                                                                                                                                                                                                                                        margin = margin(l = half_line, r = half_line)), strip.placement = "inside", 
+        strip.placement.x = NULL, strip.placement.y = NULL, strip.switch.pad.grid = unit(0.1, 
+                                                                                         "cm"), strip.switch.pad.wrap = unit(0.1, "cm"), plot.background = element_rect(colour = "white"), 
+        plot.title = element_text(size = rel(1.2), hjust = 0, 
+                                  vjust = 1, margin = margin(b = half_line * 1.2)), 
+        plot.subtitle = element_text(size = rel(0.9), hjust = 0, 
+                                     vjust = 1, margin = margin(b = half_line * 0.9)), 
+        plot.caption = element_text(size = rel(0.9), hjust = 1, 
+                                    vjust = 1, margin = margin(t = half_line * 0.9)), 
+        plot.margin = margin(half_line, half_line, half_line, 
+                             half_line), complete = TRUE)
+}
+
 
 
 # Parameters 1--------------------------------------------------------
@@ -561,7 +617,7 @@ aeCost <- aeSmall %>% cost_ds
 opCost <- opSmall %>% cost_ds 
 
 opCostFUF <- opSmallFUF %>%
-  filter(FYear == rocParameters$To) %>%
+  filter(FYear == f_year) %>%
   select(-FYear, -DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
   gather(Strategy, Highlighted, -CCGCode, -Spells, -Costs, -DSCosts, -DSCostsVar, convert = T) %>%
   group_by(CCGCode, Strategy, Highlighted) %>%
@@ -642,9 +698,9 @@ for(i in seq(ipPlottableStrategies$Strategy)){
                    , plotFunnelSummary$NewMaxDSRate) 
     ) +
    labs(
-     x = paste0("Standardised population ", FYearIntToChar(rocParameters$To))
+     x = paste0("Standardised population ", FYearIntToChar(f_year))
      , y = paste0("Direct standardised rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
-     , title = paste0("Direct standardised rate ", FYearIntToChar(rocParameters$To))
+     , title = paste0("Direct standardised rate ", FYearIntToChar(f_year))
    ) +
    theme(
      axis.line = element_line(colour="grey80")
@@ -691,7 +747,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     scale_fill_manual(values = colourBlindPalette[c("blue", "red")] %>% unname) +
     scale_y_continuous(labels = pound) +
     expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
-    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of population ", FYearIntToChar(rocParameters$To)) + 
+    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of population ", FYearIntToChar(f_year)) + 
     theme(
      axis.line = element_line(colour="grey80")
      , axis.line.y = element_blank()
@@ -724,22 +780,21 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     filter(Strategy == ipPlottableStrategies$Strategy[i])
 
 # () -----------------------------------------------------------------
-library(extrafont)
-  
-  ggplot()+
+
+  plot_ip_trend[[i]] <-ggplot()+
     geom_area(data = plotTrendActive,
-               aes(
-                 FYearIntToChar(FYear),
-                 DSRate,
-                 group = 1
-                 ),
+              aes(
+                FYearIntToChar(FYear),
+                DSRate,
+                group = 1
+                ),
               alpha = 0.1)+
     geom_line(data = plotTrendActive,
               aes(
                 FYearIntToChar(FYear), 
                 DSRate,
                 group = 1
-              ),
+                ),
               alpha = 0.4
               )+
     # geom_point(data = plotTrendActive,
@@ -747,7 +802,6 @@ library(extrafont)
     #             FYearIntToChar(FYear), 
     #             DSRate
     #           ))+
-  
     geom_line(data = plotTrendComparators %>% 
                 filter(Type == "Average"),
               aes(
@@ -756,72 +810,70 @@ library(extrafont)
                 group = 1
                 )
               ,linetype = "longdash"
-              # fill = "red",
-              # alpha = 0.2
               )+
     ylim(0, 1.2*max(plotTrendActive$DSRate, plotTrendComparators$DSRate))+
     theme_strategy()+
-    labs(x = "Financial Year"
-         , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
-         , title = "Trend in Directly Standardised Rate")+
+    labs(x = "Financial Year",
+         y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population"),
+         title = "Trend in Directly Standardised Rate")+
     scale_x_discrete(expand = c(0.025,0.025))
     
 
 # () -----------------------------------------------------------------
 
-  plot_ip_trend[[i]] <- ggplot() +
-  geom_ribbon(
-    data = plotTrendComparators
-    , aes(
-      x = FYearIntToChar(FYear)
-      , ymin = Low
-      , ymax = High
-      , group = TypeNumber
-      , fill = TypeNumber %>% as.character
-    )
-  ) +
-  geom_ribbon(
-    data = plotTrendActive
-    , aes(
-      x = FYearIntToChar(FYear)
-      , ymin = DSRateCILower
-      , ymax = DSRateCIUpper
-      , group = Group
-      , fill = Group
-      , alpha = 0.7
-    )
-  ) + 
-  geom_line(
-    data = plotTrendActive
-    , aes(
-       x = FYearIntToChar(FYear)
-       , y = DSRate
-       , group = Group
-    )
-    , colour = colourBlindPalette["red"] %>% unname
-  ) +
-  scale_fill_manual(
-    values = trendColours %>% unname
-    , labels = names(trendColours)) +
-  labs(x = "Financial Year"
-       , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
-       , title = "Trend in direct standardised rate") +
-  theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major = element_blank()
-     #, panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0)
-   ) 
-  
+  # plot_ip_trend[[i]] <- ggplot()+
+  # geom_ribbon(
+  #   data = plotTrendComparators
+  #   , aes(
+  #     x = FYearIntToChar(FYear)
+  #     , ymin = Low
+  #     , ymax = High
+  #     , group = TypeNumber
+  #     , fill = TypeNumber %>% as.character
+  #   )
+  # ) +
+  # geom_ribbon(
+  #   data = plotTrendActive
+  #   , aes(
+  #     x = FYearIntToChar(FYear)
+  #     , ymin = DSRateCILower
+  #     , ymax = DSRateCIUpper
+  #     , group = Group
+  #     , fill = Group
+  #     , alpha = 0.7
+  #   )
+  # ) + 
+  # geom_line(
+  #   data = plotTrendActive
+  #   , aes(
+  #      x = FYearIntToChar(FYear)
+  #      , y = DSRate
+  #      , group = Group
+  #   )
+  #   , colour = colourBlindPalette["red"] %>% unname
+  # ) +
+  # scale_fill_manual(
+  #   values = trendColours %>% unname
+  #   , labels = names(trendColours)) +
+  # labs(x = "Financial Year"
+  #      , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
+  #      , title = "Trend in direct standardised rate") +
+  # theme(
+  #    axis.line = element_line(colour="grey80")
+  #    , axis.line.x = element_blank()
+  #    , axis.text = element_text(colour = "black")
+  #    , axis.ticks = element_line(colour = "black")
+  #    , axis.title.y = element_text(size = 8)
+  #    , legend.position = "none"
+  #    , plot.background = element_blank()
+  #    , panel.grid.major = element_blank()
+  #    #, panel.grid.major.y = element_line(colour = "grey95")
+  #    , panel.grid.minor = element_blank()
+  #    #, panel.border = element_blank()
+  #    , panel.background= element_blank()
+  #    , plot.title = element_text(hjust = 0)
+  #  ) 
+  # 
   # +
   #  ggsave(
   #    filename = paste0("Images/IP_", ipPlottableStrategies$Strategy[i], "_Trend.png")
@@ -844,7 +896,7 @@ aePlottableStrategies <- activeStrategies %>%
 
 
 plot_ae_funcost <- list()
-plot_ae_funroc  <- list()
+#plot_ae_funroc  <- list()
 plot_ae_cost    <- list()
 plot_ae_trend   <- list()
 
@@ -881,9 +933,9 @@ for(i in seq(aePlottableStrategies$Strategy)){
                    , plotFunnelSummary$NewMaxDSRate) 
     ) +
    labs(
-     x = paste0("Standardised population ", FYearIntToChar(rocParameters$To))
+     x = paste0("Standardised population ", FYearIntToChar(f_year))
      , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
-     , title = paste0("Direct Standardised Rate ", FYearIntToChar(rocParameters$To))
+     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
    ) +
    theme(
      axis.line = element_line(colour="grey80")
@@ -906,83 +958,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
  #     , height = 8.9
  #     , width = 13.3
  #     , units = "cm")
-# Draw rate of change plot ------------------------------------------------
-  plotRocPoints <- aeRoC %>%
-    filter(Strategy == aePlottableStrategies$Strategy[i])
-  plotRocFunnels <- aeRoCFunnels %>%
-    filter(Strategy == aePlottableStrategies$Strategy[i])
-  plotRocSummary <- aeRoCSummary %>%
-    filter(Strategy == aePlottableStrategies$Strategy[i])
-  
-  plot_ae_funroc[[i]] <- ggplot(data = plotRocFunnels) +
-    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-    geom_hline(aes(yintercept = AverageRateOfChange)) +
-    geom_point(
-      data = plotRocPoints
-      , aes(x = SpellsInBaseYear, y = RateOfChange, colour = IsActiveCCG)
-      , size = 4
-      , shape = 20
-    ) +
-    scale_colour_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
-    scale_x_continuous(
-      labels = scales::comma
-      , limits = c(plotRocSummary$NewMinSpells, plotRocSummary$NewMaxSpells)) +
-    scale_y_continuous(
-      labels = scales::percent
-      , limits = c(plotRocSummary$NewMinRateOfChange, plotRocSummary$NewMaxRateOfChange)) +
-    labs(
-      x = paste0("Related attendances "
-                 , plotRocPoints %>% 
-                   filter(IsActiveCCG) %>% 
-                   ungroup() %>% 
-                   select(From) %>% 
-                   unlist %>% unname %>% 
-                   FYearIntToChar)
-      , y = paste0("Percentage change")
-      , title = 
-          paste0("Rate of change between "
-          , plotRocPoints %>% 
-            filter(IsActiveCCG) %>% 
-            ungroup() %>% 
-            select(From) %>% 
-            unlist %>% unname %>% 
-            FYearIntToChar
-          , " and "
-          , plotRocPoints %>% 
-            filter(IsActiveCCG) %>% 
-            ungroup() %>% 
-            select(FYear) %>% 
-            unlist %>% unname %>% 
-            FYearIntToChar)
-    ) +
-    theme(
-      axis.line = element_line(colour="grey80")
-      , axis.line.x = element_blank()
-      , axis.text = element_text(colour = "black")
-      , axis.ticks = element_line(colour = "black")
-      , axis.title.y = element_text(size = 10)
-      , legend.position = "none"
-      , plot.background = element_blank()
-      , panel.grid.major.x = element_blank()
-      , panel.grid.major.y = element_line(colour = "grey95")
-      , panel.grid.minor = element_blank()
-      , panel.border = element_blank()
-      , panel.background= element_blank()
-      , plot.title = element_text(hjust = 0)
-    ) 
-  # +
-  #   ggsave(
-  #     filename = paste0(baseDir,"Images/AE_", aePlottableStrategies$Strategy[i], "_RoC.png")
-  #     , height = 8.9
-  #     , width = 13.3
-  #     , units = "cm") 
-
-
-
-  
+ 
 # Draw cost plot ----------------------------------------------------------
   plotCostData <- aeCost %>%
     filter(Strategy == aePlottableStrategies$Strategy[i])
@@ -1150,9 +1126,9 @@ for(i in seq(opPlottableStrategies$Strategy)){
                    , plotFunnelSummary$NewMaxDSRate) 
     ) +
    labs(
-     x = paste0("Standardised population ", FYearIntToChar(rocParameters$To))
+     x = paste0("Standardised population ", FYearIntToChar(f_year))
      , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
-     , title = paste0("Direct Standardised Rate ", FYearIntToChar(rocParameters$To))
+     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
    ) +
    theme(
      axis.line = element_line(colour="grey80")
@@ -1176,83 +1152,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
  #     , width = 13.3
  #     , units = "cm")
  # 
-# Draw rate of change plot ------------------------------------------------
-  plotRocPoints <- opRoC %>%
-    filter(Strategy == opPlottableStrategies$Strategy[i])
-  plotRocFunnels <- opRoCFunnels %>%
-    filter(Strategy == opPlottableStrategies$Strategy[i])
-  plotRocSummary <- opRoCSummary %>%
-    filter(Strategy == opPlottableStrategies$Strategy[i])
-  
-  plot_op_funroc[[i]] <- ggplot(data = plotRocFunnels) +
-    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-    geom_hline(aes(yintercept = AverageRateOfChange)) +
-    geom_point(
-      data = plotRocPoints
-      , aes(x = SpellsInBaseYear, y = RateOfChange, colour = IsActiveCCG)
-      , size = 4
-      , shape = 20
-    ) +
-    scale_colour_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-    scale_x_continuous(
-      labels = scales::comma
-      , limits = c(plotRocSummary$NewMinSpells, plotRocSummary$NewMaxSpells)) +
-    scale_y_continuous(
-      labels = scales::percent
-      , limits = c(plotRocSummary$NewMinRateOfChange, plotRocSummary$NewMaxRateOfChange)) +
-    labs(
-      x = paste0("Related spells "
-                 , plotRocPoints %>% 
-                   filter(IsActiveCCG) %>% 
-                   ungroup() %>% 
-                   select(From) %>% 
-                   unlist %>% unname %>% 
-                   FYearIntToChar)
-      , y = paste0("Percentage change")
-      , title = 
-          paste0("Rate of change between "
-          , plotRocPoints %>% 
-            filter(IsActiveCCG) %>% 
-            ungroup() %>% 
-            select(From) %>% 
-            unlist %>% unname %>% 
-            FYearIntToChar
-          , " and "
-          , plotRocPoints %>% 
-            filter(IsActiveCCG) %>% 
-            ungroup() %>% 
-            select(FYear) %>% 
-            unlist %>% unname %>% 
-            FYearIntToChar)
-    ) +
-    theme(
-      axis.line = element_line(colour="grey80")
-      , axis.line.x = element_blank()
-      , axis.text = element_text(colour = "black")
-      , axis.ticks = element_line(colour = "black")
-      , axis.title.y = element_text(size = 10)
-      , legend.position = "none"
-      , plot.background = element_blank()
-      , panel.grid.major.x = element_blank()
-      , panel.grid.major.y = element_line(colour = "grey95")
-      , panel.grid.minor = element_blank()
-      , panel.border = element_blank()
-      , panel.background= element_blank()
-      , plot.title = element_text(hjust = 0)
-    ) 
-  # +
-  #   ggsave(
-  #     filename = paste0("Images/OP_", opPlottableStrategies$Strategy[i], "_RoC.png")
-  #     , height = 8.9
-  #     , width = 13.3
-  #     , units = "cm") 
 
-
-
-  
 # Draw cost plot ----------------------------------------------------------
   plotCostData <- opCost %>%
     filter(Strategy == opPlottableStrategies$Strategy[i])
@@ -1420,9 +1320,9 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
                    , plotFunnelSummary$NewMaxDSRate) 
     ) +
    labs(
-     x = paste0("First appointments ", FYearIntToChar(rocParameters$To))
+     x = paste0("First appointments ", FYearIntToChar(f_year))
      , y = "Follow up to first appointment ratio"
-     , title = paste0("Follow up to first appointment ratio ", FYearIntToChar(rocParameters$To))
+     , title = paste0("Follow up to first appointment ratio ", FYearIntToChar(f_year))
    ) +
    theme(
      axis.line = element_line(colour="grey80")
@@ -1447,65 +1347,7 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
  #     , units = "cm")
   
   
-# Draw rate of change plot ------------------------------------------------
-  plotFUFRocPoints <- opRocFUF %>%
-    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-  plotFUFRocFunnels <- opRocFunnelsFUF %>%
-    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-  plotFUFRocSummary <- opRocSummaryFUF %>%
-     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-  
-  plot_fuf_funroc[[i]] <- ggplot(data = plotFUFRocFunnels) +
-    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-    geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-    geom_hline(aes(yintercept = AverageRateOfChange)) +
-    geom_point(
-      data = plotFUFRocPoints
-      , aes(x = FirstInBaseYear, y = RateOfChange, colour = IsActiveCCG)
-      , size = 4
-      , shape = 20
-    ) +
-    scale_colour_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-    scale_x_continuous(
-      labels = scales::comma
-      , limits = c(plotFUFRocSummary$NewMinFirst, plotFUFRocSummary$NewMaxFirst)) +
-    scale_y_continuous(
-      limits = c(plotFUFRocSummary$NewMinRateOfChange, plotFUFRocSummary$NewMaxRateOfChange)) +
-    labs(
-      x = paste0("Related attendances "
-                 , plotFUFRocPoints %>% 
-                   filter(IsActiveCCG) %>% 
-                   ungroup() %>% 
-                   select(BaseYear) %>% 
-                   unlist %>% unname %>% 
-                   FYearIntToChar)
-      , y = paste0("Change in follow up to first appointment ratio")
-      , title = paste0("Change in ratio between ", FYearIntToChar(rocParameters$From), " and ", FYearIntToChar(rocParameters$To))
-    ) +
-    theme(
-      axis.line = element_line(colour="grey80")
-      , axis.line.x = element_blank()
-      , axis.text = element_text(colour = "black")
-      , axis.ticks = element_line(colour = "black")
-      , axis.title.y = element_text(size = 10)
-      , legend.position = "none"
-      , plot.background = element_blank()
-      , panel.grid.major.x = element_blank()
-      , panel.grid.major.y = element_line(colour = "grey95")
-      , panel.grid.minor = element_blank()
-      , panel.border = element_blank()
-      , panel.background= element_blank()
-      , plot.title = element_text(hjust = 0)
-    ) 
-  # +
-  #   ggsave(
-  #     filename = paste0(baseDir, "Images/OP_", opPlottableFUFStrategies$Strategy[i], "_RoC.png")
-  #     , height = 8.9
-  #     , width = 13.3
-  #     , units = "cm") 
-  
+
 # Draw cost plot ----------------------------------------------------------
   plotCostData <- opCostFUF %>%
     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
@@ -1637,8 +1479,8 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
     , by = c("CCGCode", "Strategy"))
 
 
-write.table(summaryOutputIP, "Data/R_SummaryOutputIP.csv", sep = ",", row.names = FALSE)
-write.table(summaryOutputIP, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputIP.csv"), sep = ",", row.names = FALSE)
+# write.table(summaryOutputIP, "Data/R_SummaryOutputIP.csv", sep = ",", row.names = FALSE)
+# write.table(summaryOutputIP, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputIP.csv"), sep = ",", row.names = FALSE)
 
 # A&E ---------------------------------------------------------------------
 totalActivityAE <- aeSmall %>% total_activity
@@ -1658,8 +1500,8 @@ summaryOutputAE <- aeSmall %>% summary_output(., savingsAnyOneAE, aeSignificance
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
 
-write.table(summaryOutputAE, "Data/R_SummaryOutputAE.csv", sep = ",", row.names = FALSE)
-write.table(summaryOutputAE, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputAE.csv"), sep = ",", row.names = FALSE)
+#write.table(summaryOutputAE, "Data/R_SummaryOutputAE.csv", sep = ",", row.names = FALSE)
+#write.table(summaryOutputAE, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputAE.csv"), sep = ",", row.names = FALSE)
 
 
 # Outpatients -------------------------------------------------------------
@@ -1699,7 +1541,7 @@ opTopFUF <- opSmallFUF %>%
   select(-Highlighted) %>%
   spread(FUF, Spells) %>%
   mutate(FUFRatio =  FollowUp / First) %>%
-  filter(FYear == rocParameters$To) %>%
+  filter(FYear == f_year) %>%
   group_by(Strategy) %>%
   summarise(
     Average = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
@@ -1711,7 +1553,7 @@ opTopFUF <- opSmallFUF %>%
 
 
 savingsAnyOneOPFUF <- opTrendFUF %>% 
-  filter(FYear == rocParameters$To, IsActiveCCG) %>%
+  filter(FYear == f_year, IsActiveCCG) %>%
   left_join(spendFUF, by = "Strategy") %>%
   select(-IsActiveCCG) %>%
   left_join(opTopFUF, by = "Strategy") %>%
@@ -1770,7 +1612,7 @@ opSignificanceFUF <- opSignificanceFUF %>%
 
 summaryOutputOPFUF <- 
   opTrendFUF %>%
-  filter(FYear == rocParameters$To & IsActiveCCG) %>%
+  filter(FYear == f_year & IsActiveCCG) %>%
   select(-IsActiveCCG) %>%
   left_join(opTopFUF, by = "Strategy") %>%
   left_join(savingsAnyOneOPFUF, by = "Strategy") %>%
@@ -1788,10 +1630,10 @@ summaryOutputOPFUF <-
   select(-IsActiveCCG)
 
 
-write.table(summaryOutputOP, "Data/R_SummaryOutputOP.csv", sep = ",", row.names = FALSE)
-write.table(summaryOutputOPFUF, "Data/R_SummaryOutputOPFUF.csv", sep = ",", row.names = FALSE)
-write.table(summaryOutputOP, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputOP.csv"), sep = ",", row.names = FALSE)
-write.table(summaryOutputOPFUF, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputOPFUF.csv"), sep = ",", row.names = FALSE)
+# write.table(summaryOutputOP, "Data/R_SummaryOutputOP.csv", sep = ",", row.names = FALSE)
+# write.table(summaryOutputOPFUF, "Data/R_SummaryOutputOPFUF.csv", sep = ",", row.names = FALSE)
+# write.table(summaryOutputOP, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputOP.csv"), sep = ",", row.names = FALSE)
+# write.table(summaryOutputOPFUF, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputOPFUF.csv"), sep = ",", row.names = FALSE)
 # 
 # comparatorsOut <- comparatorCCGs %>%
 #   filter(NeighbourCCGCode != activeCCG) %>%
@@ -1802,8 +1644,8 @@ comparatorsOut <- comparatorCCGs2 %>%
   select(CCGCode, CCGDescription)
 # messes with the comparators table in Excel
 
-write.table(comparatorsOut, "Data/R_ComparatorCCGs.csv", sep = ",", row.names = FALSE)
-write.table(comparatorsOut, paste0("Data/ByCCG/R_", active_ccg, "ComparatorCCGs.csv"), sep = ",", row.names = FALSE)
+# write.table(comparatorsOut, "Data/R_ComparatorCCGs.csv", sep = ",", row.names = FALSE)
+# write.table(comparatorsOut, paste0("Data/ByCCG/R_", active_ccg, "ComparatorCCGs.csv"), sep = ",", row.names = FALSE)
 
 #  -------------------------------------------------------------------
 
