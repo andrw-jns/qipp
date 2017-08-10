@@ -1,6 +1,6 @@
 # Cost plot function
 cost_ds <- . %>%
-  filter(FYear == rocParameters$To) %>%
+  filter(FYear == f_year) %>%
   select(-FYear, -DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
   gather(Strategy, Highlighted, -CCGCode, -Spells, -Costs, -DSCosts, -DSCostsVar, convert = T) %>%
   group_by(CCGCode, Strategy, Highlighted) %>%
@@ -24,5 +24,5 @@ cost_ds <- . %>%
     , DSCostsPerHead = DSCosts / 100000
     , DSCostsPerHeadUpper = DSCostsCIUpper / 100000
     , DSCostsPerHeadLower = DSCostsCILower / 100000
-    , IsActiveCCG = CCGCode == activeCCG) %>%
+    , IsActiveCCG = CCGCode == active_ccg) %>%
   left_join(allCCGs, by = "CCGCode")

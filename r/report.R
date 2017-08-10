@@ -26,8 +26,8 @@ setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
 
 qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
-slide.layouts(qipp_report)
-slide.layouts(qipp_report, "qipp_body")
+#slide.layouts(qipp_report)
+#slide.layouts(qipp_report, "qipp_body")
 
 # 0: TITLE --------------------------------------------------------------
 
@@ -51,7 +51,6 @@ qipp_report <- addSlide(qipp_report, "table_of_contents") %>%
   # adding a new paragraph here creates block 2
   addParagraph("1\n7\n11\n24", par.properties = parProperties(text.align = "right")) %>% 
   addParagraph("Purpose of this report\nSubsets of Activity\nData Sources\nInterpreting Funnel Plots") %>% 
-  # adding a new paragraph here creates block 2
   addParagraph("1\n7\n11\n24")
 
 # 3: TITLE IP ---------------------------------------------------------
@@ -68,16 +67,17 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     addTitle(ipPlottableStrategies$StrategyDescription[i]) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ip_funcost[[i]])) %>% 
     addPlot(function() plot(plot_ip_cost[[i]])) %>%
-    addPlot(function() plot(plot_ip_trend[[i]])) %>%
-    addPlot(function() plot(plot_ip_funroc[[i]])) %>% 
-    addParagraph(stringr::str_c("£", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","),
-                                " spent", "  ",
-                                format(round(summaryOutputIP$Spells[i], -1), big.mark = ","),
-                                " spells", "  ",
-                                round(summaryOutputIP$propSpells[i]*100, 1),
-                                "% of all IP spells"
-                                )
-                 )
+    addPlot(function() plot(plot_ip_trend[[i]])) 
+    # %>%
+    ##addPlot(function() plot(plot_ip_funroc[[i]])) %>% 
+    # addParagraph(stringr::str_c("?", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","),
+    #                             " spent", "  ",
+    #                             format(round(summaryOutputIP$Spells[i], -1), big.mark = ","),
+    #                             " spells", "  ",
+    #                             round(summaryOutputIP$propSpells[i]*100, 1),
+    #                             "% of all IP spells"
+    #                            )
+    #             )
 }
 
 
@@ -117,7 +117,7 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
     addPlot(function() plot(plot_fuf_cost[[i]])) %>%
     addPlot(function() plot(plot_fuf_trend[[i]])) %>%
     addPlot(function() plot(plot_fuf_funroc[[i]])) %>% 
-    addParagraph(stringr::str_c("£", format(round(summaryOutputOPFUF$Costs[i], -3), big.mark = ","),
+    addParagraph(stringr::str_c("?", format(round(summaryOutputOPFUF$Costs[i], -3), big.mark = ","),
                                 " spent", "  ",
                                 format(round(summaryOutputOPFUF$FollowUp[i], -1), big.mark = ","),
                                 " follow-up attendances", "  "
@@ -145,10 +145,10 @@ qipp_report <- addSlide(qipp_report, "contentB") %>%
 # Change the default font size and font family:
  options('ReporteRs-fontsize'= 20, 'ReporteRs-default-font'='Segoe UI Light')
 
- contact_name  <- pot("Andrew Jones", format = textBold())
- contact_role  <- pot("Healthcare Analyst")
- contact_email <- pot("andrew.jones40@nhs.net", format = textNormal(color = "blue", underline = T))
- contact_tel   <- pot("0121 612 1585")
+ contact_name  <- pot("aj", format = textBold())
+ contact_role  <- pot("ha")
+ contact_email <- pot("ad", format = textNormal(color = "blue", underline = T))
+ contact_tel   <- pot("01")
  
 # parProperties() : Look at default options
 
