@@ -6,7 +6,7 @@
 # TODO ---------------------------------------------------------------
 
 # Packages ----------------------------------------------------------------
-
+" When code runs clean, replace with tidyverse"
 library(readr)
 library(readxl)
 library(dplyr)   # , warn.conflicts = FALSE)
@@ -15,7 +15,7 @@ library(ggplot2) # ggplot
 library(scales, warn.conflicts = FALSE)
 library(testthat)
 # library(ReporteRs)
-library(extrafont)
+library(extrafont) # for theme_strategy.
 
 # Parameters 1--------------------------------------------------------
 
@@ -606,7 +606,7 @@ names(trendColours) <- c("Minimum to 1st decile", "1st decile to 1st quartile", 
 # RColorBrewer::display.brewer.all(colorblindFriendly = T)
 
 plot_ip_funcost <- list()
-plot_ip_funroc  <- list()
+#plot_ip_funroc  <- list()
 plot_ip_cost    <- list()
 plot_ip_trend   <- list()
 
@@ -726,9 +726,53 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   plotTrendComparators <- ipTrendComparators %>%
     filter(Strategy == ipPlottableStrategies$Strategy[i])
 
-# () -----------------------------------------------------------------
+# Provisional trend plot (make into function?) -----------------------------------------------------------------
 
-  plot_ip_trend[[i]] <-ggplot()+
+plot_trend(plotTrendActive, plotTrendComparators)
+  
+plot_trend <- function(active_df, comparator_df){
+  
+  ggplot()+
+    geom_area(data = active_df,
+              aes(
+                FYearIntToChar(FYear),
+                DSRate,
+                group = 1
+              ),
+              alpha = 0.1)+
+    geom_line(data = active_df,
+              aes(
+                FYearIntToChar(FYear), 
+                DSRate,
+                group = 1
+              ),
+              alpha = 0.4
+    )+
+    # geom_point(data = plotTrendActive,
+    #           aes(
+    #             FYearIntToChar(FYear), 
+    #             DSRate
+    #           ))+
+    geom_line(data = comparator_df %>% 
+                filter(Type == "Average"),
+              aes(
+                FYearIntToChar(FYear), 
+                DSRate,
+                group = 1
+              )
+              ,linetype = "longdash"
+    )+
+    ylim(0, 1.2*max(active_df$DSRate, comparator_df$DSRate))+
+    theme_strategy()+
+    labs(x = "Financial Year",
+         y = paste0("DSR per ",
+                    scales::comma(funnelParameters$RatePerPeople)," population"),
+         title = "Trend in Directly Standardised Rate")+
+    scale_x_discrete(expand = c(0.025,0.025))
+  }
+  
+  
+  plot_ip_trend[[i]] <- ggplot()+
     geom_area(data = plotTrendActive,
               aes(
                 FYearIntToChar(FYear),
@@ -761,73 +805,12 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     ylim(0, 1.2*max(plotTrendActive$DSRate, plotTrendComparators$DSRate))+
     theme_strategy()+
     labs(x = "Financial Year",
-         y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population"),
+         y = paste0("DSR per ",
+                    scales::comma(funnelParameters$RatePerPeople)," population"),
          title = "Trend in Directly Standardised Rate")+
     scale_x_discrete(expand = c(0.025,0.025))
     
 
-# () -----------------------------------------------------------------
-
-  # plot_ip_trend[[i]] <- ggplot()+
-  # geom_ribbon(
-  #   data = plotTrendComparators
-  #   , aes(
-  #     x = FYearIntToChar(FYear)
-  #     , ymin = Low
-  #     , ymax = High
-  #     , group = TypeNumber
-  #     , fill = TypeNumber %>% as.character
-  #   )
-  # ) +
-  # geom_ribbon(
-  #   data = plotTrendActive
-  #   , aes(
-  #     x = FYearIntToChar(FYear)
-  #     , ymin = DSRateCILower
-  #     , ymax = DSRateCIUpper
-  #     , group = Group
-  #     , fill = Group
-  #     , alpha = 0.7
-  #   )
-  # ) + 
-  # geom_line(
-  #   data = plotTrendActive
-  #   , aes(
-  #      x = FYearIntToChar(FYear)
-  #      , y = DSRate
-  #      , group = Group
-  #   )
-  #   , colour = colourBlindPalette["red"] %>% unname
-  # ) +
-  # scale_fill_manual(
-  #   values = trendColours %>% unname
-  #   , labels = names(trendColours)) +
-  # labs(x = "Financial Year"
-  #      , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
-  #      , title = "Trend in direct standardised rate") +
-  # theme(
-  #    axis.line = element_line(colour="grey80")
-  #    , axis.line.x = element_blank()
-  #    , axis.text = element_text(colour = "black")
-  #    , axis.ticks = element_line(colour = "black")
-  #    , axis.title.y = element_text(size = 8)
-  #    , legend.position = "none"
-  #    , plot.background = element_blank()
-  #    , panel.grid.major = element_blank()
-  #    #, panel.grid.major.y = element_line(colour = "grey95")
-  #    , panel.grid.minor = element_blank()
-  #    #, panel.border = element_blank()
-  #    , panel.background= element_blank()
-  #    , plot.title = element_text(hjust = 0)
-  #  ) 
-  # 
-  # +
-  #  ggsave(
-  #    filename = paste0("Images/IP_", ipPlottableStrategies$Strategy[i], "_Trend.png")
-  #    , height = 5.5
-  #    , width = 13.3
-  #    , dpi = 600
-  #    , units = "cm")    
 # Inpatient plot ends -----------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
