@@ -6,7 +6,6 @@
 # TODO ---------------------------------------------------------------
 " CHECK THAT WE AGREED TO DISPLAY COST AS 
   cost per unit activity"
-# tidyverse may prevent current method for generating pound sign
 
 
 # Packages ----------------------------------------------------------------
