@@ -6,19 +6,15 @@
 # TODO ---------------------------------------------------------------
 " CHECK THAT WE AGREED TO DISPLAY COST AS 
   cost per unit activity"
+# Cost plot can look odd if rounded for low cost activities.
 
 
 # Packages ----------------------------------------------------------------
 " When code runs clean, replace with tidyverse"
-#library(tidyverse)
-library(readr)
+library(tidyverse)
 library(readxl)
-library(dplyr)   # , warn.conflicts = FALSE)
-library(tidyr)   # gather, spread
-library(ggplot2) # ggplot
 library(scales, warn.conflicts = FALSE)
 library(testthat)
-# library(ReporteRs)
 library(extrafont) # for theme_strategy.
 
 
@@ -56,7 +52,6 @@ qipp_ccgs  <- c(# Alphabetical:
                "06D"  # WYR#
 )
 
-
 # Parameters 2 -------------------------------------------------------------
 
 # Funnel
@@ -67,12 +62,6 @@ funnelParameters <- tibble(
   )
 personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
 
-# 
-# # Rate of change
-# rocParameters <- tibble(
-#   From = 201213
-#   , To = f_year
-#   )
 
 # Trend
 trendParameters <- tibble(
@@ -95,7 +84,6 @@ source("summaryFunctions.R")
 source("theme_strategy.R")
 
 pound <- dollar_format(prefix = "£")
-
 
 plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, comparator = T){
   
@@ -174,11 +162,6 @@ activeStrategies <- read_csv("listActiveStrategies.csv")
 # colnames(activeStrategies) <- read_csv("listActiveStrategies.csv", n_max = 0) %>% colnames
 
 # How many strategies for each type of data
-
-# numStrats <- count(activeStrategies, TableType)
-# numberOfStrategies <- numStrats$n
-# names(numberOfStrategies) <- numStrats$TableType
-# rm(numStrats)
 
 numberOfStrategies <- activeStrategies %>% 
   count(TableType)
@@ -291,102 +274,10 @@ comparatorCCGs2 <- allCCGs %>%
   filter(CCGCode %in% qipp_ccgs,
          CCGCode != active_ccg)
   
-
 activeCCGInfo <- allCCGs %>% 
   filter(CCGCode == active_ccg) %>% 
   mutate(CCGNameMinusCCG = stringr::str_replace(CCGDescription, " CCG", "")) # %>% 
   # unlist()
-
-# What years do we want to run the rate of change for?
-# activeMinMaxIp <- ipCheck %>% 
-#   filter(CCGCode == active_ccg & !is.na(Spells)) %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     From = min(FYear, na.rm = TRUE)
-#     , To = max(FYear, na.rm = TRUE)
-#   ) %>%
-#   gather(Type, FYear, -Strategy, convert = TRUE)
-#   
-# activeMinMaxOp <- opCheck %>% 
-#   filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     From = min(FYear, na.rm = TRUE)
-#     , To = max(FYear, na.rm = TRUE)
-#   ) %>%
-#   gather(Type, FYear, -Strategy, convert = TRUE)
-# 
-# activeMinMaxAe <- aeCheck %>% 
-#   filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     From = min(FYear, na.rm = TRUE)
-#     , To = max(FYear, na.rm = TRUE)
-#   ) %>%
-#   gather(Type, FYear, -Strategy, convert = TRUE)
-#   
-#   
-# # Make sure that we're not missing any strategies where allll years are NA
-# activeMinMaxIp <- activeStrategies %>%
-#   filter(TableType == "IP") %>%
-#   select(Strategy) %>%
-#   left_join(activeMinMaxIp, by = "Strategy")
-# 
-# activeMinMaxOp <- activeStrategies %>%
-#   filter(TableType == "OP") %>%
-#   select(Strategy) %>%
-#   left_join(activeMinMaxOp, by = "Strategy")
-#   
-# activeMinMaxAe <- activeStrategies %>%
-#   filter(TableType == "AE") %>%
-#   select(Strategy) %>%
-#   left_join(activeMinMaxAe, by = "Strategy")
-#   
-# 
-# # This is a list of the Strategies to totally exlude
-# activeIPExclude <- activeMinMaxIp %>%
-#   filter(is.na(FYear)) %>%
-#   select(Strategy) %>% unlist %>% unname
-# 
-# activeOPExclude <- activeMinMaxOp %>%
-#   filter(is.na(FYear)) %>%
-#   select(Strategy) %>% unlist %>% unname
-# 
-# activeAEExclude <- activeMinMaxAe %>%
-#   filter(is.na(FYear)) %>%
-#   select(Strategy) %>% unlist %>% unname
-# 
-# 
-# 
-# # Check if any comparators need to be excluded
-# " AJ - not for SUS - REMOVE SECTION"
-# checkWithComparatorsIP <- ipCheck %>%
-#   filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
-#   filter(!Strategy %in% activeIPExclude) %>% # excluding useless strategies
-#   inner_join(ipInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
-#   inner_join(activeMinMaxIp, by = c("Strategy", "FYear")) %>%
-#   select(-Spells)
-# 
-# checkWithComparatorsOP <- opCheck %>%
-#   filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
-#   filter(!Strategy %in% activeOPExclude) %>% # excluding useless strategies + FUF
-#   inner_join(opInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
-#   inner_join(activeMinMaxOp, by = c("Strategy", "FYear")) %>%
-#   select(-Attendances)
-#   
-# checkWithComparatorsAE <- aeCheck %>%
-#   filter(CCGCode %in% comparatorCCGs2$CCGCode) %>% # for comparators
-#   filter(!Strategy %in% activeAEExclude) %>% # excluding useless strategies
-#   inner_join(aeInvalid, by = c("Strategy", "CCGCode", "FYear")) %>%
-#   inner_join(activeMinMaxAe, by = c("Strategy", "FYear")) %>%
-#   select(-Attendances)
-#   
-# # Do any comparators need to be excluded?
-# cat("The following CCG strategy combinations have no activity: \n")
-#   if(nrow(checkWithComparatorsIP) > 0){checkWithComparatorsIP}
-#   if(nrow(checkWithComparatorsOP) > 0){checkWithComparatorsOP}
-#   if(nrow(checkWithComparatorsAE) > 0){checkWithComparatorsAE}
-#     
 
 # Munge data ---------------------------------------------------------------
 # setwd(paste0(baseDir, "data"))
@@ -419,19 +310,6 @@ colnames(opSmall)    <- gsub("Attendances", "Spells", colnames(opSmall))
 colnames(opSmallFUF) <- gsub("Attendances", "Spells", colnames(opSmallFUF))
 
 "Removed washer for now"
-"If reinstated, run washer needs old naming to work:"
-# activeCCG <- active_ccg
-# comparatorCCGs <- comparatorCCGs2
-# Run washer to check for outliers
-# setwd(paste0(baseDir, "R"))
-# source("runWasher.R")
-
-# Scan for problems
-# ggplotwashed function from runWasher.R
-# ggplotwashed(ipForWasher, ipWashed) 
-# ggplotwashed(opForWasher, opWashed)
-# ggplotwashed(aeForWasher, aeWashed)
-
 
 # How many rows should there be? 
 ipBase <- expand.grid(
@@ -722,14 +600,6 @@ for(i in seq(ipPlottableStrategies$Strategy)){
      , panel.border = element_blank()
      , panel.background= element_blank()
    )
-
- # +
- #   ggsave(
- #     filename = paste0("Images/IP_", ipPlottableStrategies$Strategy[i], "_Funnel.png")
- #     , height = 8.9
- #     , width = 13.3
- #     , units = "cm")
- # 
 
  # Draw cost plot ----------------------------------------------------------
   plotCostData <- ipCost %>%
