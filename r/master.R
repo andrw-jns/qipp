@@ -5,8 +5,10 @@
 
 # TODO ---------------------------------------------------------------
 
+
 # Packages ----------------------------------------------------------------
 " When code runs clean, replace with tidyverse"
+library(tidyverse)
 library(readr)
 library(readxl)
 library(dplyr)   # , warn.conflicts = FALSE)
@@ -16,6 +18,7 @@ library(scales, warn.conflicts = FALSE)
 library(testthat)
 # library(ReporteRs)
 library(extrafont) # for theme_strategy.
+
 
 # Parameters 1--------------------------------------------------------
 
@@ -91,6 +94,60 @@ source("theme_strategy.R")
 
 pound <- dollar_format(prefix = "?")
 
+
+
+plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, comparator = T){
+  
+  p <- ggplot()+
+    geom_area(data = active_df,
+              aes(
+                FYearIntToChar(FYear),
+                get(quote_y),
+                group = 1
+              ),
+              alpha = 0.1)+
+    geom_line(data = active_df,
+              aes(
+                FYearIntToChar(FYear), 
+                get(quote_y),
+                group = 1
+              ),
+              alpha = 0.4
+    )+
+    ylim(0, 1.2*max(active_y, comparator_y))+
+    theme_strategy()+
+    labs(x = "Financial Year",
+         y = paste0("DSR per ",
+                    scales::comma(funnelParameters$RatePerPeople)," population"),
+         title = "Trend in Directly Standardised Rate")+
+    scale_x_discrete(expand = c(0.025,0.025))
+  # geom_point(data = plotTrendActive,
+  #           aes(
+  #             FYearIntToChar(FYear), 
+  #             DSRate
+  #           ))+
+  if(comparator == T){
+    
+    p + geom_line(data = comparator_df %>% 
+                    filter(Type == "Average"),
+                  aes(
+                    FYearIntToChar(FYear), 
+                    get(quote_y),
+                    group = 1
+                  )
+                  ,linetype = "longdash"
+    )
+  } else {
+    p  + geom_line(data = comparator_df,
+                   aes(
+                     FYearIntToChar(FYear), 
+                     get(quote_y),
+                     group = 1
+                   )
+                   ,linetype = "longdash"
+    )
+  }
+}
 
 # Colours -----------------------------------------------------------------
 colourBlindPalette <- c(
@@ -711,13 +768,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
      , panel.background= element_blank()
      , plot.title = element_text(hjust = 0, size = 12)
    )
-  # +
-  #  ggsave(
-  #    filename = paste0("Images/IP_", ipPlottableStrategies$Strategy[i], "_Cost.png")
-  #    , height = 10.1
-  #    , width = 13.2
-  #    , dpi = 600
-  #    , units = "cm")  
+ 
   
 # Draw trend plots --------------------------------------------------------
 
@@ -726,90 +777,12 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   plotTrendComparators <- ipTrendComparators %>%
     filter(Strategy == ipPlottableStrategies$Strategy[i])
 
-# Provisional trend plot (make into function?) -----------------------------------------------------------------
-
-plot_trend(plotTrendActive, plotTrendComparators)
   
-plot_trend <- function(active_df, comparator_df){
-  
-  ggplot()+
-    geom_area(data = active_df,
-              aes(
-                FYearIntToChar(FYear),
-                DSRate,
-                group = 1
-              ),
-              alpha = 0.1)+
-    geom_line(data = active_df,
-              aes(
-                FYearIntToChar(FYear), 
-                DSRate,
-                group = 1
-              ),
-              alpha = 0.4
-    )+
-    # geom_point(data = plotTrendActive,
-    #           aes(
-    #             FYearIntToChar(FYear), 
-    #             DSRate
-    #           ))+
-    geom_line(data = comparator_df %>% 
-                filter(Type == "Average"),
-              aes(
-                FYearIntToChar(FYear), 
-                DSRate,
-                group = 1
-              )
-              ,linetype = "longdash"
-    )+
-    ylim(0, 1.2*max(active_df$DSRate, comparator_df$DSRate))+
-    theme_strategy()+
-    labs(x = "Financial Year",
-         y = paste0("DSR per ",
-                    scales::comma(funnelParameters$RatePerPeople)," population"),
-         title = "Trend in Directly Standardised Rate")+
-    scale_x_discrete(expand = c(0.025,0.025))
-  }
-  
-  
-  plot_ip_trend[[i]] <- ggplot()+
-    geom_area(data = plotTrendActive,
-              aes(
-                FYearIntToChar(FYear),
-                DSRate,
-                group = 1
-                ),
-              alpha = 0.1)+
-    geom_line(data = plotTrendActive,
-              aes(
-                FYearIntToChar(FYear), 
-                DSRate,
-                group = 1
-                ),
-              alpha = 0.4
-              )+
-    # geom_point(data = plotTrendActive,
-    #           aes(
-    #             FYearIntToChar(FYear), 
-    #             DSRate
-    #           ))+
-    geom_line(data = plotTrendComparators %>% 
-                filter(Type == "Average"),
-              aes(
-                FYearIntToChar(FYear), 
-                DSRate,
-                group = 1
-                )
-              ,linetype = "longdash"
-              )+
-    ylim(0, 1.2*max(plotTrendActive$DSRate, plotTrendComparators$DSRate))+
-    theme_strategy()+
-    labs(x = "Financial Year",
-         y = paste0("DSR per ",
-                    scales::comma(funnelParameters$RatePerPeople)," population"),
-         title = "Trend in Directly Standardised Rate")+
-    scale_x_discrete(expand = c(0.025,0.025))
-    
+plot_ip_trend[[i]] <- plot_trend(plotTrendActive,
+                                 plotTrendComparators,
+                                 "DSRate",
+                                 plotTrendActive$DSRate,
+                                 plotTrendComparators$DSRate)
 
 # Inpatient plot ends -----------------------------------------------------
 }
@@ -942,72 +915,17 @@ for(i in seq(aePlottableStrategies$Strategy)){
   plotTrendComparators <- aeTrendComparators %>%
     filter(Strategy == aePlottableStrategies$Strategy[i])
   
-  plot_ae_trend[[i]] <- ggplot() +
-  geom_ribbon(
-    data = plotTrendComparators
-    , aes(
-      x = FYearIntToChar(FYear)
-      , ymin = Low
-      , ymax = High
-      , group = TypeNumber
-      , fill = TypeNumber %>% as.character
-    )
-  ) +
-  geom_ribbon(
-    data = plotTrendActive
-    , aes(
-      x = FYearIntToChar(FYear)
-      , ymin = DSRateCILower
-      , ymax = DSRateCIUpper
-      , group = Group
-      , fill = Group
-      , alpha = 0.7
-    )
-  ) + 
-  geom_line(
-    data = plotTrendActive
-    , aes(
-       x = FYearIntToChar(FYear)
-       , y = DSRate
-       , group = Group
-    )
-    , colour = scales::brewer_pal("seq", palette = "Reds")(5)[4]
-  ) +
-  scale_fill_manual(
-    values = trendColours %>% unname
-    , labels = names(trendColours)) +
-  labs(x = "Financial Year"
-       , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
-       , title = "Trend in direct standardised rate"
-  ) +
-  theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major = element_blank()
-     #, panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0)
-   ) 
+  plot_ae_trend[[i]] <- plot_trend(plotTrendActive,
+                                   plotTrendComparators,
+                                   "DSRate",
+                                   plotTrendActive$DSRate,
+                                   plotTrendComparators$DSRate)
   
-  # +
-  #  ggsave(
-  #    filename = paste0(baseDir,"Images/AE_", aePlottableStrategies$Strategy[i], "_Trend.png")
-  #    , height = 5.5
-  #    , width = 13.3
-  #    , dpi = 600
-  #    , units = "cm")    
   
 # AE plot ends ------------------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
-   , plotRocPoints, plotRocFunnels, plotRocSummary
+   #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
    , i)
@@ -1019,7 +937,7 @@ opPlottableStrategies <- activeStrategies %>%
   filter(!(grepl("^FUF*", Strategy)))
 
 plot_op_funcost <- list()
-plot_op_funroc  <- list()
+#plot_op_funroc  <- list()
 plot_op_cost    <- list()
 plot_op_trend   <- list()
 
@@ -1136,72 +1054,16 @@ for(i in seq(opPlottableStrategies$Strategy)){
   plotTrendComparators <- opTrendComparators %>%
     filter(Strategy == opPlottableStrategies$Strategy[i])
   
-  plot_op_trend[[i]] <- ggplot() +
-  geom_ribbon(
-    data = plotTrendComparators
-    , aes(
-      x = FYearIntToChar(FYear)
-      , ymin = Low
-      , ymax = High
-      , group = TypeNumber
-      , fill = TypeNumber %>% as.character
-    )
-  ) +
-  geom_ribbon(
-    data = plotTrendActive
-    , aes(
-      x = FYearIntToChar(FYear)
-      , ymin = DSRateCILower
-      , ymax = DSRateCIUpper
-      , group = Group
-      , fill = Group
-      , alpha = 0.7
-    )
-  ) + 
-  geom_line(
-    data = plotTrendActive
-    , aes(
-       x = FYearIntToChar(FYear)
-       , y = DSRate
-       , group = Group
-    )
-    , colour = scales::brewer_pal("seq", palette = "Reds")(5)[4]
-  ) +
-  scale_fill_manual(
-    values = trendColours %>% unname
-    , labels = names(trendColours)) +
-  labs(x = "Financial Year"
-       , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
-       , title = "Trend in direct standardised rate"
-  ) +
-  theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major = element_blank()
-     #, panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0)
-   ) 
-  
-  # +
-  #  ggsave(
-  #    filename = paste0("Images/OP_", opPlottableStrategies$Strategy[i], "_Trend.png")
-  #    , height = 5.5
-  #    , width = 13.3
-  #    , dpi = 600
-  #    , units = "cm")    
+  plot_op_trend[[i]] <- plot_trend(plotTrendActive,
+                                   plotTrendComparators,
+                                   "DSRate",
+                                   plotTrendActive$DSRate,
+                                   plotTrendComparators$DSRate)
   
 # Ordinary OP plot ends ---------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
-   , plotRocPoints, plotRocFunnels, plotRocSummary
+   #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
    , i)
@@ -1212,7 +1074,7 @@ opPlottableFUFStrategies <- activeStrategies %>%
   filter((grepl("^FUF*", Strategy)))
 
 plot_fuf_funcost <- list()
-plot_fuf_funroc  <- list()
+# plot_fuf_funroc  <- list()
 plot_fuf_cost    <- list()
 plot_fuf_trend   <- list()
 
@@ -1326,55 +1188,25 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
   #    , units = "cm")  
   
 # Draw trend plots --------------------------------------------------------
+"May have to look into this. IsActiveCCG == False may be all other CCGs?"
   plotTrendActive <- opTrendFUF %>%
     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-#   plotTrendComparators <- opTrendComparators %>%
-#     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
+   # plotTrendComparators <- opTrendComparators %>%
+   #   filter(Strategy == opPlottableFUFStrategies$Strategy[i])
   
-  plot_fuf_trend[[i]] <- ggplot() +
-  geom_line(
-    data = plotTrendActive
-    , aes(
-       x = FYearIntToChar(FYear)
-       , y = FUFRatio
-       , group = IsActiveCCG
-       , colour = IsActiveCCG
-    )
-  ) +
-  scale_colour_manual(
-    values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-  labs(x = "Financial Year"
-       , y = "Follow up to first appointment ratio"
-       , title = "Trend in follow up to first appointment ratio"
-  ) +
-  theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     #, panel.grid.major = element_blank()
-     , panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0)
-   ) 
-  # +
-  #  ggsave(
-  #    filename = paste0(baseDir, "Images/OP_", opPlottableFUFStrategies$Strategy[i], "_Trend.png")
-  #    , height = 5.5
-  #    , width = 13.3
-  #    , dpi = 600
-  #    , units = "cm")    
-
+  plot_fuf_trend[[i]] <-   plot_trend(plotTrendActive %>% filter(IsActiveCCG == T),
+                                      plotTrendActive %>% filter(IsActiveCCG == F),
+                                      "FUFRatio",
+                                      plotTrendActive$FUFRatio,
+                                      plotTrendActive$FUFRatio, # or 0,
+                                      F # for comparator
+                                      )
+  
   
 # FUF OP plot ends --------------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
-   , plotFUFRocPoints, plotFUFRocFunnels, plotFUFRocSummary
+   #, plotFUFRocPoints, plotFUFRocFunnels, plotFUFRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive
    , i)

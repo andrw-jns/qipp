@@ -115,17 +115,18 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
     addTitle(opPlottableFUFStrategies$StrategyDescription[i]) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_fuf_funcost[[i]])) %>% 
     addPlot(function() plot(plot_fuf_cost[[i]])) %>%
-    addPlot(function() plot(plot_fuf_trend[[i]])) %>%
-    addPlot(function() plot(plot_fuf_funroc[[i]])) %>% 
-    addParagraph(stringr::str_c("?", format(round(summaryOutputOPFUF$Costs[i], -3), big.mark = ","),
-                                " spent", "  ",
-                                format(round(summaryOutputOPFUF$FollowUp[i], -1), big.mark = ","),
-                                " follow-up attendances", "  "
-                                # ,
-                                # round(summaryOutputIP$propSpells[i]*100, 1),
-                                # "% of all IP spells"
-    )
-    )
+    addPlot(function() plot(plot_fuf_trend[[i]])) 
+  #%>%
+    # addPlot(function() plot(plot_fuf_funroc[[i]])) %>% 
+    # addParagraph(stringr::str_c("?", format(round(summaryOutputOPFUF$Costs[i], -3), big.mark = ","),
+    #                             " spent", "  ",
+    #                             format(round(summaryOutputOPFUF$FollowUp[i], -1), big.mark = ","),
+    #                             " follow-up attendances", "  "
+    #                             # ,
+    #                             # round(summaryOutputIP$propSpells[i]*100, 1),
+    #                             # "% of all IP spells"
+    #)
+    #)
 }
 
 
