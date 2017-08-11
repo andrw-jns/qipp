@@ -94,7 +94,7 @@ source("costPlotFunctions.R")
 source("summaryFunctions.R") 
 source("theme_strategy.R")
 
-pound <- dollar_format(prefix = "?")
+pound <- dollar_format(prefix = "£")
 
 
 plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, comparator = T){
@@ -874,13 +874,17 @@ for(i in seq(aePlottableStrategies$Strategy)){
   
   plotCostData <- plotCostData %>%
     mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
-    mutate(DSCostsPerHead = as.numeric(format(round(DSCostsPerHead, 1), nsmall = 2)))
+    mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
 
   
   plot_ae_cost[[i]] <- ggplot(plotCostData) +
     geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
+    # geom_text(
+    #   aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
+    #   , size = 3) +
     geom_text(
-      aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
+      aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = stringr::str_c("£", plotCostData$for_label),
+                                                                           hjust = 0)
       , size = 3) +
     coord_flip() +
     # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
