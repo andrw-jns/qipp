@@ -4,11 +4,14 @@
 ###########################################################################
 
 # TODO ---------------------------------------------------------------
+" CHECK THAT WE AGREED TO DISPLAY COST AS 
+  cost per unit activity"
+# tidyverse may prevent current method for generating pound sign
 
 
 # Packages ----------------------------------------------------------------
 " When code runs clean, replace with tidyverse"
-library(tidyverse)
+#library(tidyverse)
 library(readr)
 library(readxl)
 library(dplyr)   # , warn.conflicts = FALSE)
@@ -93,7 +96,6 @@ source("summaryFunctions.R")
 source("theme_strategy.R")
 
 pound <- dollar_format(prefix = "?")
-
 
 
 plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, comparator = T){
@@ -872,7 +874,9 @@ for(i in seq(aePlottableStrategies$Strategy)){
     select(ShortName) %>% unlist %>% unname
   
   plotCostData <- plotCostData %>%
-    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels))
+    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
+    mutate(DSCostsPerHead = as.numeric(format(round(DSCostsPerHead, 1), nsmall = 2)))
+
   
   plot_ae_cost[[i]] <- ggplot(plotCostData) +
     geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
@@ -880,10 +884,11 @@ for(i in seq(aePlottableStrategies$Strategy)){
       aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
       , size = 3) +
     coord_flip() +
-    scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
+    # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
+    # scale_fill_manual(values = c("grey50", "grey40")) +
     scale_y_continuous(labels = pound) +
     expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
-    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of population") + 
+    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of Population") + 
     theme(
      axis.line = element_line(colour="grey80")
      , axis.line.y = element_blank()
@@ -899,7 +904,9 @@ for(i in seq(aePlottableStrategies$Strategy)){
      #, panel.border = element_blank()
      , panel.background= element_blank()
      , plot.title = element_text(hjust = 0, size = 12)
-   ) 
+   ) +
+    theme_strategy()+
+    theme(legend.position = "none")
   
   # +
   #  ggsave(
