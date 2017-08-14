@@ -94,14 +94,17 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 get(quote_y),
                 group = 1
               ),
-              alpha = 0.1)+
+              alpha = 0.1
+              , fill = "steelblue2"
+              )+
     geom_line(data = active_df,
               aes(
                 FYearIntToChar(FYear), 
                 get(quote_y),
                 group = 1
               ),
-              alpha = 0.4
+              alpha = 0.8
+              , colour = "steelblue2"
     )+
     ylim(0, 1.2*max(active_y, comparator_y))+
     theme_strategy()+
@@ -125,6 +128,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                     group = 1
                   )
                   ,linetype = "longdash"
+                  , alpha = 0.4
     )
   } else {
     p  + geom_line(data = comparator_df,
@@ -770,7 +774,6 @@ for(i in seq(aePlottableStrategies$Strategy)){
       , size = 3) +
     coord_flip() +
     # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
-    # scale_fill_manual(values = c("grey50", "grey40")) +
     scale_y_continuous(labels = pound) +
     expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
     labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of Population") + 
