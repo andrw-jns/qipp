@@ -152,6 +152,9 @@ colourBlindPalette <- c(
 names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow", "blue", "red", "pink")
 
 
+# ***** --------------------------------------------------------------
+
+
 # Load data ---------------------------------------------------------------
 setwd(paste0(baseDir, "data"))
 
@@ -167,7 +170,7 @@ numberOfStrategies <- activeStrategies %>%
   count(TableType)
 
 "WORK IN PROGRESS :"
-# load_sus <- tibble(
+# sus_names <- tibble(
 #   ip = "IP[0-9]{4}.csv",
 #   op = "OP[0-9]{4}.csv",
 #   ae = "AE[0-9]{4}.csv"
@@ -265,7 +268,7 @@ ccgPopulation <- read_csv("CCGPopulation.csv")
 # source("checks.R") # big and slow
 
 
-# [CHECKPOINT] -----------------------------------------------------------------
+# *****chckpnt**** -----------------------------------------------------------------
 # Rerun from here if running multiple packs
 setwd(paste0(baseDir, "data"))
 
@@ -401,6 +404,12 @@ opFUF <- opFUFBase %>%
 stopifnot(nrow(opFUF) == nrow(opFUFBase)) # # strategies * # ccgs * # financial years
 rm(opFUFhold, opFUFSpells, opFUFCosts)
 
+
+
+# ***** --------------------------------------------------------------
+
+
+
 # Funnel ------------------------------------------------------------------
 ipFunnelPoints <- ip %>% filter(FYear == f_year)
 opFunnelPoints <- op %>% filter(FYear == f_year)
@@ -529,6 +538,9 @@ opCostFUF <- opSmallFUF %>%
 
 opCost <- opCost %>% bind_rows(opCostFUF)
 
+# ***** --------------------------------------------------------------
+
+
 # Inpatient plots ---------------------------------------------------------
 setwd(baseDir)
 ipPlottableStrategies <- activeStrategies %>%
@@ -655,7 +667,7 @@ plot_ip_trend[[i]] <- plot_trend(plotTrendActive,
                                  plotTrendActive$DSRate,
                                  plotTrendComparators$DSRate)
 
-# Inpatient plot ends -----------------------------------------------------
+# ***** -----------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
    #, plotRocPoints, plotRocFunnels, plotRocSummary
@@ -753,7 +765,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
     #   aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
     #   , size = 3) +
     geom_text(
-      aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = stringr::str_c("£", plotCostData$for_label),
+      aes(x = ShortName, y = 1.01 * DSCostsPerHead, family = "Segoe UI Light", label = stringr::str_c("£", plotCostData$for_label),
                                                                            hjust = 0)
       , size = 3) +
     coord_flip() +
@@ -779,7 +791,9 @@ for(i in seq(aePlottableStrategies$Strategy)){
      , plot.title = element_text(hjust = 0, size = 12)
    ) +
     theme_strategy()+
-    theme(legend.position = "none")
+    theme(legend.position = "none")+
+    # theme(panel.grid.major = element_blank())+
+    scale_fill_grey(start = 0.6)
   
   # +
   #  ggsave(
@@ -802,7 +816,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
                                    plotTrendComparators$DSRate)
   
   
-# AE plot ends ------------------------------------------------------------
+# ***** ------------------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
    #, plotRocPoints, plotRocFunnels, plotRocSummary
@@ -940,7 +954,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
                                    plotTrendActive$DSRate,
                                    plotTrendComparators$DSRate)
   
-# Ordinary OP plot ends ---------------------------------------------------
+# ***** ---------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
    #, plotRocPoints, plotRocFunnels, plotRocSummary
@@ -1083,7 +1097,7 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
                                       )
   
   
-# FUF OP plot ends --------------------------------------------------------
+# ***** --------------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
    #, plotFUFRocPoints, plotFUFRocFunnels, plotFUFRocSummary
