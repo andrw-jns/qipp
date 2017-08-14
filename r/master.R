@@ -9,6 +9,9 @@
 # Cost plot can look odd if rounded for low cost activities.
 
 
+# ***** --------------------------------------------------------------
+
+
 # Packages ----------------------------------------------------------------
 " When code runs clean, replace with tidyverse"
 library(tidyverse)
@@ -158,7 +161,7 @@ plot_cost <- function(df){
       , size = 3) +
     coord_flip() +
     # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
-    scale_y_continuous(labels = pound, limits = c(0,20)) +
+    scale_y_continuous(labels = pound, limits = c(0,150)) +
     expand_limits(y = c(min(pretty(df$DSCostsPerHead)), max(pretty(df$DSCostsPerHead))*1.05)) +
     labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of Population") +
     theme_strategy()+
@@ -438,12 +441,36 @@ rm(opFUFhold, opFUFSpells, opFUFCosts)
 # ***** --------------------------------------------------------------
 
 
-
 # Funnel ------------------------------------------------------------------
 ipFunnelPoints <- ip %>% filter(FYear == f_year)
 opFunnelPoints <- op %>% filter(FYear == f_year)
 aeFunnelPoints <- ae %>% filter(FYear == f_year)
 opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year)
+
+ip_funnel <- funl_Data(ip %>% filter(FYear == f_year, Strategy == "ACS_Acute_v3") 
+                       , col.unit = "CCGCode"
+                       , col.group = "Strategy"
+                       , col.O = "Spells"
+                       , col.n = "DerivedPopulation"
+                       , col.rt = "DSRate"
+                       , target = NULL
+                       , smoothness = 100
+                       , fnlMinEvents = NULL
+                       , fnlMaxEvents = NULL
+                       ) 
+
+plotFunnels <- ip_funnel[[1]]
+plotFunnels <- plotFunnels %>%
+  left_join(ip)
+plotUnits <- ip_funnel[[2]]
+plotUnits <- plotUnits %>% 
+  left_join(ip %>% filter(FYear == f_year, Strategy == "ACS_Acute_v3"), "CCGCode")
+
+ggplot(plotFunnels) +
+  geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
+  geom_line(aes(x = n, y = fnlHigh, group = fnlLimit), linetype = "44") +
+  geom_hline(aes(yintercept = target)) +
+  geom_point(data = plotUnits, aes(x = DerivedPopulation, y = DSRate, color = IsActiveCCG))
 
 ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
 ipFunnelFunnels <- funnel_funnels(ipFunnelSummary, funnelParameters$Smoothness, personYears)
@@ -583,7 +610,6 @@ names(trendColours) <- c("Minimum to 1st decile", "1st decile to 1st quartile", 
 # RColorBrewer::display.brewer.all(colorblindFriendly = T)
 
 plot_ip_funcost <- list()
-#plot_ip_funroc  <- list()
 plot_ip_cost    <- list()
 plot_ip_trend   <- list()
 
@@ -810,13 +836,11 @@ rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
    , i)
 
 # Outpatient plots --------------------------------------------------------
-# Ordinary plots-----------------------------------------------------------
 opPlottableStrategies <- activeStrategies %>%
   filter(TableType == "OP") %>%
   filter(!(grepl("^FUF*", Strategy)))
 
 plot_op_funcost <- list()
-#plot_op_funroc  <- list()
 plot_op_cost    <- list()
 plot_op_trend   <- list()
 
@@ -890,7 +914,9 @@ for(i in seq(opPlottableStrategies$Strategy)){
     select(ShortName) %>% unlist %>% unname
   
   plotCostData <- plotCostData %>%
-    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels))
+    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
+    mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
+  
   
   plot_op_cost[[i]] <- ggplot(plotCostData) +
     geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
@@ -953,7 +979,6 @@ opPlottableFUFStrategies <- activeStrategies %>%
   filter((grepl("^FUF*", Strategy)))
 
 plot_fuf_funcost <- list()
-# plot_fuf_funroc  <- list()
 plot_fuf_cost    <- list()
 plot_fuf_trend   <- list()
 
@@ -1029,7 +1054,11 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
     select(ShortName) %>% unlist %>% unname
   
   plotCostData <- plotCostData %>%
-    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels))
+    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
+    mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
+  
+  
+  plot_cost(plotCostData)
   
   plot_fuf_cost[[i]] <- ggplot(plotCostData) +
     geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
