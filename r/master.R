@@ -77,11 +77,13 @@ trendCV <- qnorm((1 - trendParameters$Significance)/2, lower.tail = FALSE)
 setwd(paste0(baseDir, "r"))
 source("roundingAndChartLimitFunctions.R")
 source("funnelPlotFunctions.R")
-#source("rateOfChangePlotFunctions.R") # needs some other things before loading.
 source("trendPlotFunctions.R")
 source("costPlotFunctions.R")
 source("summaryFunctions.R") 
 source("theme_strategy.R")
+
+setwd("C:/2017_projects/funnel/funnel/")
+source("funlData.R")
 
 pound <- dollar_format(prefix = "£")
 
@@ -140,6 +142,29 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                    ,linetype = "longdash"
     )
   }
+}
+
+plot_cost <- function(df){
+  ggplot(df) +
+    geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
+    geom_text(
+      aes(
+        x = ShortName
+        , y = 1.01 * DSCostsPerHead # for label
+        , family = "Segoe UI Light"
+        , label = stringr::str_c("£", df$for_label)
+        , hjust = 0
+      )
+      , size = 3) +
+    coord_flip() +
+    # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
+    scale_y_continuous(labels = pound, limits = c(0,20)) +
+    expand_limits(y = c(min(pretty(df$DSCostsPerHead)), max(pretty(df$DSCostsPerHead))*1.05)) +
+    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of Population") +
+    theme_strategy()+
+    theme(legend.position = "none")+
+    # theme(panel.grid.major = element_blank())+
+    scale_fill_grey(start = 0.6)
 }
 
 # Colours -----------------------------------------------------------------
@@ -684,9 +709,7 @@ rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
 aePlottableStrategies <- activeStrategies %>%
   filter(TableType == "AE") 
 
-
 plot_ae_funcost <- list()
-#plot_ae_funroc  <- list()
 plot_ae_cost    <- list()
 plot_ae_trend   <- list()
 
@@ -751,60 +774,19 @@ for(i in seq(aePlottableStrategies$Strategy)){
  
 # Draw cost plot ----------------------------------------------------------
   plotCostData <- aeCost %>%
-    filter(Strategy == aePlottableStrategies$Strategy[i])
-  
+    filter(Strategy == aePlottableStrategies$Strategy[i])   
+ 
   plotCostFactorLevels <- plotCostData %>% 
     ungroup() %>%
     arrange(desc(DSCostsPerHead)) %>% 
     select(ShortName) %>% unlist %>% unname
-  
+
   plotCostData <- plotCostData %>%
     mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
     mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
+  
+  plot_ae_cost[[i]] <-  plot_cost(plotCostData) 
 
-  
-  plot_ae_cost[[i]] <- ggplot(plotCostData) +
-    geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
-    # geom_text(
-    #   aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
-    #   , size = 3) +
-    geom_text(
-      aes(x = ShortName, y = 1.01 * DSCostsPerHead, family = "Segoe UI Light", label = stringr::str_c("£", plotCostData$for_label),
-                                                                           hjust = 0)
-      , size = 3) +
-    coord_flip() +
-    # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
-    scale_y_continuous(labels = pound) +
-    expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
-    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of Population") + 
-    theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.y = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.ticks.y = element_blank()
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major = element_blank()
-     #, panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0, size = 12)
-   ) +
-    theme_strategy()+
-    theme(legend.position = "none")+
-    # theme(panel.grid.major = element_blank())+
-    scale_fill_grey(start = 0.6)
-  
-  # +
-  #  ggsave(
-  #    filename = paste0(baseDir,"Images/AE_", aePlottableStrategies$Strategy[i], "_Cost.png")
-  #    , height = 10.1
-  #    , width = 13.2
-  #    , dpi = 600
-  #    , units = "cm")  
   
 # Draw trend plots --------------------------------------------------------
   plotTrendActive <- aeTrendActive %>%
