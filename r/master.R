@@ -148,7 +148,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
   }
 }
 
-plot_cost <- function(df){
+plot_cost  <- function(df){
   ggplot(df) +
     geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
     geom_text(
@@ -171,6 +171,27 @@ plot_cost <- function(df){
     scale_fill_grey(start = 0.6)
 }
 
+plot_fun   <- function(df_funnels, df_units){
+  
+  ggplot(df_funnels) +
+    geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
+    geom_line(aes(x = n, y = fnlHigh, group = fnlLimit), linetype = "44") +
+    geom_hline(aes(yintercept = target)) +
+    geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, color = IsActiveCCG))+
+    scale_x_continuous(labels = scales::comma
+                       #, limits = c(0, 1000000) # forced x to 1M
+                       )+
+    scale_y_continuous(labels = scales::comma)+
+    theme_strategy()+
+    theme(legend.position = "none")+
+    labs(
+      x = paste0("Standardised population ", FYearIntToChar(f_year))
+      , y = paste0("Directly standardised rate\nper ", scales::comma(funnelParameters$RatePerPeople)," population")
+      , title = paste0("Directly standardised rate ", FYearIntToChar(f_year))
+    )+
+    scale_color_grey(end = 0.6)
+  }
+  
 convert_dsr_100k <- function(df) {
   if("target" %in% colnames(df)){
     mutate(df, target  = target*100000
@@ -456,7 +477,7 @@ rm(opFUFhold, opFUFSpells, opFUFCosts)
 ipFunnelPoints    <- ip    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) 
 opFunnelPoints    <- op    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
 aeFunnelPoints    <- ae    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
-opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
+opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
 
 # ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
 # aeFunnelSummary <- aeFunnelPoints %>% funnel_summary
@@ -625,25 +646,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     left_join(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k()
   
-  plot_ip_fun[[i]] <- ggplot(plotFunnels) +
-    geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
-    geom_line(aes(x = n, y = fnlHigh, group = fnlLimit), linetype = "44") +
-    geom_hline(aes(yintercept = target)) +
-    geom_point(data = plotUnits, aes(x = DerivedPopulation, y = DSRate, color = IsActiveCCG))+
-    scale_x_continuous(labels = scales::comma
-                       #, limits = c(0, 1000000) # forced x to 1M
-                       )+
-    scale_y_continuous(labels = scales::comma)+
-    theme_strategy()+
-    theme(legend.position = "none")+
-    labs(
-      x = paste0("Standardised population ", FYearIntToChar(f_year))
-      , y = paste0("Directly standardised rate\nper ", scales::comma(funnelParameters$RatePerPeople)," population")
-      , title = paste0("Directly standardised rate ", FYearIntToChar(f_year))
-    )+
-    scale_color_grey(end = 0.6)
+  plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
   
- 
  # plotFunnelPoints <- ipFunnelPoints %>%
  #   filter(Strategy == ipPlottableStrategies$Strategy[i])
  # plotFunnelFunnels <- ipFunnelFunnels %>%
@@ -764,13 +768,38 @@ rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
 aePlottableStrategies <- activeStrategies %>%
   filter(TableType == "AE") 
 
-plot_ae_fun <- list()
-plot_ae_cost    <- list()
-plot_ae_trend   <- list()
+plot_ae_fun   <- list()
+plot_ae_cost  <- list()
+plot_ae_trend <- list()
 
 for(i in seq(aePlottableStrategies$Strategy)){
 # Draw funnel plot --------------------------------------------------------
- # plotFunnelPoints <- aeFunnelPoints %>%
+ 
+  
+  funnel <- funl_Data(aeFunnelPoints %>% filter(Strategy == aePlottableStrategies$Strategy[i]) 
+                      , col.unit = "CCGCode"
+                      , col.group = "Strategy"
+                      , col.O = "Spells" # Should be costs (?) but doesn't work in poisson
+                      , col.n = "DerivedPopulation"
+                      , col.rt = "DSRate"
+                      , target = NULL
+                      , smoothness = 100
+                      , fnlMinEvents = NULL
+                      , fnlMaxEvents = NULL
+  ) 
+  
+  # What happens when you have a rate which does not come directly from (spells/population)?
+  # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
+  
+  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
+  plotUnits   <- funnel[[2]] %>% 
+    left_join(aeFunnelPoints %>% filter(Strategy == aePlottableStrategies$Strategy[i]), by = "CCGCode") %>%
+    convert_dsr_100k()
+  
+  plot_ae_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
+  
+  
+  # plotFunnelPoints <- aeFunnelPoints %>%
  #   filter(Strategy == aePlottableStrategies$Strategy[i])
  # plotFunnelFunnels <- aeFunnelFunnels %>%
  #   filter(Strategy == aePlottableStrategies$Strategy[i])
@@ -859,6 +888,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
 # ***** ------------------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
+   , funnel, plotFunnels, plotUnits
    #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
@@ -875,56 +905,81 @@ plot_op_trend   <- list()
 
 for(i in seq(opPlottableStrategies$Strategy)){
 # Draw funnel plot --------------------------------------------------------
- plotFunnelPoints <- opFunnelPoints %>%
-   filter(Strategy == opPlottableStrategies$Strategy[i])
- plotFunnelFunnels <- opFunnelFunnels %>%
-   filter(Strategy == opPlottableStrategies$Strategy[i])
- plotFunnelSummary <- opFunnelSummary %>%
-   filter(Strategy == opPlottableStrategies$Strategy[i])
- 
- plot_op_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
-   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-   geom_hline(aes(yintercept = Average)) +
-   geom_point(
-     data = plotFunnelPoints
-     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
-     , size = 4
-     , shape = 20
-   ) +
-   scale_colour_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-   scale_x_continuous(
-     labels = scales::comma
-      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
-                   , plotFunnelSummary$NewMaxDerivedPopulation) 
-    ) +
-   scale_y_continuous(
-     labels = scales::comma
-     , limits = c(plotFunnelSummary$NewMinDSRate
-                   , plotFunnelSummary$NewMaxDSRate) 
-    ) +
-   labs(
-     x = paste0("Standardised population ", FYearIntToChar(f_year))
-     , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
-     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
-   ) +
-   theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 10)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major.x = element_blank()
-     , panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     , panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0)
-   ) 
+
+    funnel <- funl_Data(opFunnelPoints %>% filter(Strategy == opPlottableStrategies$Strategy[i]) 
+                      , col.unit = "CCGCode"
+                      , col.group = "Strategy"
+                      , col.O = "Spells" # Should be costs (?) but doesn't work in poisson
+                      , col.n = "DerivedPopulation"
+                      , col.rt = "DSRate"
+                      , target = NULL
+                      , smoothness = 100
+                      , fnlMinEvents = NULL
+                      , fnlMaxEvents = NULL
+  ) 
+  
+  # What happens when you have a rate which does not come directly from (spells/population)?
+  # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
+  
+  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
+  plotUnits   <- funnel[[2]] %>% 
+    left_join(opFunnelPoints %>% filter(Strategy == opPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
+    convert_dsr_100k()
+  
+  plot_op_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
+  
+  
+  
+ #   plotFunnelPoints <- opFunnelPoints %>%
+ #   filter(Strategy == opPlottableStrategies$Strategy[i])
+ # plotFunnelFunnels <- opFunnelFunnels %>%
+ #   filter(Strategy == opPlottableStrategies$Strategy[i])
+ # plotFunnelSummary <- opFunnelSummary %>%
+ #   filter(Strategy == opPlottableStrategies$Strategy[i])
+ # 
+ # plot_op_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
+ #   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
+ #   geom_hline(aes(yintercept = Average)) +
+ #   geom_point(
+ #     data = plotFunnelPoints
+ #     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
+ #     , size = 4
+ #     , shape = 20
+ #   ) +
+ #   scale_colour_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
+ #   scale_x_continuous(
+ #     labels = scales::comma
+ #      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
+ #                   , plotFunnelSummary$NewMaxDerivedPopulation) 
+ #    ) +
+ #   scale_y_continuous(
+ #     labels = scales::comma
+ #     , limits = c(plotFunnelSummary$NewMinDSRate
+ #                   , plotFunnelSummary$NewMaxDSRate) 
+ #    ) +
+ #   labs(
+ #     x = paste0("Standardised population ", FYearIntToChar(f_year))
+ #     , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
+ #     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
+ #   ) +
+ #   theme(
+ #     axis.line = element_line(colour="grey80")
+ #     , axis.line.x = element_blank()
+ #     , axis.text = element_text(colour = "black")
+ #     , axis.ticks = element_line(colour = "black")
+ #     , axis.title.y = element_text(size = 10)
+ #     , legend.position = "none"
+ #     , plot.background = element_blank()
+ #     , panel.grid.major.x = element_blank()
+ #     , panel.grid.major.y = element_line(colour = "grey95")
+ #     , panel.grid.minor = element_blank()
+ #     , panel.border = element_blank()
+ #     , panel.background= element_blank()
+ #     , plot.title = element_text(hjust = 0)
+ #   ) 
  # +
  #   ggsave(
  #     filename = paste0("Images/OP_", opPlottableStrategies$Strategy[i], "_Funnel.png")
@@ -997,6 +1052,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
 # ***** ---------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
+   , funnel, plotFunnels, plotUnits
    #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
@@ -1014,7 +1070,34 @@ plot_fuf_trend   <- list()
 for(i in seq(opPlottableFUFStrategies$Strategy)){
 
 # Draw funnel plot --------------------------------------------------------
- plotFunnelPoints <- opFUFFunnelPoints %>%
+
+  
+  funnel <- funl_Data(opFUFFunnelPoints %>% filter(Strategy == opPlottableFUFStrategies$Strategy[i]) 
+                      , col.unit = "CCGCode"
+                      , col.group = "Strategy"
+                      , col.O = "Spells" # Should be costs (?) but doesn't work in poisson
+                      , col.n = "DerivedPopulation"
+                      , col.rt = "DSRate"
+                      , target = NULL
+                      , smoothness = 100
+                      , fnlMinEvents = NULL
+                      , fnlMaxEvents = NULL
+  ) 
+  
+  # What happens when you have a rate which does not come directly from (spells/population)?
+  # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
+  
+  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
+  plotUnits   <- funnel[[2]] %>% 
+    left_join(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
+    convert_dsr_100k()
+  
+  plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
+  
+  
+  
+  
+  plotFunnelPoints <- opFUFFunnelPoints %>%
    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
  plotFunnelFunnels <- opFunnelFunnelsFUF %>%
    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
