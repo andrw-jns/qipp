@@ -710,34 +710,11 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     select(ShortName) %>% unlist %>% unname
   
   plotCostData <- plotCostData %>%
-    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels))
+    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
+    mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
   
-  plot_ip_cost[[i]] <- ggplot(plotCostData) +
-    geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
-    geom_text(
-      aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
-      , size = 3) +
-    coord_flip() +
-    scale_fill_manual(values = colourBlindPalette[c("blue", "red")] %>% unname) +
-    scale_y_continuous(labels = pound) +
-    expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
-    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of population ", FYearIntToChar(f_year)) + 
-    theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.y = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.ticks.y = element_blank()
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major = element_blank()
-     #, panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0, size = 12)
-   )
+  
+  plot_ip_cost[[i]] <- plot_cost(plotCostData)
  
   
 # Draw trend plots --------------------------------------------------------
@@ -1002,40 +979,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
     mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
   
   
-  plot_op_cost[[i]] <- ggplot(plotCostData) +
-    geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
-    geom_text(
-      aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
-      , size = 3) +
-    coord_flip() +
-    scale_fill_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-    scale_y_continuous(labels = pound) +
-    expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
-    labs(x = NULL, y = NULL, title = "Direct Standardised Costs per head of population") + 
-    theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.y = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.ticks.y = element_blank()
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major = element_blank()
-     #, panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0, size = 12)
-   ) 
-  
-  # +
-  #  ggsave(
-  #    filename = paste0("Images/OP_", opPlottableStrategies$Strategy[i], "_Cost.png")
-  #    , height = 10.1
-  #    , width = 13.2
-  #    , dpi = 600
-  #    , units = "cm")  
+  plot_op_cost[[i]] <- plot_cost(plotCostData)
   
 # Draw trend plots --------------------------------------------------------
   plotTrendActive <- opTrendActive %>%
@@ -1170,35 +1114,35 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
     mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
   
   
-  plot_cost(plotCostData)
+  plot_fuf_cost[[i]] <- plot_cost(plotCostData)
   
-  plot_fuf_cost[[i]] <- ggplot(plotCostData) +
-    geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
-    geom_text(
-      aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
-      , size = 3) +
-    coord_flip() +
-    scale_fill_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-    scale_y_continuous(labels = pound) +
-    expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
-    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of population") + 
-    theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.y = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.ticks.y = element_blank()
-     , axis.title.y = element_text(size = 8)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major = element_blank()
-     #, panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     #, panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0, size = 12)
-   ) 
-  
+  # plot_fuf_cost[[i]] <- ggplot(plotCostData) +
+  #   geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
+  #   geom_text(
+  #     aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
+  #     , size = 3) +
+  #   coord_flip() +
+  #   scale_fill_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
+  #   scale_y_continuous(labels = pound) +
+  #   expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
+  #   labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of population") + 
+  #   theme(
+  #    axis.line = element_line(colour="grey80")
+  #    , axis.line.y = element_blank()
+  #    , axis.text = element_text(colour = "black")
+  #    , axis.ticks = element_line(colour = "black")
+  #    , axis.ticks.y = element_blank()
+  #    , axis.title.y = element_text(size = 8)
+  #    , legend.position = "none"
+  #    , plot.background = element_blank()
+  #    , panel.grid.major = element_blank()
+  #    #, panel.grid.major.y = element_line(colour = "grey95")
+  #    , panel.grid.minor = element_blank()
+  #    #, panel.border = element_blank()
+  #    , panel.background= element_blank()
+  #    , plot.title = element_text(hjust = 0, size = 12)
+  #  ) 
+  # 
   # +
   #  ggsave(
   #    filename = paste0(baseDir, "Images/OP_", opPlottableFUFStrategies$Strategy[i], "_Cost.png")
@@ -1208,7 +1152,7 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
   #    , units = "cm")  
   
 # Draw trend plots --------------------------------------------------------
-"May have to look into this. IsActiveCCG == False may be all other CCGs?"
+"May have to look into this. "IsActiveCCG == False"" may be all other CCGs?"
   plotTrendActive <- opTrendFUF %>%
     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
    # plotTrendComparators <- opTrendComparators %>%

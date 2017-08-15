@@ -65,7 +65,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(ipPlottableStrategies$StrategyDescription[i]) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_ip_funcost[[i]])) %>% 
+    addPlot(function() plot(plot_ip_fun[[i]])) %>% 
     addPlot(function() plot(plot_ip_cost[[i]])) %>%
     addPlot(function() plot(plot_ip_trend[[i]])) 
     # %>%
@@ -113,7 +113,7 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(opPlottableFUFStrategies$StrategyDescription[i]) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_fuf_funcost[[i]])) %>% 
+    addPlot(function() plot(plot_fuf_fun[[i]])) %>% 
     addPlot(function() plot(plot_fuf_cost[[i]])) %>%
     addPlot(function() plot(plot_fuf_trend[[i]])) 
   #%>%
