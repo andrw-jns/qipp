@@ -90,6 +90,7 @@ source("funlData.R")
 
 pound <- dollar_format(prefix = "£")
 
+
 plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, comparator = T){
   
   p <- ggplot()+
@@ -100,7 +101,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.1
-              , fill = "steelblue2"
+              , fill = "dodgerblue"
               )+
     geom_line(data = active_df,
               aes(
@@ -109,7 +110,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.8
-              , colour = "steelblue2"
+              , colour = "dodgerblue"
     )+
     ylim(0, 1.2*max(active_y, comparator_y))+
     theme_strategy()+
@@ -169,6 +170,16 @@ plot_cost <- function(df){
     # theme(panel.grid.major = element_blank())+
     scale_fill_grey(start = 0.6)
 }
+
+convert_dsr_100k <- function(df) {
+  if("target" %in% colnames(df)){
+    mutate(df, target  = target*100000
+           , fnlLow  = fnlLow*100000
+           , fnlHigh = fnlHigh*100000)
+  } else {
+    mutate(df, DSRate = DSRate*100000)
+  }
+} # For funnel plots
 
 # Colours -----------------------------------------------------------------
 colourBlindPalette <- c(
@@ -442,98 +453,75 @@ rm(opFUFhold, opFUFSpells, opFUFCosts)
 
 
 # Funnel ------------------------------------------------------------------
-ipFunnelPoints <- ip %>% filter(FYear == f_year)
-opFunnelPoints <- op %>% filter(FYear == f_year)
-aeFunnelPoints <- ae %>% filter(FYear == f_year)
-opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year)
+ipFunnelPoints    <- ip    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) 
+opFunnelPoints    <- op    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
+aeFunnelPoints    <- ae    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
+opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
 
-ip_funnel <- funl_Data(ip %>% filter(FYear == f_year, Strategy == "ACS_Acute_v3") 
-                       , col.unit = "CCGCode"
-                       , col.group = "Strategy"
-                       , col.O = "Spells"
-                       , col.n = "DerivedPopulation"
-                       , col.rt = "DSRate"
-                       , target = NULL
-                       , smoothness = 100
-                       , fnlMinEvents = NULL
-                       , fnlMaxEvents = NULL
-                       ) 
-
-plotFunnels <- ip_funnel[[1]]
-plotFunnels <- plotFunnels %>%
-  left_join(ip)
-plotUnits <- ip_funnel[[2]]
-plotUnits <- plotUnits %>% 
-  left_join(ip %>% filter(FYear == f_year, Strategy == "ACS_Acute_v3"), "CCGCode")
-
-ggplot(plotFunnels) +
-  geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
-  geom_line(aes(x = n, y = fnlHigh, group = fnlLimit), linetype = "44") +
-  geom_hline(aes(yintercept = target)) +
-  geom_point(data = plotUnits, aes(x = DerivedPopulation, y = DSRate, color = IsActiveCCG))
-
-ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
-ipFunnelFunnels <- funnel_funnels(ipFunnelSummary, funnelParameters$Smoothness, personYears)
-aeFunnelSummary <- aeFunnelPoints %>% funnel_summary
-aeFunnelFunnels <- funnel_funnels(aeFunnelSummary, funnelParameters$Smoothness, personYears)
-opFunnelSummary <- opFunnelPoints %>% funnel_summary
-opFunnelFunnels <- funnel_funnels(opFunnelSummary, funnelParameters$Smoothness, personYears)
-
-opFunnelSummaryFUF <- opFUF %>%
-  ungroup() %>%
-  group_by(Strategy) %>%
-  summarise(
-    AverageFUF = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
-    , ActualMinFirst = min(First, na.rm = TRUE)
-    , ActualMaxFirst = max(First, na.rm = TRUE)
-    , ActualMinFUFRatio = min(FUFRatio, na.rm = TRUE)
-    , ActualMaxFUFRatio = max(FUFRatio, na.rm = TRUE)
-  ) %>%
-  group_by(Strategy) %>%
-  mutate(
-    NewMinFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Min"]
-    , NewMaxFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Max"]
-    , NewMinFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Min"]
-    , NewMaxFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Max"]
-  ) 
-
-
-opFunnelFunnelsFUF <- 
-  expand.grid(
-    Strategy = unique(opFunnelSummaryFUF$Strategy)
-    , RowNumber = seq(1, funnelParameters$Smoothness, 1)
-    , stringsAsFactors = FALSE
-  ) %>%
-  left_join(opFunnelSummaryFUF, by = "Strategy") %>%
-  mutate(EventSpells = NA) %>%
-  arrange(Strategy)  
-
-  for (i in seq(length(opFunnelFunnelsFUF$EventSpells))){
-    if(opFunnelFunnelsFUF$RowNumber[i] == 1){
-      opFunnelFunnelsFUF$EventSpells[i] <- max(1, opFunnelFunnelsFUF$NewMinFirst[i])
-    } else {
-      opFunnelFunnelsFUF$EventSpells[i] <- 
-        max(
-          round(
-            ((opFunnelFunnelsFUF$NewMaxFirst[i]) / 
-               opFunnelFunnelsFUF$EventSpells[i - 1]) ^ 
-              (1 / ((funnelParameters$Smoothness + 1) - opFunnelFunnelsFUF$RowNumber[i])) * opFunnelFunnelsFUF$EventSpells[i - 1]
-          )
-          , opFunnelFunnelsFUF$EventSpells[i - 1] + 1
-        )
-    }
-  }
-
-  opFunnelFunnelsFUF <- opFunnelFunnelsFUF %>%
-    mutate(
-      Denominator = EventSpells
-      , FUIfAverage = Denominator * AverageFUF
-      , StandardError =  sqrt(1 / FUIfAverage + 1 / Denominator)
-      , ThreeSigmaLower  = (AverageFUF - (3 * StandardError)) 
-      , TwoSigmaLower  = (AverageFUF - (2 * StandardError))
-      , TwoSigmaHigher  = (AverageFUF +(2 * StandardError))
-      , ThreeSigmaHigher  = (AverageFUF + (3 * StandardError))
-    )
+# ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
+# aeFunnelSummary <- aeFunnelPoints %>% funnel_summary
+# opFunnelSummary <- opFunnelPoints %>% funnel_summary
+# 
+# ipFunnelFunnels <- funnel_funnels(ipFunnelSummary, funnelParameters$Smoothness, personYears)
+# aeFunnelFunnels <- funnel_funnels(aeFunnelSummary, funnelParameters$Smoothness, personYears)
+# opFunnelFunnels <- funnel_funnels(opFunnelSummary, funnelParameters$Smoothness, personYears)
+# 
+# 
+# opFunnelSummaryFUF <- opFUF %>%
+#   ungroup() %>%
+#   group_by(Strategy) %>%
+#   summarise(
+#     AverageFUF = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
+#     , ActualMinFirst = min(First, na.rm = TRUE)
+#     , ActualMaxFirst = max(First, na.rm = TRUE)
+#     , ActualMinFUFRatio = min(FUFRatio, na.rm = TRUE)
+#     , ActualMaxFUFRatio = max(FUFRatio, na.rm = TRUE)
+#   ) %>%
+#   group_by(Strategy) %>%
+#   mutate(
+#     NewMinFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Min"]
+#     , NewMaxFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Max"]
+#     , NewMinFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Min"]
+#     , NewMaxFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Max"]
+#   ) 
+# 
+# 
+# opFunnelFunnelsFUF <- 
+#   expand.grid(
+#     Strategy = unique(opFunnelSummaryFUF$Strategy)
+#     , RowNumber = seq(1, funnelParameters$Smoothness, 1)
+#     , stringsAsFactors = FALSE
+#   ) %>%
+#   left_join(opFunnelSummaryFUF, by = "Strategy") %>%
+#   mutate(EventSpells = NA) %>%
+#   arrange(Strategy)  
+# 
+#   for (i in seq(length(opFunnelFunnelsFUF$EventSpells))){
+#     if(opFunnelFunnelsFUF$RowNumber[i] == 1){
+#       opFunnelFunnelsFUF$EventSpells[i] <- max(1, opFunnelFunnelsFUF$NewMinFirst[i])
+#     } else {
+#       opFunnelFunnelsFUF$EventSpells[i] <- 
+#         max(
+#           round(
+#             ((opFunnelFunnelsFUF$NewMaxFirst[i]) / 
+#                opFunnelFunnelsFUF$EventSpells[i - 1]) ^ 
+#               (1 / ((funnelParameters$Smoothness + 1) - opFunnelFunnelsFUF$RowNumber[i])) * opFunnelFunnelsFUF$EventSpells[i - 1]
+#           )
+#           , opFunnelFunnelsFUF$EventSpells[i - 1] + 1
+#         )
+#     }
+#   }
+# 
+#   opFunnelFunnelsFUF <- opFunnelFunnelsFUF %>%
+#     mutate(
+#       Denominator = EventSpells
+#       , FUIfAverage = Denominator * AverageFUF
+#       , StandardError =  sqrt(1 / FUIfAverage + 1 / Denominator)
+#       , ThreeSigmaLower  = (AverageFUF - (3 * StandardError)) 
+#       , TwoSigmaLower  = (AverageFUF - (2 * StandardError))
+#       , TwoSigmaHigher  = (AverageFUF +(2 * StandardError))
+#       , ThreeSigmaHigher  = (AverageFUF + (3 * StandardError))
+#     )
 
 # Trend in DSRate ---------------------------------------------------------
 ipTrendActive <- ipSmall %>% trend_active 
@@ -604,69 +592,109 @@ ipPlottableStrategies <- activeStrategies %>%
   filter(Strategy != "Canc_Op_v1") %>%
   filter(Strategy != "Readmissions_v1")
 
-trendColours <- c(scales::brewer_pal("seq", palette = "Blues")(6)[2:5], colourBlindPalette["red"] %>% unname)
-names(trendColours) <- c("Minimum to 1st decile", "1st decile to 1st quartile", "1st quartile to average", "Average to max", activeCCGInfo$ShortName)
+# trendColours <- c(scales::brewer_pal("seq", palette = "Blues")(6)[2:5], colourBlindPalette["red"] %>% unname)
+# names(trendColours) <- c("Minimum to 1st decile", "1st decile to 1st quartile", "1st quartile to average", "Average to max", activeCCGInfo$ShortName)
 
 # RColorBrewer::display.brewer.all(colorblindFriendly = T)
 
-plot_ip_funcost <- list()
+plot_ip_fun     <- list()
 plot_ip_cost    <- list()
 plot_ip_trend   <- list()
 
 
 for(i in seq(ipPlottableStrategies$Strategy)){
 # Draw funnel plot --------------------------------------------------------
- plotFunnelPoints <- ipFunnelPoints %>%
-   filter(Strategy == ipPlottableStrategies$Strategy[i])
- plotFunnelFunnels <- ipFunnelFunnels %>%
-   filter(Strategy == ipPlottableStrategies$Strategy[i])
- plotFunnelSummary <- ipFunnelSummary %>%
-   filter(Strategy == ipPlottableStrategies$Strategy[i])
  
-
- plot_ip_funcost[[i]] <- ggplot(data = plotFunnelFunnels) +
-   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-   geom_hline(aes(yintercept = Average)) +
-   geom_point(
-     data = plotFunnelPoints
-     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
-     , size = 4
-     , shape = 20
-   ) +
-   scale_colour_manual(values = colourBlindPalette[c("blue", "red")] %>% unname) +
-   scale_x_continuous(
-     labels = scales::comma
-      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
-                   , plotFunnelSummary$NewMaxDerivedPopulation) 
-    ) +
-   scale_y_continuous(
-     labels = scales::comma
-     , limits = c(plotFunnelSummary$NewMinDSRate
-                   , plotFunnelSummary$NewMaxDSRate) 
-    ) +
-   labs(
-     x = paste0("Standardised population ", FYearIntToChar(f_year))
-     , y = paste0("Direct standardised rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
-     , title = paste0("Direct standardised rate ", FYearIntToChar(f_year))
-   ) +
-   theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 10)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , plot.title = element_text(hjust = 0)
-     , panel.grid.major.x = element_blank()
-     , panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     , panel.border = element_blank()
-     , panel.background= element_blank()
-   )
+  funnel <- funl_Data(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]) 
+                         , col.unit = "CCGCode"
+                         , col.group = "Strategy"
+                         , col.O = "Spells" # Should be costs (?) but doesn't work in poisson
+                         , col.n = "DerivedPopulation"
+                         , col.rt = "DSRate"
+                         , target = NULL
+                         , smoothness = 100
+                         , fnlMinEvents = NULL
+                         , fnlMaxEvents = NULL
+                         ) 
+  
+  # What happens when you have a rate which does not come directly from (spells/population)?
+  # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
+ 
+  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
+  plotUnits   <- funnel[[2]] %>% 
+    left_join(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
+    convert_dsr_100k()
+  
+  plot_ip_fun[[i]] <- ggplot(plotFunnels) +
+    geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
+    geom_line(aes(x = n, y = fnlHigh, group = fnlLimit), linetype = "44") +
+    geom_hline(aes(yintercept = target)) +
+    geom_point(data = plotUnits, aes(x = DerivedPopulation, y = DSRate, color = IsActiveCCG))+
+    scale_x_continuous(labels = scales::comma
+                       #, limits = c(0, 1000000) # forced x to 1M
+                       )+
+    scale_y_continuous(labels = scales::comma)+
+    theme_strategy()+
+    theme(legend.position = "none")+
+    labs(
+      x = paste0("Standardised population ", FYearIntToChar(f_year))
+      , y = paste0("Directly standardised rate\nper ", scales::comma(funnelParameters$RatePerPeople)," population")
+      , title = paste0("Directly standardised rate ", FYearIntToChar(f_year))
+    )+
+    scale_color_grey(end = 0.6)
+  
+ 
+ # plotFunnelPoints <- ipFunnelPoints %>%
+ #   filter(Strategy == ipPlottableStrategies$Strategy[i])
+ # plotFunnelFunnels <- ipFunnelFunnels %>%
+ #   filter(Strategy == ipPlottableStrategies$Strategy[i])
+ # plotFunnelSummary <- ipFunnelSummary %>%
+ #   filter(Strategy == ipPlottableStrategies$Strategy[i])
+ # 
+ # 
+ # plot_ip_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
+ #   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
+ #   geom_hline(aes(yintercept = Average)) +
+ #   geom_point(
+ #     data = plotFunnelPoints
+ #     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
+ #     , size = 4
+ #     , shape = 20
+ #   ) +
+ #   scale_colour_manual(values = colourBlindPalette[c("blue", "red")] %>% unname) +
+ #   scale_x_continuous(
+ #     labels = scales::comma
+ #      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
+ #                   , plotFunnelSummary$NewMaxDerivedPopulation) 
+ #    ) +
+ #   scale_y_continuous(
+ #     labels = scales::comma
+ #     , limits = c(plotFunnelSummary$NewMinDSRate
+ #                   , plotFunnelSummary$NewMaxDSRate) 
+ #    ) +
+ #   labs(
+ #     x = paste0("Standardised population ", FYearIntToChar(f_year))
+ #     , y = paste0("Direct standardised rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
+ #     , title = paste0("Direct standardised rate ", FYearIntToChar(f_year))
+ #   ) +
+ #   theme(
+ #     axis.line = element_line(colour="grey80")
+ #     , axis.line.x = element_blank()
+ #     , axis.text = element_text(colour = "black")
+ #     , axis.ticks = element_line(colour = "black")
+ #     , axis.title.y = element_text(size = 10)
+ #     , legend.position = "none"
+ #     , plot.background = element_blank()
+ #     , plot.title = element_text(hjust = 0)
+ #     , panel.grid.major.x = element_blank()
+ #     , panel.grid.major.y = element_line(colour = "grey95")
+ #     , panel.grid.minor = element_blank()
+ #     , panel.border = element_blank()
+ #     , panel.background= element_blank()
+ #   )
 
  # Draw cost plot ----------------------------------------------------------
   plotCostData <- ipCost %>%
@@ -725,6 +753,7 @@ plot_ip_trend[[i]] <- plot_trend(plotTrendActive,
 # ***** -----------------------------------------------------
 }
 rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
+   , funnel, plotFunnels, plotUnits
    #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
@@ -735,62 +764,62 @@ rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
 aePlottableStrategies <- activeStrategies %>%
   filter(TableType == "AE") 
 
-plot_ae_funcost <- list()
+plot_ae_fun <- list()
 plot_ae_cost    <- list()
 plot_ae_trend   <- list()
 
 for(i in seq(aePlottableStrategies$Strategy)){
 # Draw funnel plot --------------------------------------------------------
- plotFunnelPoints <- aeFunnelPoints %>%
-   filter(Strategy == aePlottableStrategies$Strategy[i])
- plotFunnelFunnels <- aeFunnelFunnels %>%
-   filter(Strategy == aePlottableStrategies$Strategy[i])
- plotFunnelSummary <- aeFunnelSummary %>%
-   filter(Strategy == aePlottableStrategies$Strategy[i])
- 
- plot_ae_funcost[[i]] <- ggplot(data = plotFunnelFunnels) +
-   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-   geom_hline(aes(yintercept = Average)) +
-   geom_point(
-     data = plotFunnelPoints
-     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
-     , size = 4
-     , shape = 20
-   ) +
-   scale_colour_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
-   scale_x_continuous(
-     labels = scales::comma
-      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
-                   , plotFunnelSummary$NewMaxDerivedPopulation) 
-    ) +
-   scale_y_continuous(
-     labels = scales::comma
-     , limits = c(plotFunnelSummary$NewMinDSRate
-                   , plotFunnelSummary$NewMaxDSRate) 
-    ) +
-   labs(
-     x = paste0("Standardised population ", FYearIntToChar(f_year))
-     , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
-     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
-   ) +
-   theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 10)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major.x = element_blank()
-     , panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     , panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0)
-   ) 
+ # plotFunnelPoints <- aeFunnelPoints %>%
+ #   filter(Strategy == aePlottableStrategies$Strategy[i])
+ # plotFunnelFunnels <- aeFunnelFunnels %>%
+ #   filter(Strategy == aePlottableStrategies$Strategy[i])
+ # plotFunnelSummary <- aeFunnelSummary %>%
+ #   filter(Strategy == aePlottableStrategies$Strategy[i])
+ # 
+ # plot_ae_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
+ #   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
+ #   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
+ #   geom_hline(aes(yintercept = Average)) +
+ #   geom_point(
+ #     data = plotFunnelPoints
+ #     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
+ #     , size = 4
+ #     , shape = 20
+ #   ) +
+ #   scale_colour_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
+ #   scale_x_continuous(
+ #     labels = scales::comma
+ #      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
+ #                   , plotFunnelSummary$NewMaxDerivedPopulation) 
+ #    ) +
+ #   scale_y_continuous(
+ #     labels = scales::comma
+ #     , limits = c(plotFunnelSummary$NewMinDSRate
+ #                   , plotFunnelSummary$NewMaxDSRate) 
+ #    ) +
+ #   labs(
+ #     x = paste0("Standardised population ", FYearIntToChar(f_year))
+ #     , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
+ #     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
+ #   ) +
+ #   theme(
+ #     axis.line = element_line(colour="grey80")
+ #     , axis.line.x = element_blank()
+ #     , axis.text = element_text(colour = "black")
+ #     , axis.ticks = element_line(colour = "black")
+ #     , axis.title.y = element_text(size = 10)
+ #     , legend.position = "none"
+ #     , plot.background = element_blank()
+ #     , panel.grid.major.x = element_blank()
+ #     , panel.grid.major.y = element_line(colour = "grey95")
+ #     , panel.grid.minor = element_blank()
+ #     , panel.border = element_blank()
+ #     , panel.background= element_blank()
+ #     , plot.title = element_text(hjust = 0)
+ #   ) 
  # +
  #   ggsave(
  #     filename = paste0("Images/AE_", aePlottableStrategies$Strategy[i], "_Funnel.png")
@@ -840,7 +869,7 @@ opPlottableStrategies <- activeStrategies %>%
   filter(TableType == "OP") %>%
   filter(!(grepl("^FUF*", Strategy)))
 
-plot_op_funcost <- list()
+plot_op_fun <- list()
 plot_op_cost    <- list()
 plot_op_trend   <- list()
 
@@ -853,7 +882,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
  plotFunnelSummary <- opFunnelSummary %>%
    filter(Strategy == opPlottableStrategies$Strategy[i])
  
- plot_op_funcost[[i]] <- ggplot(data = plotFunnelFunnels) +
+ plot_op_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
@@ -978,7 +1007,7 @@ opPlottableFUFStrategies <- activeStrategies %>%
   filter(TableType == "OP") %>%
   filter((grepl("^FUF*", Strategy)))
 
-plot_fuf_funcost <- list()
+plot_fuf_fun <- list()
 plot_fuf_cost    <- list()
 plot_fuf_trend   <- list()
 
@@ -992,7 +1021,7 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
  plotFunnelSummary <- opFunnelSummaryFUF %>%
    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
  
- plot_fuf_funcost[[i]] <- ggplot(data = plotFunnelFunnels) +
+ plot_fuf_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
