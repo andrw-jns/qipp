@@ -44,13 +44,13 @@ qipp_ccgs  <- c(# Alphabetical:
                "05N", # SHR
                "05P", # SOL
                "05Q", # SES
-               # "05R", # SWK -- OUTSIDE SUS
+               # "05R", # SWK -- OUTSIDE CSU
                "05T", # SWC
                "05V", # SAS
                "05W", # STO
                "05X", # TEL
                "05Y", # WAL
-               # "05H", # WKN -- OUTSIDE SUS
+               # "05H", # WKN -- OUTSIDE CSU
                "06A", # WOL#
                "06D"  # WYR#
 )
@@ -101,7 +101,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.1
-              , fill = "dodgerblue"
+              , fill = '#c52828'
               )+
     geom_line(data = active_df,
               aes(
@@ -110,7 +110,17 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.8
-              , colour = "dodgerblue"
+              , colour = '#c52828'
+    )+
+    geom_line(data = active_df,
+              aes(
+                FYearIntToChar(FYear), 
+                get(quote_y),
+                group = 1
+              ),
+              alpha = 0.2
+              , colour = '#c52828'
+              , size = 2
     )+
     ylim(0, 1.2*max(active_y, comparator_y))+
     theme_strategy()+
@@ -133,9 +143,9 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                     get(quote_y),
                     group = 1
                   )
-                  ,linetype = "longdash"
+                  # ,linetype = "longdash"
                   , alpha = 0.4
-    )
+    ) 
   } else {
     p  + geom_line(data = comparator_df,
                    aes(
@@ -143,7 +153,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                      get(quote_y),
                      group = 1
                    )
-                   ,linetype = "longdash"
+                   # ,linetype = "longdash"
     )
   }
 }
@@ -176,22 +186,26 @@ plot_fun   <- function(df_funnels, df_units){
   ggplot(df_funnels) +
     geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
     geom_line(aes(x = n, y = fnlHigh, group = fnlLimit), linetype = "44") +
-    geom_hline(aes(yintercept = target)) +
-    geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, color = IsActiveCCG))+
+    geom_segment(aes(  x    = min(n)
+                       , xend = max(n)
+                       , y    = target
+                       , yend = target))+
+    #geom_hline(aes(yintercept = target)) +
+    geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
     scale_x_continuous(labels = scales::comma
                        #, limits = c(0, 1000000) # forced x to 1M
-                       )+
+    )+
     scale_y_continuous(labels = scales::comma)+
     theme_strategy()+
     theme(legend.position = "none")+
     labs(
       x = paste0("Standardised population ", FYearIntToChar(f_year))
-      , y = paste0("Directly standardised rate\nper ", scales::comma(funnelParameters$RatePerPeople)," population")
-      , title = paste0("Directly standardised rate ", FYearIntToChar(f_year))
+      , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
+      , title = paste0("Directly Standardised Rate ", FYearIntToChar(f_year))
     )+
-    scale_color_grey(end = 0.6)
-  }
-  
+    scale_color_manual(values = c("grey70", '#c52828'))
+}
+
 convert_dsr_100k <- function(df) {
   if("target" %in% colnames(df)){
     mutate(df, target  = target*100000
@@ -203,17 +217,17 @@ convert_dsr_100k <- function(df) {
 } # For funnel plots
 
 # Colours -----------------------------------------------------------------
-colourBlindPalette <- c(
-    "#000000" #black
-  , "#E69F00" #orange
-  , "#56B4E9" #sky blue
-  , "#009E73" #green
-  , "#F0E442" #yellow
-  , "#0072B2" #blue
-  , "#D55E00" #red
-  , "#CC79A7" #pink
-)
-names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow", "blue", "red", "pink")
+# colourBlindPalette <- c(
+#     "#000000" #black
+#   , "#E69F00" #orange
+#   , "#56B4E9" #sky blue
+#   , "#009E73" #green
+#   , "#F0E442" #yellow
+#   , "#0072B2" #blue
+#   , "#D55E00" #red
+#   , "#CC79A7" #pink
+# )
+# names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow", "blue", "red", "pink")
 
 
 # ***** --------------------------------------------------------------
@@ -488,61 +502,61 @@ opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year)
 # opFunnelFunnels <- funnel_funnels(opFunnelSummary, funnelParameters$Smoothness, personYears)
 # 
 # 
-# opFunnelSummaryFUF <- opFUF %>%
-#   ungroup() %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     AverageFUF = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
-#     , ActualMinFirst = min(First, na.rm = TRUE)
-#     , ActualMaxFirst = max(First, na.rm = TRUE)
-#     , ActualMinFUFRatio = min(FUFRatio, na.rm = TRUE)
-#     , ActualMaxFUFRatio = max(FUFRatio, na.rm = TRUE)
-#   ) %>%
-#   group_by(Strategy) %>%
-#   mutate(
-#     NewMinFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Min"]
-#     , NewMaxFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Max"]
-#     , NewMinFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Min"]
-#     , NewMaxFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Max"]
-#   ) 
-# 
-# 
-# opFunnelFunnelsFUF <- 
-#   expand.grid(
-#     Strategy = unique(opFunnelSummaryFUF$Strategy)
-#     , RowNumber = seq(1, funnelParameters$Smoothness, 1)
-#     , stringsAsFactors = FALSE
-#   ) %>%
-#   left_join(opFunnelSummaryFUF, by = "Strategy") %>%
-#   mutate(EventSpells = NA) %>%
-#   arrange(Strategy)  
-# 
-#   for (i in seq(length(opFunnelFunnelsFUF$EventSpells))){
-#     if(opFunnelFunnelsFUF$RowNumber[i] == 1){
-#       opFunnelFunnelsFUF$EventSpells[i] <- max(1, opFunnelFunnelsFUF$NewMinFirst[i])
-#     } else {
-#       opFunnelFunnelsFUF$EventSpells[i] <- 
-#         max(
-#           round(
-#             ((opFunnelFunnelsFUF$NewMaxFirst[i]) / 
-#                opFunnelFunnelsFUF$EventSpells[i - 1]) ^ 
-#               (1 / ((funnelParameters$Smoothness + 1) - opFunnelFunnelsFUF$RowNumber[i])) * opFunnelFunnelsFUF$EventSpells[i - 1]
-#           )
-#           , opFunnelFunnelsFUF$EventSpells[i - 1] + 1
-#         )
-#     }
-#   }
-# 
-#   opFunnelFunnelsFUF <- opFunnelFunnelsFUF %>%
-#     mutate(
-#       Denominator = EventSpells
-#       , FUIfAverage = Denominator * AverageFUF
-#       , StandardError =  sqrt(1 / FUIfAverage + 1 / Denominator)
-#       , ThreeSigmaLower  = (AverageFUF - (3 * StandardError)) 
-#       , TwoSigmaLower  = (AverageFUF - (2 * StandardError))
-#       , TwoSigmaHigher  = (AverageFUF +(2 * StandardError))
-#       , ThreeSigmaHigher  = (AverageFUF + (3 * StandardError))
-#     )
+opFunnelSummaryFUF <- opFUF %>%
+  ungroup() %>%
+  group_by(Strategy) %>%
+  summarise(
+    AverageFUF = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
+    , ActualMinFirst = min(First, na.rm = TRUE)
+    , ActualMaxFirst = max(First, na.rm = TRUE)
+    , ActualMinFUFRatio = min(FUFRatio, na.rm = TRUE)
+    , ActualMaxFUFRatio = max(FUFRatio, na.rm = TRUE)
+  ) %>%
+  group_by(Strategy) %>%
+  mutate(
+    NewMinFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Min"]
+    , NewMaxFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Max"]
+    , NewMinFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Min"]
+    , NewMaxFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Max"]
+  )
+
+
+opFunnelFunnelsFUF <-
+  expand.grid(
+    Strategy = unique(opFunnelSummaryFUF$Strategy)
+    , RowNumber = seq(1, funnelParameters$Smoothness, 1)
+    , stringsAsFactors = FALSE
+  ) %>%
+  left_join(opFunnelSummaryFUF, by = "Strategy") %>%
+  mutate(EventSpells = NA) %>%
+  arrange(Strategy)
+
+  for (i in seq(length(opFunnelFunnelsFUF$EventSpells))){
+    if(opFunnelFunnelsFUF$RowNumber[i] == 1){
+      opFunnelFunnelsFUF$EventSpells[i] <- max(1, opFunnelFunnelsFUF$NewMinFirst[i])
+    } else {
+      opFunnelFunnelsFUF$EventSpells[i] <-
+        max(
+          round(
+            ((opFunnelFunnelsFUF$NewMaxFirst[i]) /
+               opFunnelFunnelsFUF$EventSpells[i - 1]) ^
+              (1 / ((funnelParameters$Smoothness + 1) - opFunnelFunnelsFUF$RowNumber[i])) * opFunnelFunnelsFUF$EventSpells[i - 1]
+          )
+          , opFunnelFunnelsFUF$EventSpells[i - 1] + 1
+        )
+    }
+  }
+
+  opFunnelFunnelsFUF <- opFunnelFunnelsFUF %>%
+    mutate(
+      Denominator = EventSpells
+      , FUIfAverage = Denominator * AverageFUF
+      , StandardError =  sqrt(1 / FUIfAverage + 1 / Denominator)
+      , ThreeSigmaLower  = (AverageFUF - (3 * StandardError))
+      , TwoSigmaLower  = (AverageFUF - (2 * StandardError))
+      , TwoSigmaHigher  = (AverageFUF +(2 * StandardError))
+      , ThreeSigmaHigher  = (AverageFUF + (3 * StandardError))
+    )
 
 # Trend in DSRate ---------------------------------------------------------
 ipTrendActive <- ipSmall %>% trend_active 
@@ -725,16 +739,17 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     filter(Strategy == ipPlottableStrategies$Strategy[i])
 
   
-plot_ip_trend[[i]] <- plot_trend(plotTrendActive,
-                                 plotTrendComparators,
-                                 "DSRate",
-                                 plotTrendActive$DSRate,
-                                 plotTrendComparators$DSRate)
-
+  plot_ip_trend[[i]] <- plot_trend(plotTrendActive,
+                                   plotTrendComparators,
+                                   "DSRate",
+                                   plotTrendActive$DSRate,
+                                   plotTrendComparators$DSRate)
+   
 # ***** -----------------------------------------------------
 }
-rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
-   , funnel, plotFunnels, plotUnits
+rm(
+   # plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
+  funnel, plotFunnels, plotUnits
    #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
@@ -864,8 +879,9 @@ for(i in seq(aePlottableStrategies$Strategy)){
   
 # ***** ------------------------------------------------------------
 }
-rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
-   , funnel, plotFunnels, plotUnits
+rm(
+  #plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
+    funnel, plotFunnels, plotUnits
    #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
@@ -995,8 +1011,9 @@ for(i in seq(opPlottableStrategies$Strategy)){
   
 # ***** ---------------------------------------------------
 }
-rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
-   , funnel, plotFunnels, plotUnits
+rm(
+  #plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
+   funnel, plotFunnels, plotUnits
    #, plotRocPoints, plotRocFunnels, plotRocSummary
    , plotCostData, plotCostFactorLevels
    , plotTrendActive, plotTrendComparators
@@ -1007,39 +1024,13 @@ opPlottableFUFStrategies <- activeStrategies %>%
   filter(TableType == "OP") %>%
   filter((grepl("^FUF*", Strategy)))
 
-plot_fuf_fun <- list()
-plot_fuf_cost    <- list()
-plot_fuf_trend   <- list()
+plot_fuf_fun   <- list()
+plot_fuf_cost  <- list()
+plot_fuf_trend <- list()
 
 for(i in seq(opPlottableFUFStrategies$Strategy)){
 
 # Draw funnel plot --------------------------------------------------------
-
-  
-  funnel <- funl_Data(opFUFFunnelPoints %>% filter(Strategy == opPlottableFUFStrategies$Strategy[i]) 
-                      , col.unit = "CCGCode"
-                      , col.group = "Strategy"
-                      , col.O = "Spells" # Should be costs (?) but doesn't work in poisson
-                      , col.n = "DerivedPopulation"
-                      , col.rt = "DSRate"
-                      , target = NULL
-                      , smoothness = 100
-                      , fnlMinEvents = NULL
-                      , fnlMaxEvents = NULL
-  ) 
-  
-  # What happens when you have a rate which does not come directly from (spells/population)?
-  # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
-  
-  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
-  plotUnits   <- funnel[[2]] %>% 
-    left_join(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
-    convert_dsr_100k()
-  
-  plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
-  
-  
-  
   
   plotFunnelPoints <- opFUFFunnelPoints %>%
    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
@@ -1049,56 +1040,34 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
  
  plot_fuf_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
-   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-   geom_hline(aes(yintercept = AverageFUF)) +
+   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "black", linetype =  44) +
+   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = 44) +
+   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = 44) +
+   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "black", linetype =  44) +
+   # geom_hline(aes(yintercept = AverageFUF)) +
+   geom_segment(aes(  x      = min(Denominator)
+                      , xend = max(Denominator)
+                      , y    = AverageFUF
+                      , yend = AverageFUF))+
    geom_point(
      data = plotFunnelPoints
      , aes(x = First, y = FUFRatio, colour = IsActiveCCG)
-     , size = 4
-     , shape = 20
-   ) +
-   scale_colour_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-   scale_x_continuous(
-     labels = scales::comma
-      , limits = c(plotFunnelSummary$NewMinDerivedPopulation
-                   , plotFunnelSummary$NewMaxDerivedPopulation) 
-    ) +
-   scale_y_continuous(
-     labels = scales::comma
-     , limits = c(plotFunnelSummary$NewMinDSRate
-                   , plotFunnelSummary$NewMaxDSRate) 
-    ) +
+     , size = 3
+   )+
+   scale_x_continuous(labels = scales::comma)+
+   scale_y_continuous(limits = c(0.8*min(plotFunnelPoints$FUFRatio)
+                                 , 1.2*max(plotFunnelPoints$FUFRatio)
+                                 )
+                      , labels = scales::comma)+
+   theme_strategy()+
+   theme(legend.position = "none")+
    labs(
      x = paste0("First appointments ", FYearIntToChar(f_year))
-     , y = "Follow up to first appointment ratio"
-     , title = paste0("Follow up to first appointment ratio ", FYearIntToChar(f_year))
-   ) +
-   theme(
-     axis.line = element_line(colour="grey80")
-     , axis.line.x = element_blank()
-     , axis.text = element_text(colour = "black")
-     , axis.ticks = element_line(colour = "black")
-     , axis.title.y = element_text(size = 10)
-     , legend.position = "none"
-     , plot.background = element_blank()
-     , panel.grid.major.x = element_blank()
-     , panel.grid.major.y = element_line(colour = "grey95")
-     , panel.grid.minor = element_blank()
-     , panel.border = element_blank()
-     , panel.background= element_blank()
-     , plot.title = element_text(hjust = 0)
-   ) 
- # +
- #   ggsave(
- #     filename = paste0(baseDir, "Images/OP_", opPlottableFUFStrategies$Strategy[i], "_Funnel.png")
- #     , height = 8.9
- #     , width = 13.3
- #     , units = "cm")
-  
-  
+     , y = "Ratio of follow-ups to first"
+     , title = paste0("Ratio of Follow-ups to First Appointments ", FYearIntToChar(f_year))
+   )+
+   scale_color_manual(values = c("grey70", '#c52828'))
+
 
 # Draw cost plot ----------------------------------------------------------
   plotCostData <- opCostFUF %>%
@@ -1115,44 +1084,9 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
   
   
   plot_fuf_cost[[i]] <- plot_cost(plotCostData)
-  
-  # plot_fuf_cost[[i]] <- ggplot(plotCostData) +
-  #   geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
-  #   geom_text(
-  #     aes(x = ShortName, y = 1.01 * DSCostsPerHead, label = pound(DSCostsPerHead), hjust = 0)
-  #     , size = 3) +
-  #   coord_flip() +
-  #   scale_fill_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
-  #   scale_y_continuous(labels = pound) +
-  #   expand_limits(y = c(min(pretty(plotCostData$DSCostsPerHead)), max(pretty(plotCostData$DSCostsPerHead))*1.05)) +
-  #   labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of population") + 
-  #   theme(
-  #    axis.line = element_line(colour="grey80")
-  #    , axis.line.y = element_blank()
-  #    , axis.text = element_text(colour = "black")
-  #    , axis.ticks = element_line(colour = "black")
-  #    , axis.ticks.y = element_blank()
-  #    , axis.title.y = element_text(size = 8)
-  #    , legend.position = "none"
-  #    , plot.background = element_blank()
-  #    , panel.grid.major = element_blank()
-  #    #, panel.grid.major.y = element_line(colour = "grey95")
-  #    , panel.grid.minor = element_blank()
-  #    #, panel.border = element_blank()
-  #    , panel.background= element_blank()
-  #    , plot.title = element_text(hjust = 0, size = 12)
-  #  ) 
-  # 
-  # +
-  #  ggsave(
-  #    filename = paste0(baseDir, "Images/OP_", opPlottableFUFStrategies$Strategy[i], "_Cost.png")
-  #    , height = 10.1
-  #    , width = 13.2
-  #    , dpi = 600
-  #    , units = "cm")  
-  
+ 
 # Draw trend plots --------------------------------------------------------
-"May have to look into this. "IsActiveCCG == False"" may be all other CCGs?"
+"May have to look into this. IsActiveCCG == False may be all other CCGs?"
   plotTrendActive <- opTrendFUF %>%
     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
    # plotTrendComparators <- opTrendComparators %>%

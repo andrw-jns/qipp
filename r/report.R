@@ -21,6 +21,7 @@
 # install.packages("ReporteRs")
 # library(tidyverse)
 library(ReporteRs)
+library(stringr)
 
 setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
 
@@ -34,7 +35,7 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
 qipp_report <- addSlide(qipp_report, "title" ) %>% 
   addTitle(value = "Indentifying potential QIPP opportunities") %>% 
-  addSubtitle(stringr::str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
+  addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
 
 # 1: ABOUT -----------------------------------------------------
 
@@ -64,7 +65,7 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 for(i in seq(ipPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
-    addTitle(ipPlottableStrategies$StrategyDescription[i]) %>%  # "ACS Vaccine Preventable Conditions"
+    addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ip_fun[[i]])) %>% 
     addPlot(function() plot(plot_ip_cost[[i]])) %>%
     addPlot(function() plot(plot_ip_trend[[i]])) 
