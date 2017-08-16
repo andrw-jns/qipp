@@ -25,10 +25,10 @@ library(stringr)
 
 setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
 
-qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
+qipp_report <- pptx(title = "qipp_one", template = "su_brand3.pptx")
 
-#slide.layouts(qipp_report)
-#slide.layouts(qipp_report, "qipp_body")
+# slide.layouts(qipp_report)
+# slide.layouts(qipp_report, "qipp_body")
 
 # 0: TITLE --------------------------------------------------------------
 
@@ -67,8 +67,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ip_fun[[i]])) %>% 
-    addPlot(function() plot(plot_ip_cost[[i]])) %>%
-    addPlot(function() plot(plot_ip_trend[[i]])) 
+    addPlot(function() plot(plot_ip_trend[[i]])) %>% 
+    addPlot(function() plot(plot_ip_cost[[i]]))
     # %>%
     ##addPlot(function() plot(plot_ip_funroc[[i]])) %>% 
     # addParagraph(stringr::str_c("?", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","),
@@ -96,8 +96,8 @@ for(i in seq(aePlottableStrategies$Strategy)){
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(noquote(str_replace_all(aePlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ae_fun[[i]])) %>% 
-    addPlot(function() plot(plot_ae_cost[[i]])) %>%
-    addPlot(function() plot(plot_ae_trend[[i]])) 
+    addPlot(function() plot(plot_ae_trend[[i]])) %>% 
+    addPlot(function() plot(plot_ae_cost[[i]])) 
 }
 
 
@@ -115,8 +115,8 @@ for(i in seq(opPlottableStrategies$Strategy)){
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(noquote(str_replace_all(opPlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_op_fun[[i]])) %>% 
-    addPlot(function() plot(plot_op_cost[[i]])) %>%
-    addPlot(function() plot(plot_op_trend[[i]])) 
+    addPlot(function() plot(plot_op_trend[[i]])) %>% 
+    addPlot(function() plot(plot_op_cost[[i]]))
 }
 
 for(i in seq(opPlottableFUFStrategies$Strategy)){
@@ -124,36 +124,36 @@ for(i in seq(opPlottableFUFStrategies$Strategy)){
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(noquote(str_replace_all(opPlottableFUFStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_fuf_fun[[i]])) %>% 
-    addPlot(function() plot(plot_fuf_cost[[i]])) %>%
-    addPlot(function() plot(plot_fuf_trend[[i]])) 
+    addPlot(function() plot(plot_fuf_trend[[i]])) %>%  
+    addPlot(function() plot(plot_fuf_cost[[i]])) 
  }
 
 
 
 # 6. EXAMPLE TABLE ---------------------------------------------------
-
-test_summary <- summaryOutputIP %>% 
-  group_by() %>% 
-  na.omit() %>% 
-  slice(1:10)
-
-test_table <- tibble(colour       = rep("", length(test_summary$Significance)),
-                     activ_subset = test_summary$StrategyDescription,
-                     spells       = test_summary$Spells,
-                     spend        = test_summary$Costs,
-                     rate         = test_summary$Significance,
-                     roc          = test_summary$RocSignificance
-                     )
-
-test_flex <- FlexTable(test_table) %>% 
-  setFlexTableBackgroundColors(j = 1, 
-                               colors = ifelse(test_summary$RocSignificance == "Not Significant", "hotpink1", "grey"))
-
-
-qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("Flextable: Proof of Concept") %>% 
-  addFlexTable(test_flex)
-  
+# 
+# test_summary <- summaryOutputIP %>% 
+#   group_by() %>% 
+#   na.omit() %>% 
+#   slice(1:10)
+# 
+# test_table <- tibble(colour       = rep("", length(test_summary$Significance)),
+#                      activ_subset = test_summary$StrategyDescription,
+#                      spells       = test_summary$Spells,
+#                      spend        = test_summary$Costs,
+#                      rate         = test_summary$Significance,
+#                      roc          = test_summary$RocSignificance
+#                      )
+# 
+# test_flex <- FlexTable(test_table) %>% 
+#   setFlexTableBackgroundColors(j = 1, 
+#                                colors = ifelse(test_summary$RocSignificance == "Not Significant", "hotpink1", "grey"))
+# 
+# 
+# qipp_report <- addSlide(qipp_report, "contentA") %>%
+#   addTitle("Flextable: Proof of Concept") %>% 
+#   addFlexTable(test_flex)
+#   
 
 # slidex -------------------------------------------------------------
 qipp_report <- addSlide(qipp_report, "contentB") %>% 

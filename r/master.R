@@ -124,16 +124,13 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
     )+
     ylim(0, 1.2*max(active_y, comparator_y))+
     theme_strategy()+
+    theme(panel.background = element_rect(fill = "white"))+
     labs(x = "Financial Year",
          y = paste0("DSR per ",
                     scales::comma(funnelParameters$RatePerPeople)," population"),
          title = "Trend in Directly Standardised Rate")+
     scale_x_discrete(expand = c(0.025,0.025))
-  # geom_point(data = plotTrendActive,
-  #           aes(
-  #             FYearIntToChar(FYear), 
-  #             DSRate
-  #           ))+
+
   if(comparator == T){
     
     p + geom_line(data = comparator_df %>% 
@@ -157,6 +154,12 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
     )
   }
 }
+
+plot_trend(plotTrendActive,
+           plotTrendComparators,
+           "DSRate",
+           plotTrendActive$DSRate,
+           plotTrendComparators$DSRate)
 
 plot_cost  <- function(df){
   ggplot(df) +
@@ -206,6 +209,7 @@ plot_fun   <- function(df_funnels, df_units){
     scale_color_manual(values = c("grey70", '#c52828'))
 }
 
+
 convert_dsr_100k <- function(df) {
   if("target" %in% colnames(df)){
     mutate(df, target  = target*100000
@@ -253,8 +257,8 @@ numberOfStrategies <- activeStrategies %>%
 #   op = "OP[0-9]{4}.csv",
 #   ae = "AE[0-9]{4}.csv"
 # )
-# 
-# filenames <- list.files(pattern = load_sus$ip)
+#  
+# filenames <- list.files(pattern = sus_names$ip)
 
 # because of PowerShell: 
 # take_names <- map(filenames, read_csv, n_max = 0) %>% 
