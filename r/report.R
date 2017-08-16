@@ -82,7 +82,55 @@ for(i in seq(ipPlottableStrategies$Strategy)){
 }
 
 
-# 4. EXAMPLE TABLE ---------------------------------------------------
+# 4: TITLE AE ---------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "poster") %>%
+  addImage("qipp_photo_inpatient.png") %>% 
+  addTitle("A&E") 
+
+
+# 4: BODY AE ---------------------------------------------------------
+
+for(i in seq(aePlottableStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
+    addTitle(noquote(str_replace_all(aePlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addPlot(function() plot(plot_ae_fun[[i]])) %>% 
+    addPlot(function() plot(plot_ae_cost[[i]])) %>%
+    addPlot(function() plot(plot_ae_trend[[i]])) 
+}
+
+
+# 5: TITLE OP ---------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "poster") %>%
+  addImage("qipp_photo_inpatient.png") %>% 
+  addTitle("Outpatients") 
+
+
+# 5: BODY OP ---------------------------------------------------------
+
+for(i in seq(opPlottableStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
+    addTitle(noquote(str_replace_all(opPlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addPlot(function() plot(plot_op_fun[[i]])) %>% 
+    addPlot(function() plot(plot_op_cost[[i]])) %>%
+    addPlot(function() plot(plot_op_trend[[i]])) 
+}
+
+for(i in seq(opPlottableFUFStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
+    addTitle(noquote(str_replace_all(opPlottableFUFStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addPlot(function() plot(plot_fuf_fun[[i]])) %>% 
+    addPlot(function() plot(plot_fuf_cost[[i]])) %>%
+    addPlot(function() plot(plot_fuf_trend[[i]])) 
+ }
+
+
+
+# 6. EXAMPLE TABLE ---------------------------------------------------
 
 test_summary <- summaryOutputIP %>% 
   group_by() %>% 
@@ -106,31 +154,6 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Flextable: Proof of Concept") %>% 
   addFlexTable(test_flex)
   
-
-
-# 3: BODY OP FUF ---------------------------------------------------------
-
-for(i in seq(opPlottableFUFStrategies$Strategy)){
-  
-  qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
-    addTitle(opPlottableFUFStrategies$StrategyDescription[i]) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_fuf_fun[[i]])) %>% 
-    addPlot(function() plot(plot_fuf_cost[[i]])) %>%
-    addPlot(function() plot(plot_fuf_trend[[i]])) 
-  #%>%
-    # addPlot(function() plot(plot_fuf_funroc[[i]])) %>% 
-    # addParagraph(stringr::str_c("?", format(round(summaryOutputOPFUF$Costs[i], -3), big.mark = ","),
-    #                             " spent", "  ",
-    #                             format(round(summaryOutputOPFUF$FollowUp[i], -1), big.mark = ","),
-    #                             " follow-up attendances", "  "
-    #                             # ,
-    #                             # round(summaryOutputIP$propSpells[i]*100, 1),
-    #                             # "% of all IP spells"
-    #)
-    #)
-}
-
-
 
 # slidex -------------------------------------------------------------
 qipp_report <- addSlide(qipp_report, "contentB") %>% 

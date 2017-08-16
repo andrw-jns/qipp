@@ -172,7 +172,7 @@ plot_cost  <- function(df){
       , size = 3) +
     coord_flip() +
     # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
-    scale_y_continuous(labels = pound, limits = c(0,150)) +
+    scale_y_continuous(labels = pound, limits = c(0,101)) +
     expand_limits(y = c(min(pretty(df$DSCostsPerHead)), max(pretty(df$DSCostsPerHead))*1.05)) +
     labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of Population") +
     theme_strategy()+
