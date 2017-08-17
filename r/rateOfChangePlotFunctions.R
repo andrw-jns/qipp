@@ -4,7 +4,7 @@
 #library(dplyr)
 #library(tidyr)
 #source("roundingAndChartLimitFunctions.R")
-#activeCCG <- "05C" or similar # the ccg you want to highlight
+#active_ccg <- "05C" or similar # the ccg you want to highlight
 
 
 #funnelParameters <- data.frame(
@@ -15,8 +15,8 @@
 #personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
 
 #rocParameters <- data.frame(
-#  From = 200910
-#  , To = 201415
+#  From = 201213
+#  , To = 201617
 #  , stringsAsFactors = FALSE
 #)
 
@@ -30,8 +30,8 @@
 # ipRoCFunnels <- roc_funnels(ipRoCSummary, funnelParameters$Smoothness, personYears)
 
 rocHierarchy <- expand.grid(
-  From = seq.int(200910, 201415, 101)
-  , To = seq.int(200910, 201415, 101)
+  From = seq.int(201213, 201617, 101)
+  , To = seq.int(201213, 201617, 101)
   , stringsAsFactors = FALSE
 ) %>%
   filter(To > From) %>%
@@ -48,29 +48,28 @@ rocHierarchy <- expand.grid(
 # Gather rate of change information for all years and all strategies
 roc_all <- . %>% # ip/op/ae object
   group_by(CCGCode, Strategy, add = FALSE) %>%
-  mutate(
-    RateOfChange_1 = (DSRate / lag(DSRate, 1)) -1
-    , RateOfChange_2 = (DSRate / lag(DSRate, 2)) -1
-    , RateOfChange_3 = (DSRate / lag(DSRate, 3)) -1
-    , RateOfChange_4 = (DSRate / lag(DSRate, 4)) -1
-    , RateOfChange_5 = (DSRate / lag(DSRate, 5)) -1
+  mutate(RateOfChange_1 = (DSRate / lag(DSRate, 1)) -1 # 1213-1314
+    , RateOfChange_2 = (DSRate / lag(DSRate, 2)) -1    # 1213-1415
+    , RateOfChange_3 = (DSRate / lag(DSRate, 3)) -1    # 1213-1516
+    , RateOfChange_4 = (DSRate / lag(DSRate, 4)) -1    # 1216-1217 # mostly interested in 4 which I think is what we get
+    # , RateOfChange_5 = (DSRate / lag(DSRate, 5)) -1  # not for SUS
   ) %>%
   ungroup() %>%
   select(CCGCode, Strategy, FYear, starts_with("RateOfChange"), Spells) %>%
   gather(Periods, RateOfChange, -CCGCode, -Strategy, -FYear, -Spells, convert = TRUE) %>%
   mutate(
     Periods = gsub("^RateOfChange_", "", Periods) %>% as.integer
-    , From = FYear - Periods * 101
+    , From = ifelse(FYear == 201213, FYear, FYear - (Periods * 101))
   ) %>%
   filter(
-    FYear != 200910
-    , !(FYear == 201011 & Periods > 1)
-    , !(FYear == 201112 & Periods > 2)
-    , !(FYear == 201213 & Periods > 3)
-    , !(FYear == 201314 & Periods > 4)
+    # FYear != 201213                    # no rate of change for base year but want to include it
+     !(FYear == 201314 & Periods > 1)
+    , !(FYear == 201415 & Periods > 2)
+    , !(FYear == 201516 & Periods > 3)
+    #, !(FYear == 201314 & Periods > 4)
   ) %>%
   mutate(
-    IsActiveCCG = ifelse(CCGCode == activeCCG, TRUE, FALSE)
+    IsActiveCCG = ifelse(CCGCode == active_ccg, TRUE, FALSE)
     , IsIdealYears = ifelse(
       From == rocParameters$From 
       & FYear == rocParameters$To
@@ -78,7 +77,7 @@ roc_all <- . %>% # ip/op/ae object
     , IsValid = ifelse(
       !(is.na(RateOfChange))
       & abs(RateOfChange) <= 10
-      & !(CCGCode %in% c("03R", "03J")) # North Kirklees and Wakefield
+      # & !(CCGCode %in% c("03R", "03J")) # North Kirklees and Wakefield
       , TRUE, FALSE)
   )
 

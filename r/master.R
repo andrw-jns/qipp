@@ -4,10 +4,6 @@
 ###########################################################################
 
 # TODO ---------------------------------------------------------------
-" CHECK THAT WE AGREED TO DISPLAY COST AS 
-  cost per unit activity"
-# Cost plot can look odd if rounded for low cost activities.
-
 
 # ***** --------------------------------------------------------------
 
@@ -65,12 +61,12 @@ funnelParameters <- tibble(
   )
 personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
 
-# 
-# # Rate of change
-# rocParameters <- tibble(
-#   From = 201213
-#   , To = f_year
-#   )
+
+# Rate of change
+rocParameters <- tibble(
+  From = 201213
+  , To = f_year
+  )
 
 # Trend
 trendParameters <- tibble(
@@ -161,11 +157,11 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
   }
 }
 
-plot_trend(plotTrendActive,
-           plotTrendComparators,
-           "DSRate",
-           plotTrendActive$DSRate,
-           plotTrendComparators$DSRate)
+# plot_trend(plotTrendActive,
+#            plotTrendComparators,
+#            "DSRate",
+#            plotTrendActive$DSRate,
+#            plotTrendComparators$DSRate)
 
 plot_cost  <- function(df){
   ggplot(df) +
@@ -635,7 +631,9 @@ opFunnelFunnelsFUF <-
   
 
 # Rate of change ----------------------------------------------------------
-  source("rateOfChangePlotFunctions.R")
+  setwd(paste0(baseDir, "r"))
+  
+   source("rateOfChangePlotFunctions.R")
   
   ## AmbNoInvNoTreat has no results anywhere in 200910 or 201011
   #checkAmbNoInvNoTreat <- aeData %>%
@@ -653,8 +651,8 @@ opFunnelFunnelsFUF <-
     , stringsAsFactors = FALSE
   )
   # 
-  setwd(paste0(baseDir, "R"))
-  source("opplcvExceptions.R")
+
+    source("opplcvExceptions.R")
   #
   rocExceptions <- rbind(
     rocExceptions, 
@@ -694,11 +692,25 @@ opFunnelFunnelsFUF <-
   ipRoCAll <- ipRoCAll %>% left_join(
     ipRoCAll %>% 
       select(CCGCode, Strategy, FYear, Spells) %>%
-      rename(SpellsInBaseYear = Spells, From = FYear)
-    , by = c("CCGCode", "Strategy", "From"))
+      rename(SpellsInBaseYear = Spells, From = FYear) 
+    , by = c("CCGCode", "Strategy", "From")) %>% 
+    unique.data.frame() # to remove duplicates from incl. base yr in roc_all
+
+# tmp   <- ip %>% roc_all  %>% filter(CCGCode == "13P", Strategy == "ACS_Acute_v3")
+# tmp_a <- tmp %>% left_join(
+#   tmp %>% 
+#     filter(CCGCode == "13P", Strategy == "ACS_Acute_v3") %>% 
+#     select(CCGCode, Strategy, FYear, Spells) %>%
+#     rename(SpellsInBaseYear = Spells, From = FYear) 
+#   , by = c("CCGCode", "Strategy", "From"))
+#   
+# tmp_c <- ip %>% filter(FYear == 201213) %>% rename(SpellsInBaseYear = Spells)
+#   
+# tmp_d <- tmp_a %>% left_join(tmp_c, by = c("CCGCode", "Strategy", "From" = "FYear"))
   
   ipRoCActive <- ipRoCAll %>% roc_active
-  
+  "Here is the challenge - it's the [From] which is upopulated 
+  originates from roc_all"
   ipRoC <- ipRoCAll %>%
     inner_join(ipRoCActive, by = c("Strategy", "FYear", "From"))
   
