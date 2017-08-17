@@ -65,7 +65,7 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 for(i in seq(ipPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
-    addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ip_fun[[i]])) %>% 
     addPlot(function() plot(plot_ip_trend[[i]])) %>% 
     addPlot(function() plot(plot_ip_cost[[i]]))
