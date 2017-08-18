@@ -10,7 +10,7 @@
 
 # Packages ----------------------------------------------------------------
 
-
+library(ggrepel)
 library(readxl)
 library(scales, warn.conflicts = FALSE)
 library(testthat)
@@ -205,6 +205,15 @@ plot_fun   <- function(df_funnels, df_units){
                        , yend = target))+
     #geom_hline(aes(yintercept = target)) +
     geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
+    geom_label_repel(
+      data = df_units
+      , aes(label = ccg_label)
+      #, fontface = 'bold'
+      #, size =4,
+      # box.padding = unit(0.25, "lines"),
+      # point.padding = unit(0.5, "lines")
+      # , nudge_y = -0.00050
+      ) +
     scale_x_continuous(labels = scales::comma
                        #, limits = c(0, 1000000) # forced x to 1M
     )+
@@ -297,6 +306,33 @@ plot_roc <- function(funnel_df, points_df, summary_df){
   
   #69D2E7,#A7DBD8,#E0E4CC,#F38630,#FA6900,#69D2E7,#A7DBD8,#E0E4CC
   #"grey70", '#c52828'
+}
+
+label_ccg <- function(df){
+  
+  df %>%
+    mutate(ccg_label =case_when(
+  .$CCGCode == "13P" ~ "Bcc",
+  .$CCGCode == "04X" ~ "Bsc",
+  .$CCGCode == "04Y" ~ "Can",
+  .$CCGCode == "05C" ~ "Dud",
+  .$CCGCode == "05D" ~ "Est",
+  .$CCGCode == "05F" ~ "Her",
+  .$CCGCode == "05G" ~ "Nst",
+  .$CCGCode == "05J" ~ "Red",
+  .$CCGCode == "05L" ~ "Swb",
+  .$CCGCode == "05N" ~ "Shr",
+  .$CCGCode == "05P" ~ "Sol",
+  .$CCGCode == "05Q" ~ "Ses",
+  .$CCGCode == "05T" ~ "Swa",
+  .$CCGCode == "05V" ~ "Sas",
+  .$CCGCode == "05W" ~ "Sto",
+  .$CCGCode == "05X" ~ "Tel",
+  .$CCGCode == "05Y" ~ "Wal",
+  .$CCGCode == "06A" ~ "Wol",
+  .$CCGCode == "06D" ~ "Wyr"
+  )
+  )
 }
 
 
@@ -637,9 +673,9 @@ rm(opFUFhold, opFUFSpells, opFUFCosts)
 
 
 # Funnel ------------------------------------------------------------------
-ipFunnelPoints    <- ip    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) 
-opFunnelPoints    <- op    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
-aeFunnelPoints    <- ae    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
+ipFunnelPoints    <- ip    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) %>% label_ccg()
+opFunnelPoints    <- op    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) %>% label_ccg()
+aeFunnelPoints    <- ae    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) %>% label_ccg()
 opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
 
 
@@ -713,40 +749,40 @@ opFunnelFunnelsFUF <-
   
   ## So we need to create some exceptions
   
-  rocExceptions <- data.frame( # I will fill this with any exceptions to the rules.
-    CCGCode = character()
-    , Strategy = character()
-    , From = integer()
-    , To = integer()
-    , stringsAsFactors = FALSE
-  )
+  # rocExceptions <- data.frame( # I will fill this with any exceptions to the rules.
+  #   CCGCode = character()
+  #   , Strategy = character()
+  #   , From = integer()
+  #   , To = integer()
+  #   , stringsAsFactors = FALSE
+  # )
+  # # 
   # 
-
-    source("opplcvExceptions.R")
-  #
-  rocExceptions <- rbind(
-    rocExceptions, 
-    (allCCGs %>% 
-       select(CCGCode) %>%
-       mutate(
-         Strategy = "AmbNoInvNoTreat_v1"
-         , From = 201213
-         , To=  201617))
-    , (activeStrategies %>% 
-         filter(Strategy != "AmbNoInvNoTreat_v1") %>%
-         mutate(
-           CCGCode = "03J" # North Kirklees
-           , From = 201213
-           , To =  201617) %>%
-         select(CCGCode, Strategy, From, To))
-    , (activeStrategies %>% 
-         filter(Strategy != "AmbNoInvNoTreat_v1") %>%
-         mutate(
-           CCGCode = "03R" #Wakefield
-           , From = 201213
-           , To =  201617) %>%
-         select(CCGCode, Strategy, From, To))) %>% 
-    bind_rows(opplcvExceptions)
+  #   source("opplcvExceptions.R")
+  # #
+  # rocExceptions <- rbind(
+  #   rocExceptions, 
+  #   (allCCGs %>% 
+  #      select(CCGCode) %>%
+  #      mutate(
+  #        Strategy = "AmbNoInvNoTreat_v1"
+  #        , From = 201213
+  #        , To=  201617))
+  #   , (activeStrategies %>% 
+  #        filter(Strategy != "AmbNoInvNoTreat_v1") %>%
+  #        mutate(
+  #          CCGCode = "03J" # North Kirklees
+  #          , From = 201213
+  #          , To =  201617) %>%
+  #        select(CCGCode, Strategy, From, To))
+  #   , (activeStrategies %>% 
+  #        filter(Strategy != "AmbNoInvNoTreat_v1") %>%
+  #        mutate(
+  #          CCGCode = "03R" #Wakefield
+  #          , From = 201213
+  #          , To =  201617) %>%
+  #        select(CCGCode, Strategy, From, To))) %>% 
+  #   bind_rows(opplcvExceptions)
   
   ## Amendments to Jonathan's original code in the line above:
   ## CHANGE OF YEAr
@@ -943,10 +979,6 @@ opFunnelFunnelsFUF <-
   #  filter(TwoSigmaHigher <= NewMaxRateOfChange & TwoSigmaLower >= NewMinRateOfChange)
   
 
-  
-  
-  
-  
 # Trend  ---------------------------------------------------------
 ipTrendActive <- ipSmall %>% trend_active 
 aeTrendActive <- aeSmall %>% trend_active 
@@ -1048,7 +1080,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
   plotUnits   <- funnel[[2]] %>% 
     left_join(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
-    convert_dsr_100k()
+    convert_dsr_100k() %>% label_ccg()
   
   plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
   
