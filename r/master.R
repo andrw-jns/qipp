@@ -4,6 +4,9 @@
 ###########################################################################
 
 # TODO ---------------------------------------------------------------
+"LABELS IN FUNNELS DON'T APPEAR FIXED WHEN WRITTEN INTO PPTX"
+"POSSIBLE SOLUTION TO SET THE SIZE OF THE GRAPHIC BEFORE EXPORTING"
+# + coord_fixed()
 
 # ***** --------------------------------------------------------------
 
@@ -149,6 +152,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                     FYearIntToChar(FYear), 
                     get(quote_y),
                     group = 1
+                    , alpha =0.8
                   )
                   # ,linetype = "longdash"
                   #, alpha = 0.4
@@ -159,6 +163,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                      FYearIntToChar(FYear), 
                      get(quote_y),
                      group = 1
+                     , alpha =0.8
                    )
                    # ,linetype = "longdash"
     )
@@ -205,9 +210,13 @@ plot_fun   <- function(df_funnels, df_units){
                        , yend = target))+
     #geom_hline(aes(yintercept = target)) +
     geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
-    geom_label_repel(
-      data = df_units
-      , aes(label = ccg_label)
+    geom_text_repel(data = df_units
+      , aes(x = DerivedPopulation
+            , y = DSRate
+            , label = ccg_label
+            )
+      , alpha = 0.5
+      
       #, fontface = 'bold'
       #, size =4,
       # box.padding = unit(0.25, "lines"),
@@ -219,15 +228,19 @@ plot_fun   <- function(df_funnels, df_units){
     )+
     scale_y_continuous(labels = scales::comma)+
     theme_strategy()+
-    theme(legend.position = "none")+
+    theme(legend.position = "none"
+          , axis.title.y = element_blank()
+          , plot.subtitle = element_text(face = "italic"))+
     labs(
       x = paste0("Standardised population ", FYearIntToChar(f_year))
-      , y = paste0("DSR per ", scales::comma(funnelParameters$RatePerPeople)," population")
+      , subtitle = paste0("Vertical axis: DSR per 100k population")  # , scales::comma(funnelParameters$RatePerPeople)," population")
       , title = paste0("Directly Standardised Rate ", FYearIntToChar(f_year))
     )+
     scale_color_manual(values = c("grey70", '#c52828'))
+
 }
 
+plot_fun(plotFunnels, plotUnits)
 
 convert_dsr_100k <- function(df) {
   if("target" %in% colnames(df)){
@@ -238,7 +251,6 @@ convert_dsr_100k <- function(df) {
     mutate(df, DSRate = DSRate*100000)
   }
 } # For funnel plots
-
 
 plot_roc <- function(funnel_df, points_df, summary_df){
   
@@ -257,6 +269,18 @@ plot_roc <- function(funnel_df, points_df, summary_df){
             y = RateOfChange, colour = IsActiveCCG)
       , size = 3
     )+
+    geom_text_repel(data = points_df
+                    , aes(x = SpellsInBaseYear,
+                          y = RateOfChange
+                          , label = ccg_label
+                    )
+                    , alpha = 0.5
+                    #, fontface = 'bold'
+                    , size = 2
+                    # box.padding = unit(0.25, "lines"),
+                    # point.padding = unit(0.5, "lines")
+                    # , nudge_y = -0.00050
+    ) +
     scale_x_continuous(
       labels = scales::comma
       , limits = c(summary_df$NewMinSpells, summary_df$NewMaxSpells)) +
@@ -296,17 +320,20 @@ plot_roc <- function(funnel_df, points_df, summary_df){
     theme(legend.position = "none",
           axis.title.y  = element_blank(),
           plot.subtitle = element_text(face = "italic"),
-          panel.background = element_rect(fill = "#E0E4CC"))+
+          panel.background = element_rect(fill = "#E6E6FA"))+
     labs(
       # x = paste0("Rate of Change between ", FYearIntToChar(f_year))
       subtitle = "Vertical Axis: Percentage change in Directly Standardised Rate"
       #, title = paste0("Ratio of Follow-ups to First Appointments ", FYearIntToChar(f_year))
     )+
-    scale_color_manual(values = c("#69D2E7", '#FA6900'))
+    scale_color_manual(values = c("grey70", '#c52828'))
   
   #69D2E7,#A7DBD8,#E0E4CC,#F38630,#FA6900,#69D2E7,#A7DBD8,#E0E4CC
   #"grey70", '#c52828'
+  #"#69D2E7", '#FA6900'
 }
+
+plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary)
 
 label_ccg <- function(df){
   
@@ -334,6 +361,7 @@ label_ccg <- function(df){
   )
   )
 }
+
 
 
 # Colours -----------------------------------------------------------------
@@ -1139,7 +1167,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
 # Draw roc plot ------------------------------------------------------
 
   plotRocPoints <- ipRoC %>%
-    filter(Strategy == ipPlottableStrategies$Strategy[i])
+    filter(Strategy == ipPlottableStrategies$Strategy[i]) %>% 
+    label_ccg()
   plotRocFunnels <- ipRoCFunnels %>%
     filter(Strategy == ipPlottableStrategies$Strategy[i])
   plotRocSummary <- ipRoCSummary %>%

@@ -82,6 +82,13 @@ for(i in seq(ipPlottableStrategies$Strategy)){
 }
 
 
+# TEST write document -----------------------------------------------------
+filename <- "qipp_example_v5.pptx" # the document to produce
+# TEST write qipp_report 
+writeDoc(qipp_report, filename)
+
+
+
 # 4: TITLE AE ---------------------------------------------------------
 
 qipp_report <- addSlide(qipp_report, "poster") %>%
@@ -190,7 +197,7 @@ qipp_report <- addSlide(qipp_report, "contact") %>%
 
 
 # write document -----------------------------------------------------
-filename <- "qipp_example_v4.pptx" # the document to produce
+filename <- "qipp_example_v5.pptx" # the document to produce
 # write qipp_report 
 writeDoc(qipp_report, filename)
 
