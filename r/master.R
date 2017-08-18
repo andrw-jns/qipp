@@ -6,8 +6,9 @@
 # TODO ---------------------------------------------------------------
 "LABELS IN FUNNELS DON'T APPEAR FIXED WHEN WRITTEN INTO PPTX"
 "POSSIBLE SOLUTION TO SET THE SIZE OF THE GRAPHIC BEFORE EXPORTING"
-# + coord_fixed()
 
+"OR setting in the Reporters plot()?"
+"See https://stackoverflow.com/questions/1279003/specify-width-and-height-of-plot"
 # ***** --------------------------------------------------------------
 
 
@@ -362,7 +363,7 @@ label_ccg <- function(df){
   )
 }
 
-
+plot()
 
 # Colours -----------------------------------------------------------------
 colourBlindPalette <- c(
