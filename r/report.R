@@ -68,9 +68,9 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ip_fun[[i]])) %>% 
     addPlot(function() plot(plot_ip_trend[[i]])) %>% 
-    addPlot(function() plot(plot_ip_cost[[i]]))
+    #addPlot(function() plot(plot_ip_cost[[i]]))
     # %>%
-    ##addPlot(function() plot(plot_ip_funroc[[i]])) %>% 
+    addPlot(function() plot(plot_ip_roc[[i]])) # %>% 
     # addParagraph(stringr::str_c("?", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","),
     #                             " spent", "  ",
     #                             format(round(summaryOutputIP$Spells[i], -1), big.mark = ","),
@@ -97,7 +97,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
     addTitle(noquote(str_replace_all(aePlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ae_fun[[i]])) %>% 
     addPlot(function() plot(plot_ae_trend[[i]])) %>% 
-    addPlot(function() plot(plot_ae_cost[[i]])) 
+    addPlot(function() plot(plot_ae_roc[[i]])) 
 }
 
 
@@ -116,17 +116,17 @@ for(i in seq(opPlottableStrategies$Strategy)){
     addTitle(noquote(str_replace_all(opPlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_op_fun[[i]])) %>% 
     addPlot(function() plot(plot_op_trend[[i]])) %>% 
-    addPlot(function() plot(plot_op_cost[[i]]))
+    addPlot(function() plot(plot_op_roc[[i]]))
 }
 
-for(i in seq(opPlottableFUFStrategies$Strategy)){
-  
-  qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
-    addTitle(noquote(str_replace_all(opPlottableFUFStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_fuf_fun[[i]])) %>% 
-    addPlot(function() plot(plot_fuf_trend[[i]])) %>%  
-    addPlot(function() plot(plot_fuf_cost[[i]])) 
- }
+# for(i in seq(opPlottableFUFStrategies$Strategy)){
+#   
+#   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
+#     addTitle(noquote(str_replace_all(opPlottableFUFStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+#     addPlot(function() plot(plot_fuf_fun[[i]])) %>% 
+#     addPlot(function() plot(plot_fuf_trend[[i]])) %>%  
+#     addPlot(function() plot(plot_fuf_cost[[i]])) 
+#  }
 
 
 
@@ -190,8 +190,9 @@ qipp_report <- addSlide(qipp_report, "contact") %>%
 
 
 # write document -----------------------------------------------------
-filename <- "qipp_example.pptx" # the document to produce
+filename <- "qipp_example_v4.pptx" # the document to produce
 # write qipp_report 
 writeDoc(qipp_report, filename)
+
 
 

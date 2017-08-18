@@ -10,12 +10,13 @@
 
 # Packages ----------------------------------------------------------------
 
-library(tidyverse)
+
 library(readxl)
 library(scales, warn.conflicts = FALSE)
 library(testthat)
 library(extrafont) # for theme_strategy.
-
+library(stringr)
+library(tidyverse)
 
 # Parameters 1--------------------------------------------------------
 
@@ -113,24 +114,31 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
               ),
               alpha = 0.8
               , colour = '#c52828'
+              , size = 1
     )+
-    geom_line(data = active_df,
-              aes(
-                FYearIntToChar(FYear), 
-                get(quote_y),
-                group = 1
-              ),
-              alpha = 0.2
-              , colour = '#c52828'
-              , size = 2
-    )+
+    # geom_line(data = active_df,
+    #           aes(
+    #             FYearIntToChar(FYear), 
+    #             get(quote_y),
+    #             group = 1
+    #           ),
+    #           alpha = 0.2
+    #           , colour = '#c52828'
+    #           , size = 2
+    # )+
     ylim(0, 1.2*max(active_y, comparator_y))+
     theme_strategy()+
-    theme(panel.background = element_rect(fill = "white"))+
-    labs(x = "Financial Year",
-         y = paste0("DSR per ",
+    theme(panel.background = element_rect(fill = "white"),
+          plot.subtitle = element_text(face = "italic"),
+          axis.title = element_blank())+
+    labs(y = paste0("DSR per ",
                     scales::comma(funnelParameters$RatePerPeople)," population"),
-         title = "Trend in Directly Standardised Rate")+
+         title = paste0("Trend in Directly Standardised Rate, ",
+                        str_sub(rocParameters$From ,1, 4), "/",
+                        str_sub(rocParameters$From ,5, 6), " to "
+                        , str_sub(rocParameters$To ,1, 4), "/",
+                        str_sub(rocParameters$To ,5, 6))
+         , subtitle = "Vertical Axis: Directly Standardised Rate per 100k population")+
     scale_x_discrete(expand = c(0.025,0.025))
 
   if(comparator == T){
@@ -143,7 +151,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                     group = 1
                   )
                   # ,linetype = "longdash"
-                  , alpha = 0.4
+                  #, alpha = 0.4
     ) 
   } else {
     p  + geom_line(data = comparator_df,
@@ -157,11 +165,11 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
   }
 }
 
-# plot_trend(plotTrendActive,
-#            plotTrendComparators,
-#            "DSRate",
-#            plotTrendActive$DSRate,
-#            plotTrendComparators$DSRate)
+plot_trend(plotTrendActive,
+           plotTrendComparators,
+           "DSRate",
+           plotTrendActive$DSRate,
+           plotTrendComparators$DSRate)
 
 plot_cost  <- function(df){
   ggplot(df) +
@@ -634,15 +642,7 @@ opFunnelPoints    <- op    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRat
 aeFunnelPoints    <- ae    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000)
 opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
 
-# ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
-# aeFunnelSummary <- aeFunnelPoints %>% funnel_summary
-# opFunnelSummary <- opFunnelPoints %>% funnel_summary
-# 
-# ipFunnelFunnels <- funnel_funnels(ipFunnelSummary, funnelParameters$Smoothness, personYears)
-# aeFunnelFunnels <- funnel_funnels(aeFunnelSummary, funnelParameters$Smoothness, personYears)
-# opFunnelFunnels <- funnel_funnels(opFunnelSummary, funnelParameters$Smoothness, personYears)
-# 
-# 
+
 opFunnelSummaryFUF <- opFUF %>%
   ungroup() %>%
   group_by(Strategy) %>%
@@ -700,7 +700,7 @@ opFunnelFunnelsFUF <-
     )
   
 
-# Rate of change ----------------------------------------------------------
+# Roc ----------------------------------------------------------
   setwd(paste0(baseDir, "r"))
   
    source("rateOfChangePlotFunctions.R")
@@ -947,7 +947,7 @@ opFunnelFunnelsFUF <-
   
   
   
-# Trend in DSRate ---------------------------------------------------------
+# Trend  ---------------------------------------------------------
 ipTrendActive <- ipSmall %>% trend_active 
 aeTrendActive <- aeSmall %>% trend_active 
 opTrendActive <- opSmall %>% trend_active 
@@ -971,7 +971,7 @@ ipTrendComparators <- ipSmall %>% trend_comparators
 aeTrendComparators <- aeSmall %>% trend_comparators 
 opTrendComparators <- opSmall %>% trend_comparators 
 
-# Cost --------------------------------------------------------------------
+# Cost [KEEP]-----------------------------------
 ipCost <- ipSmall %>% cost_ds 
 aeCost <- aeSmall %>% cost_ds 
 opCost <- opSmall %>% cost_ds 
@@ -1608,20 +1608,33 @@ rm(
 #    , plotTrendActive
 #    , i)
 # 
-# # detach("package:testthat", unload=TRUE)
-# # library(dplyr)
+# detach("package:testthat", unload=TRUE) # remove this conflict by loading tidyverse last
 
-# Summary csv -------------------------------------------------------------
+
+# Summary tables -------------------------------------------------------------
 setwd(baseDir)
-# Inpatient ---------------------------------------------------------------
 
-savings_any_one <- . %>% 
-  ungroup(.) %>% 
-  filter(., FYear == f_year) %>% 
-  select(., -FYear, -TypeNumber, -Low, -High) %>% 
-  filter(., Type != "MinDSRate") %>% 
-  spread(., Type, DSRate)
-  
+"These required for summary tables"
+ipFunnelPoints    <- ip    %>% filter(FYear == f_year) 
+opFunnelPoints    <- op    %>% filter(FYear == f_year)
+aeFunnelPoints    <- ae    %>% filter(FYear == f_year)
+opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
+
+ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
+aeFunnelSummary <- aeFunnelPoints %>% funnel_summary
+opFunnelSummary <- opFunnelPoints %>% funnel_summary
+
+ipFunnelFunnels <- funnel_funnels(ipFunnelSummary, funnelParameters$Smoothness, personYears)
+aeFunnelFunnels <- funnel_funnels(aeFunnelSummary, funnelParameters$Smoothness, personYears)
+opFunnelFunnels <- funnel_funnels(opFunnelSummary, funnelParameters$Smoothness, personYears)
+
+
+comparatorsOut <- comparatorCCGs2 %>%
+  filter(CCGCode != active_ccg) %>%
+  select(CCGCode, CCGDescription)
+
+
+# Inpatient ---------------------------------------------------------------
 
 totalActivityIP <- ipSmall %>% total_activity
 savingsAnyOneIP <- ipTrendComparators %>% savings_any_one
@@ -1629,15 +1642,11 @@ savingsAnyOneIP <- ipTrendComparators %>% savings_any_one
 ipSignificance <- significance_summary(ipFunnelPoints, ipFunnelFunnels, ipRoC, ipRoCFunnels)
 
 summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance, totalActivityIP) %>%
-  mutate(
-    StrategyDescription = ifelse(StrategyID %in% c(25,26,27,91,92,93,104,105)
-                                 , paste0(StrategyDescription, "\U2020") # we have to bodge this in XL
-                                 , StrategyDescription)) %>%
   group_by(ReviewNumber, add = FALSE) %>%
   mutate(ReviewDupe = row_number()) %>%
   mutate(ReviewDupe = paste0(ReviewNumber, ReviewDupe)) %>%
   left_join(ipTrendActive %>% 
-    filter(FYear == 201415) %>%
+    filter(FYear == f_year) %>%
     ungroup() %>%
     select(Strategy, DSRateCIUpper, DSRateCILower)
     , by = "Strategy") %>%
@@ -1646,9 +1655,6 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
 
-
-# write.table(summaryOutputIP, "Data/R_SummaryOutputIP.csv", sep = ",", row.names = FALSE)
-# write.table(summaryOutputIP, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputIP.csv"), sep = ",", row.names = FALSE)
 
 # A&E ---------------------------------------------------------------------
 totalActivityAE <- aeSmall %>% total_activity
@@ -1667,10 +1673,6 @@ summaryOutputAE <- aeSmall %>% summary_output(., savingsAnyOneAE, aeSignificance
     ungroup() %>%
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
-
-#write.table(summaryOutputAE, "Data/R_SummaryOutputAE.csv", sep = ",", row.names = FALSE)
-#write.table(summaryOutputAE, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputAE.csv"), sep = ",", row.names = FALSE)
-
 
 # Outpatients -------------------------------------------------------------
 totalActivityOP <- opSmall %>% total_activity
@@ -1691,111 +1693,111 @@ summaryOutputOP <- opSmall %>% summary_output(., savingsAnyOneOP, opSignificance
     , by = c("CCGCode", "Strategy"))
 
 
-totalActivityOPFUF <- opSmallFUF %>% total_activity
-
-spendFUF <- opCostFUF %>%
-  filter(CCGCode == active_ccg) %>%
-  select(Strategy, Costs)
-
-opTopFUF <- opSmallFUF %>%
-  select(-DSCosts, -DSCostsVar, -DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
-  gather(Strategy, Highlighted, -Spells, -Costs, -CCGCode, -FYear, convert = T) %>%
-  group_by(Strategy, CCGCode, FYear, Highlighted) %>%
-  summarise(
-    Spells = sum(Spells, na.rm = TRUE)
-    ) %>%
-  filter(!is.na(Highlighted)) %>%
-  mutate(FUF = ifelse(Highlighted == 1,"First", "FollowUp")) %>%
-  select(-Highlighted) %>%
-  spread(FUF, Spells) %>%
-  mutate(FUFRatio =  FollowUp / First) %>%
-  filter(FYear == f_year) %>%
-  group_by(Strategy) %>%
-  summarise(
-    Average = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
-    , TopQuartile = quantile(FUFRatio, 0.25, na.rm = TRUE)
-    , TopDecile = quantile(FUFRatio, 0.1, na.rm = TRUE)
-    #, MaxFUFRatio = max(FUFRatio, na.rm = TRUE)
-    #, MinFUFRatio = min(FUFRatio, na.rm = TRUE)
-  ) 
-
-
-savingsAnyOneOPFUF <- opTrendFUF %>% 
-  filter(FYear == f_year, IsActiveCCG) %>%
-  left_join(spendFUF, by = "Strategy") %>%
-  select(-IsActiveCCG) %>%
-  left_join(opTopFUF, by = "Strategy") %>%
-  mutate(
-    SavingsIfAverage = Costs - (Average / FUFRatio) * Costs 
-    , SavingsIfTopQuartile = Costs - (TopQuartile / FUFRatio) * Costs
-    , SavingsIfTopDecile = Costs - (TopDecile / FUFRatio) * Costs
-  ) %>%
-  ungroup() %>%
-  select(Strategy, SavingsIfAverage, SavingsIfTopQuartile, SavingsIfTopDecile) %>%
-  mutate(
-    SavingsIfAverage = ifelse(SavingsIfAverage < 0, 0, SavingsIfAverage)
-    , SavingsIfTopQuartile = ifelse(SavingsIfTopQuartile < 0, 0, SavingsIfTopQuartile)
-    , SavingsIfTopDecile = ifelse(SavingsIfTopDecile < 0, 0, SavingsIfTopDecile)
-  )
-
-
-opSignificanceFUF <- opFUFFunnelPoints %>% 
-  filter(CCGCode == active_ccg) %>%
-  left_join(opFunnelFunnelsFUF, by = "Strategy") %>%
-  group_by(Strategy) %>%
-  mutate(Test = First - Denominator
-         , AbsTest = abs(Test)
-         , TestRank = rank(AbsTest, ties.method = "first")) %>%
-  filter(TestRank == 1) %>%
-  mutate(Significance = ifelse(FUFRatio > TwoSigmaHigher, "High", 
-                      ifelse(FUFRatio < TwoSigmaLower, "Low", "Not Significant"))) %>%
-  select(CCGCode, Strategy, Significance) 
-
-  opRocFUF2 <- opRocFUF %>%
-    filter(CCGCode == active_ccg) %>% ungroup() %>% select(-CCGCode)
-  opRocFunnelsFUF2 <- opRocFunnelsFUF %>% select(-FYear)
-
-opSignificanceFUF <- opSignificanceFUF %>%
-  left_join(opRocFUF2, by = "Strategy") %>%
-  left_join(opRocFunnelsFUF2, by = "Strategy") %>%
-  mutate(Test = FirstInBaseYear - Denominator
-         , AbsTest = abs(Test)
-         , TestRank = rank(AbsTest, ties.method = "first")) %>%
-  filter(TestRank == 1) %>%
-  mutate(
-    RocSignificance = ifelse(RateOfChange > TwoSigmaHigher, "High"
-                        , ifelse(RateOfChange < TwoSigmaLower, "Low", "Not Significant"))
-    , ReviewNumber = ifelse(Significance == "Low", 1
-                     , ifelse(Significance == "Not Significant", 2
-                      , ifelse(Significance == "High", 3))) + 
-                    ifelse(RocSignificance == "Low", 0
-                     , ifelse(RocSignificance == "Not Significant", 3
-                      , ifelse(RocSignificance == "High", 6)))
-    , ReviewGroup = ifelse(ReviewNumber <= 3, "Review"
-                     , ifelse(ReviewNumber == 8, "Close monitoring"
-                      , ifelse(ReviewNumber %in% c(4, 5, 7), "Background monitoring", "Explore")))
-  ) %>%
-  select(CCGCode, Strategy, Significance, RocSignificance, ReviewNumber, ReviewGroup) 
-
-
-summaryOutputOPFUF <- 
-  opTrendFUF %>%
-  filter(FYear == f_year & IsActiveCCG) %>%
-  select(-IsActiveCCG) %>%
-  left_join(opTopFUF, by = "Strategy") %>%
-  left_join(savingsAnyOneOPFUF, by = "Strategy") %>%
-  left_join(opSignificanceFUF, by = "Strategy") %>%
-  left_join(activeStrategies, by = "Strategy") %>%
-  left_join(spendFUF, by = c("Strategy", "CCGCode")) %>%
-  mutate(
-    SpellsRounded = round(FollowUp, -0.5) #FollowUp_Rounded
-    , Costs_Rounded = round(Costs, -3)
-    , Average_SavingsIf_Rounded = roundTo(SavingsIfAverage, 1000)
-    , TopQuartile_SavingsIf_Rounded = roundTo(SavingsIfTopQuartile, 1000)
-    , TopDecile_SavingsIf_Rounded = roundTo(SavingsIfTopDecile, 1000)
-  ) %>%
-  ungroup() %>%
-  select(-IsActiveCCG)
+# totalActivityOPFUF <- opSmallFUF %>% total_activity
+# 
+# spendFUF <- opCostFUF %>%
+#   filter(CCGCode == active_ccg) %>%
+#   select(Strategy, Costs)
+# 
+# opTopFUF <- opSmallFUF %>%
+#   select(-DSCosts, -DSCostsVar, -DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
+#   gather(Strategy, Highlighted, -Spells, -Costs, -CCGCode, -FYear, convert = T) %>%
+#   group_by(Strategy, CCGCode, FYear, Highlighted) %>%
+#   summarise(
+#     Spells = sum(Spells, na.rm = TRUE)
+#     ) %>%
+#   filter(!is.na(Highlighted)) %>%
+#   mutate(FUF = ifelse(Highlighted == 1,"First", "FollowUp")) %>%
+#   select(-Highlighted) %>%
+#   spread(FUF, Spells) %>%
+#   mutate(FUFRatio =  FollowUp / First) %>%
+#   filter(FYear == f_year) %>%
+#   group_by(Strategy) %>%
+#   summarise(
+#     Average = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
+#     , TopQuartile = quantile(FUFRatio, 0.25, na.rm = TRUE)
+#     , TopDecile = quantile(FUFRatio, 0.1, na.rm = TRUE)
+#     #, MaxFUFRatio = max(FUFRatio, na.rm = TRUE)
+#     #, MinFUFRatio = min(FUFRatio, na.rm = TRUE)
+#   ) 
+# 
+# 
+# savingsAnyOneOPFUF <- opTrendFUF %>% 
+#   filter(FYear == f_year, IsActiveCCG) %>%
+#   left_join(spendFUF, by = "Strategy") %>%
+#   select(-IsActiveCCG) %>%
+#   left_join(opTopFUF, by = "Strategy") %>%
+#   mutate(
+#     SavingsIfAverage = Costs - (Average / FUFRatio) * Costs 
+#     , SavingsIfTopQuartile = Costs - (TopQuartile / FUFRatio) * Costs
+#     , SavingsIfTopDecile = Costs - (TopDecile / FUFRatio) * Costs
+#   ) %>%
+#   ungroup() %>%
+#   select(Strategy, SavingsIfAverage, SavingsIfTopQuartile, SavingsIfTopDecile) %>%
+#   mutate(
+#     SavingsIfAverage = ifelse(SavingsIfAverage < 0, 0, SavingsIfAverage)
+#     , SavingsIfTopQuartile = ifelse(SavingsIfTopQuartile < 0, 0, SavingsIfTopQuartile)
+#     , SavingsIfTopDecile = ifelse(SavingsIfTopDecile < 0, 0, SavingsIfTopDecile)
+#   )
+# 
+# 
+# opSignificanceFUF <- opFUFFunnelPoints %>% 
+#   filter(CCGCode == active_ccg) %>%
+#   left_join(opFunnelFunnelsFUF, by = "Strategy") %>%
+#   group_by(Strategy) %>%
+#   mutate(Test = First - Denominator
+#          , AbsTest = abs(Test)
+#          , TestRank = rank(AbsTest, ties.method = "first")) %>%
+#   filter(TestRank == 1) %>%
+#   mutate(Significance = ifelse(FUFRatio > TwoSigmaHigher, "High", 
+#                       ifelse(FUFRatio < TwoSigmaLower, "Low", "Not Significant"))) %>%
+#   select(CCGCode, Strategy, Significance) 
+# 
+#   opRocFUF2 <- opRocFUF %>%
+#     filter(CCGCode == active_ccg) %>% ungroup() %>% select(-CCGCode)
+#   opRocFunnelsFUF2 <- opRocFunnelsFUF %>% select(-FYear)
+# 
+# opSignificanceFUF <- opSignificanceFUF %>%
+#   left_join(opRocFUF2, by = "Strategy") %>%
+#   left_join(opRocFunnelsFUF2, by = "Strategy") %>%
+#   mutate(Test = FirstInBaseYear - Denominator
+#          , AbsTest = abs(Test)
+#          , TestRank = rank(AbsTest, ties.method = "first")) %>%
+#   filter(TestRank == 1) %>%
+#   mutate(
+#     RocSignificance = ifelse(RateOfChange > TwoSigmaHigher, "High"
+#                         , ifelse(RateOfChange < TwoSigmaLower, "Low", "Not Significant"))
+#     , ReviewNumber = ifelse(Significance == "Low", 1
+#                      , ifelse(Significance == "Not Significant", 2
+#                       , ifelse(Significance == "High", 3))) + 
+#                     ifelse(RocSignificance == "Low", 0
+#                      , ifelse(RocSignificance == "Not Significant", 3
+#                       , ifelse(RocSignificance == "High", 6)))
+#     , ReviewGroup = ifelse(ReviewNumber <= 3, "Review"
+#                      , ifelse(ReviewNumber == 8, "Close monitoring"
+#                       , ifelse(ReviewNumber %in% c(4, 5, 7), "Background monitoring", "Explore")))
+#   ) %>%
+#   select(CCGCode, Strategy, Significance, RocSignificance, ReviewNumber, ReviewGroup) 
+# 
+# 
+# summaryOutputOPFUF <- 
+#   opTrendFUF %>%
+#   filter(FYear == f_year & IsActiveCCG) %>%
+#   select(-IsActiveCCG) %>%
+#   left_join(opTopFUF, by = "Strategy") %>%
+#   left_join(savingsAnyOneOPFUF, by = "Strategy") %>%
+#   left_join(opSignificanceFUF, by = "Strategy") %>%
+#   left_join(activeStrategies, by = "Strategy") %>%
+#   left_join(spendFUF, by = c("Strategy", "CCGCode")) %>%
+#   mutate(
+#     SpellsRounded = round(FollowUp, -0.5) #FollowUp_Rounded
+#     , Costs_Rounded = round(Costs, -3)
+#     , Average_SavingsIf_Rounded = roundTo(SavingsIfAverage, 1000)
+#     , TopQuartile_SavingsIf_Rounded = roundTo(SavingsIfTopQuartile, 1000)
+#     , TopDecile_SavingsIf_Rounded = roundTo(SavingsIfTopDecile, 1000)
+#   ) %>%
+#   ungroup() %>%
+#   select(-IsActiveCCG)
 
 
 # write.table(summaryOutputOP, "Data/R_SummaryOutputOP.csv", sep = ",", row.names = FALSE)
@@ -1807,9 +1809,6 @@ summaryOutputOPFUF <-
 #   filter(NeighbourCCGCode != activeCCG) %>%
 #   select(ClosenessRank, NeighbourCCGCode, CCGDescription)
 
-comparatorsOut <- comparatorCCGs2 %>%
-  filter(CCGCode != active_ccg) %>%
-  select(CCGCode, CCGDescription)
 # messes with the comparators table in Excel
 
 # write.table(comparatorsOut, "Data/R_ComparatorCCGs.csv", sep = ",", row.names = FALSE)

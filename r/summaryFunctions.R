@@ -5,12 +5,19 @@ total_activity <- . %>%
     , Costs = sum(Costs, na.rm = TRUE)
   )
 
-savings_any_one <- . %>%
-  ungroup() %>%
-  filter(FYear == rocParameters$To) %>%
-  select(-FYear, -TypeNumber, -Low, -High) %>%
-  filter(Type != "MinDSRate") %>%
-  spread(Type, DSRate)
+savings_any_one <- . %>% 
+  ungroup(.) %>% 
+  filter(., FYear == f_year) %>% 
+  select(., -FYear, -TypeNumber, -Low, -High) %>% 
+  filter(., Type != "MinDSRate") %>% 
+  spread(., Type, DSRate)
+
+# savings_any_one <- . %>%
+#   ungroup() %>%
+#   filter(FYear == rocParameters$To) %>%
+#   select(-FYear, -TypeNumber, -Low, -High) %>%
+#   filter(Type != "MinDSRate") %>%
+#   spread(Type, DSRate)
 
 significance_summary <- function(funnelPoints, funnelFunnels, rocPoints, rocFunnels){
   rocPoints <- rocPoints %>%
