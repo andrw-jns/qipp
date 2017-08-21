@@ -153,10 +153,9 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                     FYearIntToChar(FYear), 
                     get(quote_y),
                     group = 1
-                    , alpha =0.8
                   )
                   # ,linetype = "longdash"
-                  #, alpha = 0.4
+                  , alpha = 0.8
     ) 
   } else {
     p  + geom_line(data = comparator_df,
@@ -164,9 +163,9 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                      FYearIntToChar(FYear), 
                      get(quote_y),
                      group = 1
-                     , alpha =0.8
                    )
                    # ,linetype = "longdash"
+                   , alpha =0.8
     )
   }
 }
