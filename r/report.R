@@ -8,7 +8,6 @@
 # 888   T88b 8888888888 888         "Y88888P"  888   T88b    888  
 
 
-
 # notes --------------------------------------------------------------
 
 # MAY OCCASIONALLY BE USEFUL TO SOFT WRAP TEXT IN THIS SCRIPT: 
@@ -25,7 +24,7 @@ library(stringr)
 
 setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
 
-qipp_report <- pptx(title = "qipp_one", template = "su_brand3.pptx")
+qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
 # slide.layouts(qipp_report)
 # slide.layouts(qipp_report, "qipp_body")
@@ -66,8 +65,11 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_ip_fun[[i]])) %>% 
-    addPlot(function() plot(plot_ip_trend[[i]])) %>% 
+    addPlot(function() plot(plot_ip_fun[[i]], height = 0.5, width = 0.5)) %>% 
+    addPlot(function() plot(plot_ip_trend[[i]])) %>%
+    # addPlot(function() plot(x, cex = 0.1
+                            #, cex.lab = .1
+                            #, cex.main = .1))%>% 
     #addPlot(function() plot(plot_ip_cost[[i]]))
     # %>%
     addPlot(function() plot(plot_ip_roc[[i]])) # %>% 
@@ -82,10 +84,15 @@ for(i in seq(ipPlottableStrategies$Strategy)){
 }
 
 
+
 # TEST write document -----------------------------------------------------
 filename <- "qipp_example_v5.pptx" # the document to produce
 # TEST write qipp_report 
 writeDoc(qipp_report, filename)
+# plot(x)
+# windows.options(height = 1 , width =1, pointsize = 0.2)
+# par("cin")
+
 
 
 
@@ -203,3 +210,24 @@ writeDoc(qipp_report, filename)
 
 
 
+
+
+# test ---------------------------------------------------------------
+
+# 
+# setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
+# 
+# qipp_report <- pptx(title = "qipp_one", template = "Presentation1.pptx")
+# slide.layouts(qipp_report, "Two Content")
+# 
+# qipp_report <- addSlide(qipp_report, "Two Content") %>% 
+#   #addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+#   #addPlot(function() plot(plot_ip_fun[[i]], height = 0.5, width = 0.5)) %>% 
+#   #addPlot(function() plot(plot_ip_trend[[i]])) %>%
+#   addPlot(function() plot(x, cex = 0.1
+#                           , cex.lab = .1
+#                           , cex.main = .1)) %>% 
+#   addPlot(function() plot(x, cex = 0.1
+#                           , cex.lab = .1
+#                           , cex.main = .1))
+# 

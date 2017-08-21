@@ -14,13 +14,13 @@
 
 # Packages ----------------------------------------------------------------
 
-library(ggrepel)
 library(readxl)
 library(scales, warn.conflicts = FALSE)
 library(testthat)
 library(extrafont) # for theme_strategy.
 library(stringr)
 library(tidyverse)
+library(ggrepel)
 
 # Parameters 1--------------------------------------------------------
 
@@ -211,19 +211,19 @@ plot_fun   <- function(df_funnels, df_units){
                        , yend = target))+
     #geom_hline(aes(yintercept = target)) +
     geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
-    geom_text_repel(data = df_units
-      , aes(x = DerivedPopulation
-            , y = DSRate
-            , label = ccg_label
-            )
-      , alpha = 0.5
-      
-      #, fontface = 'bold'
-      #, size =4,
-      # box.padding = unit(0.25, "lines"),
-      # point.padding = unit(0.5, "lines")
-      # , nudge_y = -0.00050
-      ) +
+    # geom_text_repel(data = df_units
+    #   , aes(x = DerivedPopulation
+    #         , y = DSRate
+    #         , label = ccg_label
+    #        )
+    #   , alpha = 0.5
+    #   
+    #   #, fontface = 'bold'
+    #   , size = 3
+    #   # box.padding = unit(0.25, "lines"),
+    #   # point.padding = unit(0.5, "lines")
+    #   # , nudge_y = -0.00050
+    #   ) +
     scale_x_continuous(labels = scales::comma
                        #, limits = c(0, 1000000) # forced x to 1M
     )+
@@ -241,7 +241,7 @@ plot_fun   <- function(df_funnels, df_units){
 
 }
 
-plot_fun(plotFunnels, plotUnits)
+x <- plot_fun(plotFunnels, plotUnits)
 
 convert_dsr_100k <- function(df) {
   if("target" %in% colnames(df)){
@@ -270,18 +270,18 @@ plot_roc <- function(funnel_df, points_df, summary_df){
             y = RateOfChange, colour = IsActiveCCG)
       , size = 3
     )+
-    geom_text_repel(data = points_df
-                    , aes(x = SpellsInBaseYear,
-                          y = RateOfChange
-                          , label = ccg_label
-                    )
-                    , alpha = 0.5
-                    #, fontface = 'bold'
-                    , size = 2
-                    # box.padding = unit(0.25, "lines"),
-                    # point.padding = unit(0.5, "lines")
-                    # , nudge_y = -0.00050
-    ) +
+    # geom_text_repel(data = points_df
+    #                 , aes(x = SpellsInBaseYear,
+    #                       y = RateOfChange
+    #                       , label = ccg_label
+    #                 )
+    #                 , alpha = 0.5
+    #                 #, fontface = 'bold'
+    #                 , size = 2
+    #                 # box.padding = unit(0.25, "lines"),
+    #                 # point.padding = unit(0.5, "lines")
+    #                 # , nudge_y = -0.00050
+    # ) +
     scale_x_continuous(
       labels = scales::comma
       , limits = c(summary_df$NewMinSpells, summary_df$NewMaxSpells)) +
