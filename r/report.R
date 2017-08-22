@@ -32,32 +32,32 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 # 0: TITLE --------------------------------------------------------------
 
 
-qipp_report <- addSlide(qipp_report, "title" ) %>% 
-  addTitle(value = "Indentifying potential QIPP opportunities") %>% 
-  addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
+# qipp_report <- addSlide(qipp_report, "title" ) %>% 
+#   addTitle(value = "Identifying potential QIPP opportunities") %>% 
+#   addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
 
 # 1: ABOUT -----------------------------------------------------
-
-qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("About the Strategy Unit") %>% 
-  addParagraph("The Strategy Unit is a team of experts who are committed to helping you to improve health and care in ever more challenging circumstances. Hosted by the Midlands and Lancashire Commissioning Support Unit, we operate autonomously as a free-standing health and care consultancy business.\n\nOur team offers advanced technical skills combined with practically grounded strategic and operational experience. We specialise in analysis; evidence review; strategic financial planning; policy and strategy development; consensus building; programme design, assurance and implementation; capacity building; evaluation; and trusted advisor support for senior leaders.\n\nWe welcome the opportunity to discuss your needs and challenges at any time. If we think we can help you, we will gladly develop a detailed proposal. If we think we can't, then we will tell you, and explain why, helping you to find an alternative if needed.")
-  # adding a new paragraph here creates block 2
+# 
+# qipp_report <- addSlide(qipp_report, "contentA") %>%
+#   addTitle("About the Strategy Unit") %>% 
+#   addParagraph("The Strategy Unit is a team of experts who are committed to helping you to improve health and care in ever more challenging circumstances. Hosted by the Midlands and Lancashire Commissioning Support Unit, we operate autonomously as a free-standing health and care consultancy business.\n\nOur team offers advanced technical skills combined with practically grounded strategic and operational experience. We specialise in analysis; evidence review; strategic financial planning; policy and strategy development; consensus building; programme design, assurance and implementation; capacity building; evaluation; and trusted advisor support for senior leaders.\n\nWe welcome the opportunity to discuss your needs and challenges at any time. If we think we can help you, we will gladly develop a detailed proposal. If we think we can't, then we will tell you, and explain why, helping you to find an alternative if needed.")
+#   # adding a new paragraph here creates block 2
 
 # 2: CONTENTS --------------------------------------------------
 
-qipp_report <- addSlide(qipp_report, "table_of_contents") %>% 
-  addTitle("Contents") %>% 
-  addParagraph("Purpose of this report\nSubsets of Activity\nData Sources\nInterpreting Funnel Plots") %>% 
-  # adding a new paragraph here creates block 2
-  addParagraph("1\n7\n11\n24", par.properties = parProperties(text.align = "right")) %>% 
-  addParagraph("Purpose of this report\nSubsets of Activity\nData Sources\nInterpreting Funnel Plots") %>% 
-  addParagraph("1\n7\n11\n24")
+# qipp_report <- addSlide(qipp_report, "table_of_contents") %>% 
+#   addTitle("Contents") %>% 
+#   addParagraph("Purpose of this report\nSubsets of Activity\nData Sources\nInterpreting Funnel Plots") %>% 
+#   # adding a new paragraph here creates block 2
+#   addParagraph("1\n7\n11\n24", par.properties = parProperties(text.align = "right")) %>% 
+#   addParagraph("Purpose of this report\nSubsets of Activity\nData Sources\nInterpreting Funnel Plots") %>% 
+#   addParagraph("1\n7\n11\n24")
 
 # 3: TITLE IP ---------------------------------------------------------
-
-qipp_report <- addSlide(qipp_report, "poster") %>%
-  addImage("qipp_photo_inpatient.png") %>% 
-  addTitle("Inpatients") 
+# 
+# qipp_report <- addSlide(qipp_report, "poster") %>%
+#   addImage("qipp_photo_inpatient.png") %>% 
+#   addTitle("Inpatients") 
 
 # 3: BODY IP ---------------------------------------------------------
 
@@ -86,14 +86,12 @@ for(i in seq(ipPlottableStrategies$Strategy)){
 
 
 # TEST write document -----------------------------------------------------
-filename <- "qipp_example_v5.pptx" # the document to produce
-# TEST write qipp_report 
-writeDoc(qipp_report, filename)
-# plot(x)
-# windows.options(height = 1 , width =1, pointsize = 0.2)
-# par("cin")
-
-
+# filename <- "qipp_example_v5.pptx" # the document to produce
+# # TEST write qipp_report 
+# writeDoc(qipp_report, filename)
+# # plot(x)
+# # windows.options(height = 1 , width =1, pointsize = 0.2)
+# # par("cin")
 
 
 # 4: TITLE AE ---------------------------------------------------------
@@ -170,11 +168,11 @@ for(i in seq(opPlottableStrategies$Strategy)){
 #   
 
 # slidex -------------------------------------------------------------
-qipp_report <- addSlide(qipp_report, "contentB") %>% 
-  addTitle("Genesis") %>% 
-  addParagraph("And the earth was without form and void;\nand darkness was upon the face of the deep.") %>% 
-  # adding a new paragraph here creates block 2
-  addParagraph("And the earth was without form and void;")
+# qipp_report <- addSlide(qipp_report, "contentB") %>% 
+#   addTitle("Genesis") %>% 
+#   addParagraph("And the earth was without form and void;\nand darkness was upon the face of the deep.") %>% 
+#   # adding a new paragraph here creates block 2
+#   addParagraph("And the earth was without form and void;")
 
 # contact -------------------------------------------------------------
 
@@ -204,7 +202,7 @@ qipp_report <- addSlide(qipp_report, "contact") %>%
 
 
 # write document -----------------------------------------------------
-filename <- "qipp_example_v5.pptx" # the document to produce
+filename <- "qipp_example_v6.pptx" # the document to produce
 # write qipp_report 
 writeDoc(qipp_report, filename)
 

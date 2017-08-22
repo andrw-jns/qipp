@@ -142,7 +142,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                         str_sub(rocParameters$From ,5, 6), " to "
                         , str_sub(rocParameters$To ,1, 4), "/",
                         str_sub(rocParameters$To ,5, 6))
-         , subtitle = "Vertical Axis: Directly Standardised Rate per 100k population")+
+         , subtitle = "Directly Standardised Rate per 100k population [Vertical Axis]")+
     scale_x_discrete(expand = c(0.025,0.025))
 
   if(comparator == T){
@@ -233,8 +233,8 @@ plot_fun   <- function(df_funnels, df_units){
           , plot.subtitle = element_text(face = "italic"))+
     labs(
       x = paste0("Standardised population ", FYearIntToChar(f_year))
-      , subtitle = paste0("Vertical axis: DSR per 100k population")  # , scales::comma(funnelParameters$RatePerPeople)," population")
-      , title = paste0("Directly Standardised Rate ", FYearIntToChar(f_year))
+      , subtitle = paste0("DSR per 100k population [Vertical Axis]")  # , scales::comma(funnelParameters$RatePerPeople)," population")
+      , title = paste0("Directly Standardised Rate, ", FYearIntToChar(f_year))
     )+
     scale_color_manual(values = c("grey70", '#c52828'))
 
@@ -242,7 +242,7 @@ plot_fun   <- function(df_funnels, df_units){
 
 x <- plot_fun(plotFunnels, plotUnits)
 
-convert_dsr_100k <- function(df) {
+convert_dsr_100k <- function(df) { # For DSR funnel
   if("target" %in% colnames(df)){
     mutate(df, target  = target*100000
            , fnlLow  = fnlLow*100000
@@ -250,7 +250,7 @@ convert_dsr_100k <- function(df) {
   } else {
     mutate(df, DSRate = DSRate*100000)
   }
-} # For funnel plots
+} 
 
 plot_roc <- function(funnel_df, points_df, summary_df){
   
@@ -323,7 +323,7 @@ plot_roc <- function(funnel_df, points_df, summary_df){
           panel.background = element_rect(fill = "#E6E6FA"))+
     labs(
       # x = paste0("Rate of Change between ", FYearIntToChar(f_year))
-      subtitle = "Vertical Axis: Percentage change in Directly Standardised Rate"
+      subtitle = "Percentage change in Directly Standardised Rate [Vertical Axis]"
       #, title = paste0("Ratio of Follow-ups to First Appointments ", FYearIntToChar(f_year))
     )+
     scale_color_manual(values = c("grey70", '#c52828'))
@@ -1674,7 +1674,7 @@ rm(
 
 # Summary tables -------------------------------------------------------------
 setwd(baseDir)
-
+"CAREFUL IF RE-RUNNING THE FUNNEL PLOTS AFTERWARD"
 "These required for summary tables"
 ipFunnelPoints    <- ip    %>% filter(FYear == f_year) 
 opFunnelPoints    <- op    %>% filter(FYear == f_year)
@@ -1715,6 +1715,36 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
     ungroup() %>%
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
+
+# Savings any one plot -----------------------------------------------
+
+savingsIP <-  summaryOutputIP %>%
+  ungroup() %>% 
+  select(Strategy, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded, TopDecile_SavingsIf_Rounded) %>% 
+  rename(average = Average_SavingsIf_Rounded 
+         , quartile = TopQuartile_SavingsIf_Rounded 
+         , decile = TopDecile_SavingsIf_Rounded 
+  ) %>% 
+  filter(Strategy != "Readmissions_v1", Strategy != "Canc_Op_v1") %>% 
+  gather(level, saving, 2:4)
+
+savingsIP$Strategy <-  savingsIP$Strategy %>% 
+    str_replace_all("v[0-9]?", "") %>%
+    str_replace_all("\\_"," ") %>%
+    str_trim()
+
+
+  ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+
+  geom_bar(position = "stack", stat = "identity", colour = "black")+
+  coord_flip()+
+  theme_strategy()+
+  scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6, digits = 1))+
+  theme(legend.title = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "bottom")+
+  scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+                    , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+  ylab("Savings (£)")
 
 
 # A&E ---------------------------------------------------------------------
