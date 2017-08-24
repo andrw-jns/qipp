@@ -63,7 +63,7 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
 for(i in seq(ipPlottableStrategies$Strategy)){
   
-  qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
+  qipp_report <- addSlide(qipp_report, "new_body") %>% 
     addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
     addPlot(function() plot(plot_ip_fun[[i]], height = 0.5, width = 0.5)) %>% 
     addPlot(function() plot(plot_ip_trend[[i]])) %>%
@@ -86,9 +86,10 @@ for(i in seq(ipPlottableStrategies$Strategy)){
 
 
 # TEST write document -----------------------------------------------------
-# filename <- "qipp_example_v5.pptx" # the document to produce
+ filename <- "qipp_size_v8.pptx" # the document to produce
 # # TEST write qipp_report 
-# writeDoc(qipp_report, filename)
+writeDoc(qipp_report, filename)
+
 # # plot(x)
 # # windows.options(height = 1 , width =1, pointsize = 0.2)
 # # par("cin")

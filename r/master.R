@@ -133,7 +133,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
     ylim(0, 1.2*max(active_y, comparator_y))+
     theme_strategy()+
     theme(panel.background = element_rect(fill = "white"),
-          plot.subtitle = element_text(face = "italic"),
+          # plot.subtitle = element_text(face = "italic"),
           axis.title = element_blank())+
     labs(y = paste0("DSR per ",
                     scales::comma(funnelParameters$RatePerPeople)," population"),
@@ -143,7 +143,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                         , str_sub(rocParameters$To ,1, 4), "/",
                         str_sub(rocParameters$To ,5, 6))
          , subtitle = "Directly Standardised Rate per 100k population [Vertical Axis]")+
-    scale_x_discrete(expand = c(0.025,0.025))
+    scale_x_discrete(expand = c(0.0,0.0))
 
   if(comparator == T){
     
@@ -176,7 +176,7 @@ plot_trend(plotTrendActive,
            plotTrendActive$DSRate,
            plotTrendComparators$DSRate)
 
-plot_cost  <- function(df){
+# plot_cost  <- function(df){
   ggplot(df) +
     geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
     geom_text(
@@ -230,7 +230,8 @@ plot_fun   <- function(df_funnels, df_units){
     theme_strategy()+
     theme(legend.position = "none"
           , axis.title.y = element_blank()
-          , plot.subtitle = element_text(face = "italic"))+
+          #, plot.subtitle = element_text(face = "italic")
+          )+
     labs(
       x = paste0("Standardised population ", FYearIntToChar(f_year))
       , subtitle = paste0("DSR per 100k population [Vertical Axis]")  # , scales::comma(funnelParameters$RatePerPeople)," population")
@@ -319,8 +320,9 @@ plot_roc <- function(funnel_df, points_df, summary_df){
     theme_strategy()+
     theme(legend.position = "none",
           axis.title.y  = element_blank(),
-          plot.subtitle = element_text(face = "italic"),
-          panel.background = element_rect(fill = "#E6E6FA"))+
+          # plot.subtitle = element_text(face = "italic"),
+          # panel.background = element_rect(fill = "#E6E6FA")
+          )+
     labs(
       # x = paste0("Rate of Change between ", FYearIntToChar(f_year))
       subtitle = "Percentage change in Directly Standardised Rate [Vertical Axis]"

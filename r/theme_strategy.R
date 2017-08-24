@@ -1,5 +1,5 @@
 
-theme_strategy <- function (base_size = 11, base_family = "Segoe UI Light") {
+theme_strategy <- function (base_size = 8, base_family = "Segoe UI") {
   
   half_line <- base_size/2
   theme(line = element_line(colour = "black", size = 0.5, linetype = 1, 
@@ -46,8 +46,8 @@ theme_strategy <- function (base_size = 11, base_family = "Segoe UI Light") {
                                      vjust = 1, margin = margin(b = half_line * 0.9)), 
         plot.caption = element_text(size = rel(0.9), hjust = 1, 
                                     vjust = 1, margin = margin(t = half_line * 0.9)), 
-        plot.margin = margin(half_line, half_line, half_line, 
-                             half_line), complete = TRUE)
+        plot.margin = margin(half_line*4, half_line*4, half_line*4, 
+                             half_line*4), complete = TRUE)
 }
 
 
