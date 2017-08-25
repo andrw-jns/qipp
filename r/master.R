@@ -79,6 +79,21 @@ trendParameters <- tibble(
   )
 trendCV <- qnorm((1 - trendParameters$Significance)/2, lower.tail = FALSE)
 
+label_fun <- tibble(
+  x = Inf
+  , y = Inf
+  , label = paste(
+    "Standardised population 2016/17"
+  )
+)
+
+label_roc <- tibble(
+  DerivedPopulation = Inf
+  , DSRate = Inf
+  , label = paste(
+    "Standardised population 2016/17"
+  )
+)
 
 # Functions ---------------------------------------------------------------
 "Careful with summary functions <- many old parameters exist here"
@@ -176,7 +191,7 @@ plot_trend(plotTrendActive,
            plotTrendActive$DSRate,
            plotTrendComparators$DSRate)
 
-# plot_cost  <- function(df){
+plot_cost  <- function(df){
   ggplot(df) +
     geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
     geom_text(
@@ -210,6 +225,14 @@ plot_fun   <- function(df_funnels, df_units){
                        , yend = target))+
     #geom_hline(aes(yintercept = target)) +
     geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
+    geom_text(data = df_funnels
+              , aes(x = max(n), y = min(fnlLow), label = "Standardised population 2016/17")
+              , vjust = "bottom"
+              , hjust = "right"
+              , family = "Segoe UI"
+              , size  = 3
+              , fontface  = "plain"
+               )+
     # geom_text_repel(data = df_units
     #   , aes(x = DerivedPopulation
     #         , y = DSRate
@@ -229,7 +252,7 @@ plot_fun   <- function(df_funnels, df_units){
     scale_y_continuous(labels = scales::comma)+
     theme_strategy()+
     theme(legend.position = "none"
-          , axis.title.y = element_blank()
+          , axis.title = element_blank()
           #, plot.subtitle = element_text(face = "italic")
           )+
     labs(
