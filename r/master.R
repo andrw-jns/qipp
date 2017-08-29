@@ -1788,7 +1788,7 @@ geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0
   scale_fill_manual(
     name = "line Colour"
     ,values=c(myline1 = "lightblue", myline2 = "lightblue")
-                    , labels=c("Savings if Top Quartile", "Savings if Average"))+
+                    , labels=c("Savings if Average", "Savings if Top Quartile"))+
   # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
   ylab("Potential savings (millions of pounds)")+
