@@ -11,6 +11,7 @@
 "See https://stackoverflow.com/questions/1279003/specify-width-and-height-of-plot"
 # ***** --------------------------------------------------------------
 
+!Get the list of CCGs on to C drive!
 
 # Packages ----------------------------------------------------------------
 
@@ -506,7 +507,7 @@ rm(filesToLoad, opDataNames)
 
 
 # List of CCGs
-setwd(paste0(ifelse(inOffice, "S:/Commissioning Intelligence And Strategy/Strategic Analytics/", "change file path"), "Jonathan Spencer/FrequentFiles/Classification/Organisations/CCG"))
+# setwd(paste0(ifelse(inOffice, "S:/Commissioning Intelligence And Strategy/Strategic Analytics/", "change file path"), "Jonathan Spencer/FrequentFiles/Classification/Organisations/CCG"))
 
 allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
   filter(CCGActiveDate <= "2014-04-01") %>% 
@@ -516,7 +517,7 @@ allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
   
 
 
-setwd(paste0(baseDir, "Data"))
+#setwd(paste0(baseDir, "Data"))
 # CCG populations for cost charts
 # AJ - did manually so no need to remove rows as below for powershell
 # ccgPopulation <- read_csv("CCGPopulation.csv", col_names = FALSE, skip = 2)
@@ -531,7 +532,7 @@ ccgPopulation <- read_csv("CCGPopulation.csv")
 
 # *****chckpnt**** -----------------------------------------------------------------
 # Rerun from here if running multiple packs
-setwd(paste0(baseDir, "data"))
+# setwd(paste0(baseDir, "data"))
 
 # CCG selections
 comparatorCCGs2 <- allCCGs %>%
@@ -1760,8 +1761,9 @@ savingsIP <-  summaryOutputIP %>%
          , quartile = TopQuartile_SavingsIf_Rounded 
          , decile = TopDecile_SavingsIf_Rounded 
   ) %>% 
-  filter(Strategy != "Readmissions_v1", Strategy != "Canc_Op_v1") %>% 
-  gather(level, saving, 2:4)
+  filter(Strategy != "Readmissions_v1", Strategy != "Canc_Op_v1") # %>% 
+  # gather(level, saving, 2:4)
+
 
 savingsIP$Strategy <-  savingsIP$Strategy %>% 
     str_replace_all("v[0-9]?", "") %>%
@@ -1769,17 +1771,28 @@ savingsIP$Strategy <-  savingsIP$Strategy %>%
     str_trim()
 
 
-  ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+
-  geom_bar(position = "stack", stat = "identity", colour = "black")+
+# so have multiple variables again.
+# error in stacked  bars! should not be stacked
+# ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
+ggplot(savingsIP, aes(reorder(Strategy, average), average))+
+geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+  # geom_bar(stat = "identity", position = "stack") +
   coord_flip()+
   theme_strategy()+
-  scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6, digits = 1))+
+  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1))+
+  # scale_y_continuous(labels = scales::comma_format())
   theme(legend.title = element_blank(),
         axis.title.y = element_blank(),
         legend.position = "bottom")+
-  scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
-                    , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-  ylab("Savings (£)")
+  scale_fill_manual(
+    name = "line Colour"
+    ,values=c(myline1 = "lightblue", myline2 = "lightblue")
+                    , labels=c("Savings if Top Quartile", "Savings if Average"))+
+  # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+  #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+  ylab("Potential savings (millions of pounds)")+
+  guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
 
 
 # A&E ---------------------------------------------------------------------
@@ -1946,3 +1959,26 @@ summaryOutputOP <- opSmall %>% summary_output(., savingsAnyOneOP, opSignificance
 cat("Ends")
 activeCCGInfo$CCGDescription
 
+
+
+# ADDITIONAL RATE COMPARISONS ----------------------------------------
+
+tmp_summary <- ipSmall %>%
+  filter(FYear == f_year) %>%
+  select(-FYear, -DSRateVar, -DSCosts, -DSCostsVar) %>%
+  gather(Strategy, Highlighted,  -Spells, -Costs, -DSRate, -CCGCode,  -CCGDescription, -ShortName, convert = T) %>% 
+  group_by(Strategy, CCGCode ,CCGDescription, ShortName, Highlighted) %>%
+  summarise_each(
+    funs(sum(., na.rm = TRUE))
+    , Spells, Costs, DSRate
+  ) %>%
+  filter(Highlighted == 1) %>%
+  select(-Highlighted) %>% 
+  filter(Strategy == "ACS_Acute_v3")
+
+# Binwidth calculated using the Freedman-Diaconis rule:
+# 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3))
+
+ggplot(tmp_summary, aes(DSRate))+
+  geom_histogram(binwidth = 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3)))+
+  geom_segment()
