@@ -1712,18 +1712,18 @@ rm(
 setwd(baseDir)
 "CAREFUL IF RE-RUNNING THE FUNNEL PLOTS AFTERWARD"
 "These required for summary tables"
-ipFunnelPoints    <- ip    %>% filter(FYear == f_year) 
-opFunnelPoints    <- op    %>% filter(FYear == f_year)
-aeFunnelPoints    <- ae    %>% filter(FYear == f_year)
-opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
+summ_ipFunnelPoints    <- ip    %>% filter(FYear == f_year) 
+summ_opFunnelPoints    <- op    %>% filter(FYear == f_year)
+summ_aeFunnelPoints    <- ae    %>% filter(FYear == f_year)
+summ_opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
 
-ipFunnelSummary <- ipFunnelPoints %>% funnel_summary
-aeFunnelSummary <- aeFunnelPoints %>% funnel_summary
-opFunnelSummary <- opFunnelPoints %>% funnel_summary
+summ_ipFunnelSummary <- summ_ipFunnelPoints %>% funnel_summary
+summ_aeFunnelSummary <- summ_aeFunnelPoints %>% funnel_summary
+summ_opFunnelSummary <- summ_opFunnelPoints %>% funnel_summary
 
-ipFunnelFunnels <- funnel_funnels(ipFunnelSummary, funnelParameters$Smoothness, personYears)
-aeFunnelFunnels <- funnel_funnels(aeFunnelSummary, funnelParameters$Smoothness, personYears)
-opFunnelFunnels <- funnel_funnels(opFunnelSummary, funnelParameters$Smoothness, personYears)
+summ_ipFunnelFunnels <- funnel_funnels(summ_ipFunnelSummary, funnelParameters$Smoothness, personYears)
+summ_aeFunnelFunnels <- funnel_funnels(summ_aeFunnelSummary, funnelParameters$Smoothness, personYears)
+summ_opFunnelFunnels <- funnel_funnels(summ_opFunnelSummary, funnelParameters$Smoothness, personYears)
 
 
 comparatorsOut <- comparatorCCGs2 %>%
@@ -1736,7 +1736,7 @@ comparatorsOut <- comparatorCCGs2 %>%
 totalActivityIP <- ipSmall %>% total_activity
 savingsAnyOneIP <- ipTrendComparators %>% savings_any_one
 
-ipSignificance <- significance_summary(ipFunnelPoints, ipFunnelFunnels, ipRoC, ipRoCFunnels)
+ipSignificance <- significance_summary(summ_ipFunnelPoints, summ_ipFunnelFunnels, ipRoC, ipRoCFunnels)
 
 summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance, totalActivityIP) %>%
   group_by(ReviewNumber, add = FALSE) %>%
@@ -1764,7 +1764,7 @@ savingsIP <-  summaryOutputIP %>%
   filter(Strategy != "Readmissions_v1", Strategy != "Canc_Op_v1") # %>% 
   # gather(level, saving, 2:4)
 
-
+# basic name adjust
 savingsIP$Strategy <-  savingsIP$Strategy %>% 
     str_replace_all("v[0-9]?", "") %>%
     str_replace_all("\\_"," ") %>%

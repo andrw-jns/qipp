@@ -16,6 +16,7 @@
 # EXTRA NOTES:
 # http://www.sthda.com/english/wiki/create-and-format-word-documents-using-r-software-and-reporters-package#add-plots-and-images
 
+
 # setup --------------------------------------------------------------
 # install.packages("ReporteRs")
 # library(tidyverse)
@@ -163,9 +164,13 @@ for(i in seq(opPlottableStrategies$Strategy)){
 #                                colors = ifelse(test_summary$RocSignificance == "Not Significant", "hotpink1", "grey"))
 # 
 # 
-# qipp_report <- addSlide(qipp_report, "contentA") %>%
-#   addTitle("Flextable: Proof of Concept") %>% 
-#   addFlexTable(test_flex)
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(tmp1)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(tmp2)
 #   
 
 # slidex -------------------------------------------------------------
@@ -203,10 +208,9 @@ qipp_report <- addSlide(qipp_report, "contact") %>%
 
 
 # write document -----------------------------------------------------
-filename <- "qipp_example_v6.pptx" # the document to produce
+filename <- "qipp_table.pptx" # the document to produce
 # write qipp_report 
 writeDoc(qipp_report, filename)
-
 
 
 
