@@ -1628,7 +1628,8 @@ qipp_save <- function(x, y){
          units    = "cm")
 }
 
-# Save IP ------------------------------------------------------------
+
+# IP
 
 for(i in seq_along(ipPlottableStrategies$Strategy)){
   
@@ -1640,26 +1641,37 @@ for(i in seq_along(ipPlottableStrategies$Strategy)){
   
   qipp_save(paste0(i, "_trend_", ipPlottableStrategies$Strategy[i], ".png"),
             plot_ip_trend[[i]])
-  }
+}
+
+
+# AE
+
+for(i in seq_along(aePlottableStrategies$Strategy)){
   
-  # ggsave(filename = paste0(i, "_fun_", ipPlottableStrategies$Strategy[i], ".png"),
-  #        plot     = plot_ip_fun[[i]],
-  #        width    = 9.5*1.414, # A4 ratio
-  #        height   = 9.5,
-  #        units    = "cm" )
+  qipp_save(paste0(i, "_fun_", aePlottableStrategies$Strategy[i], ".png"),
+            plot_ae_fun[[i]])
   
-  # ggsave(filename = paste0(i, "_roc_", ipPlottableStrategies$Strategy[i], ".png"),
-  #        plot     = plot_ip_roc[[i]],
-  #        width    = 9.5*1.414, # A4 ratio
-  #        height   = 9.5,
-  #        units    = "cm" )
-  # 
-  # ggsave(filename = paste0(i, "_trend_", ipPlottableStrategies$Strategy[i], ".png"),
-  #        plot     = plot_ip_trend[[i]],
-  #        width    = 9.5*1.414, # A4 ratio
-  #        height   = 9.5,
-  #        units    = "cm" )
+  qipp_save(paste0(i, "_roc_", aePlottableStrategies$Strategy[i], ".png"),
+            plot_ae_roc[[i]])
   
+  qipp_save(paste0(i, "_trend_", aePlottableStrategies$Strategy[i], ".png"),
+            plot_ae_trend[[i]])
+}
+
+# OP
+
+for(i in seq_along(opPlottableStrategies$Strategy)){
+  
+  qipp_save(paste0(i, "_fun_", opPlottableStrategies$Strategy[i], ".png"),
+            plot_op_fun[[i]])
+  
+  qipp_save(paste0(i, "_roc_", opPlottableStrategies$Strategy[i], ".png"),
+            plot_op_roc[[i]])
+  
+  qipp_save(paste0(i, "_trend_", opPlottableStrategies$Strategy[i], ".png"),
+            plot_op_trend[[i]])
+}
+
 
 
 # Experiment with purrr WALK
