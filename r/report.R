@@ -62,12 +62,17 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
 # 3: BODY IP ---------------------------------------------------------
 
+setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
+
+qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
+
+
 for(i in seq(ipPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body") %>% 
     addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_ip_fun[[i]], height = 0.5, width = 0.5)) %>% 
     addPlot(function() plot(plot_ip_trend[[i]])) %>%
+    addPlot(function() plot(plot_ip_fun[[i]])) %>% 
     # addPlot(function() plot(x, cex = 0.1
                             #, cex.lab = .1
                             #, cex.main = .1))%>% 
@@ -87,7 +92,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
 
 
 # TEST write document -----------------------------------------------------
- filename <- "qipp_size_v8.pptx" # the document to produce
+ filename <- "qipp_test8.pptx" # the document to produce
 # # TEST write qipp_report 
 writeDoc(qipp_report, filename)
 
@@ -109,8 +114,8 @@ for(i in seq(aePlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(noquote(str_replace_all(aePlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_ae_fun[[i]])) %>% 
     addPlot(function() plot(plot_ae_trend[[i]])) %>% 
+    addPlot(function() plot(plot_ae_fun[[i]])) %>% 
     addPlot(function() plot(plot_ae_roc[[i]])) 
 }
 
@@ -128,8 +133,8 @@ for(i in seq(opPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "qipp_body") %>% 
     addTitle(noquote(str_replace_all(opPlottableStrategies$StrategyDescription[i],"[:punct:]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
-    addPlot(function() plot(plot_op_fun[[i]])) %>% 
     addPlot(function() plot(plot_op_trend[[i]])) %>% 
+    addPlot(function() plot(plot_op_fun[[i]])) %>% 
     addPlot(function() plot(plot_op_roc[[i]]))
 }
 
@@ -144,7 +149,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
 
 
 
-# 6. EXAMPLE TABLE ---------------------------------------------------
+# 6. TABLE TEST---------------------------------------------------
 # 
 # test_summary <- summaryOutputIP %>% 
 #   group_by() %>% 
@@ -163,15 +168,24 @@ for(i in seq(opPlottableStrategies$Strategy)){
 #   setFlexTableBackgroundColors(j = 1, 
 #                                colors = ifelse(test_summary$RocSignificance == "Not Significant", "hotpink1", "grey"))
 # 
-# 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("Flextable: Proof of Concept") %>%
-  addFlexTable(tmp1)
+
+qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Flextable: Proof of Concept") %>%
-  addFlexTable(tmp2)
+  addFlexTable(flex_ip_summ)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(flex_ip_cost)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>% 
+  addTitle("Potential for Savings - Any One Group") %>%  # "ACS Vaccine Preventable Conditions"
+  addPlot(function() plot(plot_savings_ip)) 
 #   
+writeDoc(qipp_report, filename)
+
+slide.layouts(qipp_report, "new_body")
 
 # slidex -------------------------------------------------------------
 # qipp_report <- addSlide(qipp_report, "contentB") %>% 

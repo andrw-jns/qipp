@@ -11,7 +11,6 @@
 "See https://stackoverflow.com/questions/1279003/specify-width-and-height-of-plot"
 # ***** --------------------------------------------------------------
 
-!Get the list of CCGs on to C drive!
 
 # Packages ----------------------------------------------------------------
 
@@ -20,6 +19,7 @@ library(scales, warn.conflicts = FALSE)
 library(testthat)
 library(extrafont) # for theme_strategy.
 library(stringr)
+library(ReporteRs)
 library(tidyverse)
 library(ggrepel)
 
@@ -227,9 +227,9 @@ plot_fun   <- function(df_funnels, df_units){
     #geom_hline(aes(yintercept = target)) +
     geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
     geom_text(data = df_funnels
-              , aes(x = max(n), y = min(fnlLow), label = "Standardised population 2016/17")
-              , vjust = "bottom"
-              , hjust = "right"
+              , aes(x = 0.75*max(n), y = min(fnlLow, df_units$DSRate), label = "Standardised population 2016/17")
+              # , vjust = "bottom"
+              # , hjust = "right"
               , family = "Segoe UI"
               , size  = 3
               , fontface  = "plain"
@@ -243,7 +243,7 @@ plot_fun   <- function(df_funnels, df_units){
       , alpha = 0.5
 
       #, fontface = 'bold'
-      , size = 2
+      , size = 3
       # box.padding = unit(0.25, "lines"),
       # point.padding = unit(0.5, "lines")
       # , nudge_y = -0.00050
@@ -1615,6 +1615,65 @@ rm(
    , plotTrendActive, plotTrendComparators
    , i)
 
+
+# Save Plots ---------------------------------------------------------
+setwd(paste0(baseDir, "output/"))
+
+qipp_save <- function(x, y){
+  
+  ggsave(filename = x,
+         plot = y,
+         width    = 9.5*1.414, # A4 ratio
+         height   = 9.5,
+         units    = "cm")
+}
+
+# Save IP ------------------------------------------------------------
+
+for(i in seq_along(ipPlottableStrategies$Strategy)){
+  
+  qipp_save(paste0(i, "_fun_", ipPlottableStrategies$Strategy[i], ".png"),
+            plot_ip_fun[[i]])
+  
+  qipp_save(paste0(i, "_roc_", ipPlottableStrategies$Strategy[i], ".png"),
+            plot_ip_roc[[i]])
+  
+  qipp_save(paste0(i, "_trend_", ipPlottableStrategies$Strategy[i], ".png"),
+            plot_ip_trend[[i]])
+  }
+  
+  # ggsave(filename = paste0(i, "_fun_", ipPlottableStrategies$Strategy[i], ".png"),
+  #        plot     = plot_ip_fun[[i]],
+  #        width    = 9.5*1.414, # A4 ratio
+  #        height   = 9.5,
+  #        units    = "cm" )
+  
+  # ggsave(filename = paste0(i, "_roc_", ipPlottableStrategies$Strategy[i], ".png"),
+  #        plot     = plot_ip_roc[[i]],
+  #        width    = 9.5*1.414, # A4 ratio
+  #        height   = 9.5,
+  #        units    = "cm" )
+  # 
+  # ggsave(filename = paste0(i, "_trend_", ipPlottableStrategies$Strategy[i], ".png"),
+  #        plot     = plot_ip_trend[[i]],
+  #        width    = 9.5*1.414, # A4 ratio
+  #        height   = 9.5,
+  #        units    = "cm" )
+  
+
+
+# Experiment with purrr WALK
+## see pwalk in r
+# tmp_fnames <- map_chr(ipPlottableStrategies$Strategy , function(x) paste0(x , ".png"))
+# tmp_fnames <- str_c(baseDir, "output/",as.character(seq(1, length(tmp_fnames))), ".1_", tmp_fnames)
+# 
+# pwalk(list(tmp_fnames, plot_ip_fun), qipp_save)
+
+
+# ***** --------------------------------------------------------------
+
+
+
 # # FUF plots ---------------------------------------------------------------
 # opPlottableFUFStrategies <- activeStrategies %>%
 #   filter(TableType == "OP") %>%
@@ -1731,12 +1790,15 @@ comparatorsOut <- comparatorCCGs2 %>%
   select(CCGCode, CCGDescription)
 
 
+#  *****--------------------------------------------------------------
+
+
 # Inpatient ---------------------------------------------------------------
 
 totalActivityIP <- ipSmall %>% total_activity
 savingsAnyOneIP <- ipTrendComparators %>% savings_any_one
 
-ipSignificance <- significance_summary(summ_ipFunnelPoints, summ_ipFunnelFunnels, ipRoC, ipRoCFunnels)
+ipSignificance  <- significance_summary(summ_ipFunnelPoints, summ_ipFunnelFunnels, ipRoC, ipRoCFunnels)
 
 summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance, totalActivityIP) %>%
   group_by(ReviewNumber, add = FALSE) %>%
@@ -1752,9 +1814,70 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
 
-# Savings any one plot -----------------------------------------------
 
-savingsIP <-  summaryOutputIP %>%
+# IP tbl summary -----------------------------------------------------
+
+summ_ip_summ_out <- summaryOutputIP %>%
+  ungroup %>%
+  filter(!Strategy %in% c("Canc_Op_v1", "Readmissions_v1")) %>%
+  select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
+  mutate(SpellsRounded = scales::comma(SpellsRounded),
+         Costs_Rounded =  pound(Costs_Rounded)
+  ) 
+
+flex_ip_summ    <- setZebraStyle(vanilla.table(summ_ip_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+
+flex_ip_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+flex_ip_summ[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+
+flex_ip_summ[, 1]                <- parLeft()
+flex_ip_summ[, 1, to = "header"] <- parLeft()
+
+
+flex_ip_summ <- setFlexTableBorders(flex_ip_summ
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
+
+
+# IP cost summary ----------------------------------------------------
+
+summ_ip_cost_out <- # head(
+  summaryOutputIP %>%
+  ungroup %>%
+  filter(!Strategy %in% c("Canc_Op_v1", "Readmissions_v1")) %>%
+  select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
+  mutate(Costs_Rounded =  pound(Costs_Rounded)
+         , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
+         , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
+  )
+
+
+flex_ip_cost    <-  setZebraStyle(vanilla.table(summ_ip_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
+flex_ip_cost[,] <-  textProperties(font.family = "Segoe UI"
+                                   , font.size = 12)
+
+flex_ip_cost[to = "header"]  <-  textProperties(font.size = 14,
+                                                font.family = "Segoe UI")
+
+flex_ip_cost[, 1]                <- parLeft()
+flex_ip_cost[, 1, to = "header"] <- parLeft()
+
+
+flex_ip_cost <- setFlexTableBorders(flex_ip_cost
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
+
+
+
+# IP save plot -----------------------------------------------
+
+savingsIP <- summaryOutputIP %>%
   ungroup() %>% 
   select(Strategy, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded, TopDecile_SavingsIf_Rounded) %>% 
   rename(average = Average_SavingsIf_Rounded 
@@ -1770,21 +1893,22 @@ savingsIP$Strategy <-  savingsIP$Strategy %>%
     str_replace_all("\\_"," ") %>%
     str_trim()
 
-
 # so have multiple variables again.
 # error in stacked  bars! should not be stacked
 # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-ggplot(savingsIP, aes(reorder(Strategy, average), average))+
+plot_savings_ip <- ggplot(savingsIP, aes(reorder(Strategy, average), average))+
 geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
 geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
   # geom_bar(stat = "identity", position = "stack") +
   coord_flip()+
-  theme_strategy()+
-  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1))+
+  theme_strategy_large()+
+  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+                     , position = "top")+
   # scale_y_continuous(labels = scales::comma_format())
   theme(legend.title = element_blank(),
         axis.title.y = element_blank(),
-        legend.position = "bottom")+
+        legend.position = c(0.82, 0.18),
+        legend.background = element_rect(fill = "white"))+
   scale_fill_manual(
     name = "line Colour"
     ,values=c(myline1 = "lightblue", myline2 = "lightblue")
@@ -1793,6 +1917,9 @@ geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0
   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
   ylab("Potential savings (millions of pounds)")+
   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+
+
+# ***** --------------------------------------------------------------
 
 
 # A&E ---------------------------------------------------------------------
@@ -1961,7 +2088,7 @@ activeCCGInfo$CCGDescription
 
 
 
-# ADDITIONAL RATE COMPARISONS ----------------------------------------
+# JOYPLOTS? OF RATES ----------------------------------------
 
 tmp_summary <- ipSmall %>%
   filter(FYear == f_year) %>%
