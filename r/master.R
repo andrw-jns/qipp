@@ -1796,6 +1796,23 @@ comparatorsOut <- comparatorCCGs2 %>%
   select(CCGCode, CCGDescription)
 
 
+flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+
+flex_comparat[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+flex_comparat[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+
+flex_comparat[, ]                <- parLeft()
+flex_comparat[, , to = "header"] <- parLeft()
+
+
+flex_comparat <- setFlexTableBorders(flex_comparat
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
+
+
 #  *****--------------------------------------------------------------
 
 
