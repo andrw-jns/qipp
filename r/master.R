@@ -26,6 +26,7 @@ setwd(baseDir)
 active_ccg <- "05L"
 
 f_year     <- 201617
+first_year <- 201213
 
 qipp_ccgs  <- c(# Alphabetical:
                "13P", # BXC
@@ -61,12 +62,11 @@ funnelParameters <- tibble(
   )
 personYears <- funnelParameters$RatePerPeople * funnelParameters$Years
 
-
 # Rate of change
 rocParameters <- tibble(
-  From = 201213
+  From = first_year
   , To = f_year
-  )
+)
 
 # Trend
 trendParameters <- tibble(
@@ -395,17 +395,17 @@ label_ccg <- function(df){
 plot()
 
 # Colours -----------------------------------------------------------------
-colourBlindPalette <- c(
-    "#000000" #black
-  , "#E69F00" #orange
-  , "#56B4E9" #sky blue
-  , "#009E73" #green
-  , "#F0E442" #yellow
-  , "#0072B2" #blue
-  , "#D55E00" #red
-  , "#CC79A7" #pink
-)
-names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow", "blue", "red", "pink")
+# colourBlindPalette <- c(
+#     "#000000" #black
+#   , "#E69F00" #orange
+#   , "#56B4E9" #sky blue
+#   , "#009E73" #green
+#   , "#F0E442" #yellow
+#   , "#0072B2" #blue
+#   , "#D55E00" #red
+#   , "#CC79A7" #pink
+# )
+# names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow", "blue", "red", "pink")
 
 
 # ***** --------------------------------------------------------------
@@ -1685,13 +1685,50 @@ for(i in seq_along(opPlottableStrategies$Strategy)){
 }
 
 
+qipp_save <- function(x, y){
+  
+  ggsave(filename = x,
+         plot = y,
+         width    = 9.5*1.414, # A4 ratio
+         height   = 9.5,
+         units    = "cm")
+}
+
 
 # Experiment with purrr WALK
 ## see pwalk in r
-# tmp_fnames <- map_chr(ipPlottableStrategies$Strategy , function(x) paste0(x , ".png"))
-# tmp_fnames <- str_c(baseDir, "output/",as.character(seq(1, length(tmp_fnames))), ".1_", tmp_fnames)
-# 
+# tmp_fnames <- map_chr(seq_along(ipPlottableStrategies$Strategy) , function(i) paste0(i , "_fun_", ipPlottableStrategies$Strategy[i] ,".png"))
+# # tmp_fnames <- str_c(baseDir, "output/",as.character(seq(1, length(tmp_fnames))), ".1_", tmp_fnames)
+# # 
 # pwalk(list(tmp_fnames, plot_ip_fun), qipp_save)
+
+save_plots <- function(vector_of_strats, list_of_plots){
+  
+  png_filenames <- map_chr(seq_along(vector_of_strats),
+                           function(i) paste0(i ,
+                                              str_c("_", # This just means that one doesn't need to specify "trend" etc.
+                                                         c(unlist(
+                                                           str_split(
+                                                             as.character(quote(list_of_plots)), "\\_")
+                                                         )[c(F, F, T)]),
+                                                         "_"),
+                                               vector_of_strats[i] ,".png")
+                           )
+  
+  pwalk(list(png_filenames, list_of_plots), qipp_save)
+}
+
+save_plots(ipPlottableStrategies$Strategy, plot_ip_fun)
+save_plots(ipPlottableStrategies$Strategy, plot_ip_roc)
+save_plots(ipPlottableStrategies$Strategy, plot_ip_trend)
+
+save_plots(aePlottableStrategies$Strategy, plot_ae_fun)
+save_plots(aePlottableStrategies$Strategy, plot_ae_roc)
+save_plots(aePlottableStrategies$Strategy, plot_ae_trend)
+
+save_plots(opPlottableStrategies$Strategy, plot_op_fun)
+save_plots(opPlottableStrategies$Strategy, plot_op_roc)
+save_plots(opPlottableStrategies$Strategy, plot_op_trend)
 
 
 # ***** --------------------------------------------------------------
@@ -1813,6 +1850,7 @@ comparatorsOut <- comparatorCCGs2 %>%
   filter(CCGCode != active_ccg) %>%
   select(CCGCode, CCGDescription)
 
+# Comparator table
 
 flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
