@@ -66,6 +66,27 @@ setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
 
 qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
+for(i in seq(ipPlottableStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "new_body") %>% 
+    addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addImage(
+      paste0(baseDir, "output/", i, "_trend_", ipPlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_fun_", ipPlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_roc_", ipPlottableStrategies$Strategy[i], ".png")
+    ) 
+ }
+
+filename <- "qipp_test9.pptx" # the document to produce
+# # TEST write qipp_report 
+writeDoc(qipp_report, filename)
+
+
+
 
 for(i in seq(ipPlottableStrategies$Strategy)){
   

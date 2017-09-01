@@ -3,12 +3,6 @@
 " CREATE QIPP PACK"
 ###########################################################################
 
-# TODO ---------------------------------------------------------------
-"LABELS IN FUNNELS DON'T APPEAR FIXED WHEN WRITTEN INTO PPTX"
-"POSSIBLE SOLUTION TO SET THE SIZE OF THE GRAPHIC BEFORE EXPORTING"
-
-"OR setting in the Reporters plot()?"
-"See https://stackoverflow.com/questions/1279003/specify-width-and-height-of-plot"
 # ***** --------------------------------------------------------------
 
 
@@ -122,9 +116,9 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 FYearIntToChar(FYear),
                 get(quote_y),
                 group = 1
-              ),
-              alpha = 0.1
-              , fill = '#c52828'
+              )
+              , alpha = 0.4
+              , fill = "#ec6555" # - SWB Red # '#c52828' - original red
               )+
     geom_line(data = active_df,
               aes(
@@ -133,7 +127,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.8
-              , colour = '#c52828'
+              , colour = "#ec6555"
               , size = 1
     )+
     # geom_line(data = active_df,
