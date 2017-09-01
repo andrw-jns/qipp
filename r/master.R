@@ -425,13 +425,32 @@ activeStrategies <- read_csv("listActiveStrategies.csv")
 numberOfStrategies <- activeStrategies %>% 
   count(TableType)
 
-"WORK IN PROGRESS :"
-# sus_names <- tibble(
-#   ip = "IP[0-9]{4}.csv",
-#   op = "OP[0-9]{4}.csv",
-#   ae = "AE[0-9]{4}.csv"
-# )
-#  
+
+# LOAD SUS - COULD BE MORE EFFICIENT IF DO ONE FUNCTION AND THEN CALL IP, AE...
+sus_names <- tibble(
+  ip = "IP[0-9]{4}.csv",
+  op = "OP[0-9]{4}.csv",
+  ae = "AE[0-9]{4}.csv"
+  )
+
+tmp <- map(sus_names, function(x) list.files(pattern = x))
+
+# because of PowerShell: 
+cols_ip <- map(tmp$ip, read_csv, n_max = 0) %>% map(colnames)
+cols_op <- map(tmp$op, read_csv, n_max = 0) %>% map(colnames)
+cols_ae <- map(tmp$ae, read_csv, n_max = 0) %>% map(colnames)
+
+read_sus <- function(filename, col_headers){
+  
+  read_csv(filename, col_headers, na = "NULL", skip = 2)
+}
+
+ipData <- map2_df(tmp$ip, cols_ip, read_sus)
+aeData <- map2_df(tmp$ae, cols_ae, read_sus)
+opData <- map2_df(tmp$op, cols_op, read_sus)
+
+# Just df does row whereas providing a vector sus_names$regex does col.
+
 # filenames <- list.files(pattern = sus_names$ip)
 
 # because of PowerShell: 
@@ -449,55 +468,54 @@ numberOfStrategies <- activeStrategies %>%
 #   bind_rows()
 
 
-# Inpatients
-filesToLoad <- list.files(pattern = "Output_SUS_IP[0-9]{4}.csv")
-ipDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>% 
-  lapply(., colnames)
-if(length(unique(ipDataNames)) != 1){stop("Inpatient column names are different somewhere.")}
-
-ipData <- lapply(
-  filesToLoad
-  , read_csv
-  , col_names = ipDataNames[[1]]
-  , na = "NULL"
-  , skip = 2
-  ) %>% bind_rows
-
-rm(filesToLoad, ipDataNames)
-
-
-# A & E
-filesToLoad <- list.files(pattern = "Output_SUS_AE[0-9]{4}.csv")
-aeDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>%
-  lapply(., colnames)
-if(length(unique(aeDataNames)) != 1){stop("A&E column names are different somewhere.")}
-
-aeData <- lapply(
-  filesToLoad
-  , read_csv
-  , col_names = aeDataNames[[1]]
-  , na = "NULL"
-  , skip = 2
-  ) %>% bind_rows
-
-
-rm(filesToLoad, aeDataNames)
-
-# Outpatients
-filesToLoad <- list.files(pattern = "Output_SUS_OP[0-9]{4}.csv")
-opDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>%
-  lapply(., colnames)
-if(length(unique(opDataNames)) != 1){stop("Outpatient column names are different somewhere.")}
-
-opData <- lapply(
-  filesToLoad
-  , read_csv
-  , col_names = opDataNames[[1]]
-  , na = "NULL"
-  , skip = 2
-  ) %>% bind_rows
-
-rm(filesToLoad, opDataNames)
+# # Inpatients
+# filesToLoad <- list.files(pattern = "Output_SUS_IP[0-9]{4}.csv")
+# ipDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>% 
+#   lapply(., colnames)
+# if(length(unique(ipDataNames)) != 1){stop("Inpatient column names are different somewhere.")}
+# 
+# ipData <- lapply(
+#   filesToLoad
+#   , read_csv
+#   , col_names = ipDataNames[[1]]
+#   , na = "NULL"
+#   , skip = 2
+#   ) %>% bind_rows
+# 
+# rm(filesToLoad, ipDataNames)
+# 
+# 
+# # A & E
+# filesToLoad <- list.files(pattern = "Output_SUS_AE[0-9]{4}.csv")
+# aeDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>%
+#   lapply(., colnames)
+# if(length(unique(aeDataNames)) != 1){stop("A&E column names are different somewhere.")}
+# 
+# aeData <- lapply(
+#   filesToLoad
+#   , read_csv
+#   , col_names = aeDataNames[[1]]
+#   , na = "NULL"
+#   , skip = 2
+#   ) %>% bind_rows
+# 
+# rm(filesToLoad, aeDataNames)
+# 
+# # Outpatients
+# filesToLoad <- list.files(pattern = "Output_SUS_OP[0-9]{4}.csv")
+# opDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>%
+#   lapply(., colnames)
+# if(length(unique(opDataNames)) != 1){stop("Outpatient column names are different somewhere.")}
+# 
+# opData <- lapply(
+#   filesToLoad
+#   , read_csv
+#   , col_names = opDataNames[[1]]
+#   , na = "NULL"
+#   , skip = 2
+#   ) %>% bind_rows
+# 
+# rm(filesToLoad, opDataNames)
 
 
 # List of CCGs

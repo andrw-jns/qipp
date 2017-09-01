@@ -204,7 +204,17 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Potential for Savings - Any One Group") %>%  # "ACS Vaccine Preventable Conditions"
   addPlot(function() plot(plot_savings_ip)) 
 #   
-writeDoc(qipp_report, filename)
+
+
+qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(flex_comparat)
+
+filename2 <- "qipp_comparators.pptx"
+
+writeDoc(qipp_report, filename2)
 
 slide.layouts(qipp_report, "new_body")
 
