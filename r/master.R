@@ -20,6 +20,7 @@ library(ReporteRs)
 library(tidyverse)
 library(ggrepel)
 
+
 # Parameters 1--------------------------------------------------------
 
 baseDir  <- "C:/2017_projects/qipp/"
@@ -395,95 +396,26 @@ numberOfStrategies <- activeStrategies %>%
   count(TableType)
 
 
-# LOAD SUS - COULD BE MORE EFFICIENT IF DO ONE FUNCTION AND THEN CALL IP, AE...
-sus_names <- tibble(ip = "IP[0-9]{4}.csv", op = "OP[0-9]{4}.csv", ae = "AE[0-9]{4}.csv")
 
-tmp <- map(sus_names, function(x) list.files(pattern = x))
+sus_regex <- tibble(ip = "IP[0-9]{4}.csv", op = "OP[0-9]{4}.csv", ae = "AE[0-9]{4}.csv")
 
-# because of PowerShell: 
-cols_ip <- map(tmp$ip, read_csv, n_max = 0) %>% map(colnames)
-cols_op <- map(tmp$op, read_csv, n_max = 0) %>% map(colnames)
-cols_ae <- map(tmp$ae, read_csv, n_max = 0) %>% map(colnames)
+sus_csvs <- map(sus_regex, function(x) list.files(pattern = x))
 
 read_sus <- function(filename, col_headers){
-  
   read_csv(filename, col_headers, na = "NULL", skip = 2)
-}
+  }
 
-ipData <- map2_df(tmp$ip, cols_ip, read_sus)
-aeData <- map2_df(tmp$ae, cols_ae, read_sus)
-opData <- map2_df(tmp$op, cols_op, read_sus)
+load_sus <- function(filenames_vector){ # eg. sus_csvs$ip
+  cols <- map(filenames_vector, read_csv, n_max = 0) %>% map(colnames)
+  map2_df(filenames_vector, cols, read_sus)
+  }
 
-# Just df does row whereas providing a vector sus_names$regex does col.
-
-# filenames <- list.files(pattern = sus_names$ip)
-
-# because of PowerShell: 
-# take_names <- map(filenames, read_csv, n_max = 0) %>% 
-#   map(., colnames)
-# if(length(unique(take_names)) != 1){stop("Inpatient column names are different somewhere.")}
-# 
-# ipData <- map(
-#   filenames,
-#   read_csv,
-#   col_names = take_names[[1]],
-#   na = "NULL",
-#   skip = 2
-# ) %>% 
-#   bind_rows()
+ipData <- load_sus(sus_csvs$ip)
+aeData <- load_sus(sus_csvs$ae)
+opData <- load_sus(sus_csvs$op)
 
 
-# # Inpatients
-# filesToLoad <- list.files(pattern = "Output_SUS_IP[0-9]{4}.csv")
-# ipDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>% 
-#   lapply(., colnames)
-# if(length(unique(ipDataNames)) != 1){stop("Inpatient column names are different somewhere.")}
-# 
-# ipData <- lapply(
-#   filesToLoad
-#   , read_csv
-#   , col_names = ipDataNames[[1]]
-#   , na = "NULL"
-#   , skip = 2
-#   ) %>% bind_rows
-# 
-# rm(filesToLoad, ipDataNames)
-# 
-# 
-# # A & E
-# filesToLoad <- list.files(pattern = "Output_SUS_AE[0-9]{4}.csv")
-# aeDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>%
-#   lapply(., colnames)
-# if(length(unique(aeDataNames)) != 1){stop("A&E column names are different somewhere.")}
-# 
-# aeData <- lapply(
-#   filesToLoad
-#   , read_csv
-#   , col_names = aeDataNames[[1]]
-#   , na = "NULL"
-#   , skip = 2
-#   ) %>% bind_rows
-# 
-# rm(filesToLoad, aeDataNames)
-# 
-# # Outpatients
-# filesToLoad <- list.files(pattern = "Output_SUS_OP[0-9]{4}.csv")
-# opDataNames <- lapply(filesToLoad, read_csv, n_max = 0) %>%
-#   lapply(., colnames)
-# if(length(unique(opDataNames)) != 1){stop("Outpatient column names are different somewhere.")}
-# 
-# opData <- lapply(
-#   filesToLoad
-#   , read_csv
-#   , col_names = opDataNames[[1]]
-#   , na = "NULL"
-#   , skip = 2
-#   ) %>% bind_rows
-# 
-# rm(filesToLoad, opDataNames)
-
-
-# List of CCGs
+# List of CCGs (Now in data folder. Previously:)
 # setwd(paste0(ifelse(inOffice, "S:/Commissioning Intelligence And Strategy/Strategic Analytics/", "change file path"), "Jonathan Spencer/FrequentFiles/Classification/Organisations/CCG"))
 
 allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
@@ -493,36 +425,26 @@ allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
   mutate(CCGDescription  = stringr::str_c(CCGDescription, " CCG"))
   
 
-
-#setwd(paste0(baseDir, "Data"))
 # CCG populations for cost charts
-# AJ - did manually so no need to remove rows as below for powershell
-# ccgPopulation <- read_csv("CCGPopulation.csv", col_names = FALSE, skip = 2)
-# colnames(ccgPopulation) <- read_csv("CCGPopulation.csv", n_max = 0) %>% colnames
+# Created without Powershell so no need to remove rows:
 
 ccgPopulation <- read_csv("CCGPopulation.csv")
 
-"How relevant are these checks now: modify/update?"
-# setwd(paste0(baseDir, "r"))
-# source("checks.R") # big and slow
-
 
 # *****chckpnt**** -----------------------------------------------------------------
-# Rerun from here if running multiple packs
-# setwd(paste0(baseDir, "data"))
 
 # CCG selections
 comparatorCCGs2 <- allCCGs %>%
   filter(CCGCode %in% qipp_ccgs,
          CCGCode != active_ccg)
+
   
 activeCCGInfo <- allCCGs %>% 
   filter(CCGCode == active_ccg) %>% 
   mutate(CCGNameMinusCCG = stringr::str_replace(CCGDescription, " CCG", "")) # %>% 
   # unlist()
 
-
-
+" All years have data so no need for checks below"
 # What years do we want to run the rate of change for?
 # activeMinMaxIp <- ipCheck %>% 
 #   filter(CCGCode == active_ccg & !is.na(Spells)) %>%
@@ -1597,13 +1519,12 @@ rm(
 setwd(paste0(baseDir, "output/"))
 
 qipp_save <- function(x, y){
-  
   ggsave(filename = x,
          plot = y,
          width    = 9.5*1.414, # A4 ratio
          height   = 9.5,
          units    = "cm")
-}
+  }
 
 
 # IP
@@ -1650,14 +1571,6 @@ for(i in seq_along(opPlottableStrategies$Strategy)){
 }
 
 
-qipp_save <- function(x, y){
-  
-  ggsave(filename = x,
-         plot = y,
-         width    = 9.5*1.414, # A4 ratio
-         height   = 9.5,
-         units    = "cm")
-}
 
 
 # Experiment with purrr WALK
@@ -1667,7 +1580,7 @@ qipp_save <- function(x, y){
 # # 
 # pwalk(list(tmp_fnames, plot_ip_fun), qipp_save)
 
-"Next time you come to print, try to write a closure."
+"Next time you come to print, try to write a closure to reduce duplication."
 
 save_plots <- function(vector_of_strats, list_of_plots){
   
