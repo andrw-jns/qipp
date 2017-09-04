@@ -5,8 +5,7 @@
 
 # ***** --------------------------------------------------------------
 "Use package check system? See email"
-
-"Seems to be unaffected by update to dplyr 0.7 etc."
+"Code seems to be unaffected by update to dplyr 0.7 etc."
 
 
 # Packages ----------------------------------------------------------------
@@ -91,6 +90,7 @@ source("theme_strategy.R")
 setwd("C:/2017_projects/funnel/funnel/")
 source("funlData.R")
 
+# This, believe it or not, works like a function : pound()
 pound <- dollar_format(prefix = "£")
 
 
@@ -384,22 +384,21 @@ label_ccg <- function(df){
 # Load data ---------------------------------------------------------------
 setwd(paste0(baseDir, "data"))
 
+"Take care to note whether data was handled by PowerShell"
+
 # List of strategies
 activeStrategies <- read_csv("listActiveStrategies.csv")
 # if run from powershell:
-# activeStrategies <- read_csv("listActiveStrategies.csv", col_names = FALSE, skip = 2)
-# colnames(activeStrategies) <- read_csv("listActiveStrategies.csv", n_max = 0) %>% colnames
 
 # How many strategies for each type of data
-
 numberOfStrategies <- activeStrategies %>% 
   count(TableType)
 
-
+# Load sus data
 
 sus_regex <- tibble(ip = "IP[0-9]{4}.csv", op = "OP[0-9]{4}.csv", ae = "AE[0-9]{4}.csv")
+sus_csvs  <- map(sus_regex, function(x) list.files(pattern = x))
 
-sus_csvs <- map(sus_regex, function(x) list.files(pattern = x))
 
 read_sus <- function(filename, col_headers){
   read_csv(filename, col_headers, na = "NULL", skip = 2)
@@ -426,8 +425,6 @@ allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
   
 
 # CCG populations for cost charts
-# Created without Powershell so no need to remove rows:
-
 ccgPopulation <- read_csv("CCGPopulation.csv")
 
 
@@ -503,9 +500,6 @@ activeCCGInfo <- allCCGs %>%
 # activeAEExclude <- activeMinMaxAe %>%
 #   filter(is.na(FYear)) %>%
 #   select(Strategy) %>% unlist %>% unname
-# 
-# 
-# 
 
 
 # Munge data ---------------------------------------------------------------
@@ -1044,6 +1038,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   plotUnits   <- funnel[[2]] %>% 
     left_join(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k() %>% label_ccg()
+  " SUGGEST THIS JOIN IS INCORPORATED IN FUNCTION funl_data"
+  " SUGGEST NEW NAME funl_data instead of funl_Data"
   
   plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
   
@@ -1590,9 +1586,11 @@ save_plots <- function(vector_of_strats, list_of_plots){
                                                          c(unlist(
                                                            str_split(
                                                              as.character(quote(list_of_plots)), "\\_")
-                                                         )[c(F, F, T)]),
+                                                           )[c(F, F, T)]),
                                                          "_"),
-                                               vector_of_strats[i] ,".png")
+                                               vector_of_strats[i],
+                                              ".png"
+                                              )
                            )
   
   pwalk(list(png_filenames, list_of_plots), qipp_save)
