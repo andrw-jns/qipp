@@ -4,6 +4,9 @@
 ###########################################################################
 
 # ***** --------------------------------------------------------------
+"Use package check system? See email"
+
+"Seems to be unaffected by update to dplyr 0.7 etc."
 
 
 # Packages ----------------------------------------------------------------
@@ -19,12 +22,9 @@ library(ggrepel)
 
 # Parameters 1--------------------------------------------------------
 
-inOffice <- TRUE
-baseDir  <- ifelse(inOffice, "C:/2017_projects/qipp/", "specify a path")
-setwd(baseDir)
+baseDir  <- "C:/2017_projects/qipp/"
 
 active_ccg <- "05L"
-
 f_year     <- 201617
 first_year <- 201213
 
@@ -74,21 +74,6 @@ trendParameters <- tibble(
   )
 trendCV <- qnorm((1 - trendParameters$Significance)/2, lower.tail = FALSE)
 
-label_fun <- tibble(
-  x = Inf
-  , y = Inf
-  , label = paste(
-    "Standardised population 2016/17"
-  )
-)
-
-label_roc <- tibble(
-  DerivedPopulation = Inf
-  , DSRate = Inf
-  , label = paste(
-    "Standardised population 2016/17"
-  )
-)
 
 # Functions ---------------------------------------------------------------
 "Careful with summary functions <- many old parameters exist here"
@@ -392,22 +377,6 @@ label_ccg <- function(df){
   )
 }
 
-plot()
-
-# Colours -----------------------------------------------------------------
-# colourBlindPalette <- c(
-#     "#000000" #black
-#   , "#E69F00" #orange
-#   , "#56B4E9" #sky blue
-#   , "#009E73" #green
-#   , "#F0E442" #yellow
-#   , "#0072B2" #blue
-#   , "#D55E00" #red
-#   , "#CC79A7" #pink
-# )
-# names(colourBlindPalette) <- c("black", "orange", "sky blue", "green", "yellow", "blue", "red", "pink")
-
-
 # ***** --------------------------------------------------------------
 
 
@@ -427,11 +396,7 @@ numberOfStrategies <- activeStrategies %>%
 
 
 # LOAD SUS - COULD BE MORE EFFICIENT IF DO ONE FUNCTION AND THEN CALL IP, AE...
-sus_names <- tibble(
-  ip = "IP[0-9]{4}.csv",
-  op = "OP[0-9]{4}.csv",
-  ae = "AE[0-9]{4}.csv"
-  )
+sus_names <- tibble(ip = "IP[0-9]{4}.csv", op = "OP[0-9]{4}.csv", ae = "AE[0-9]{4}.csv")
 
 tmp <- map(sus_names, function(x) list.files(pattern = x))
 
@@ -1702,11 +1667,13 @@ qipp_save <- function(x, y){
 # # 
 # pwalk(list(tmp_fnames, plot_ip_fun), qipp_save)
 
+"Next time you come to print, try to write a closure."
+
 save_plots <- function(vector_of_strats, list_of_plots){
   
   png_filenames <- map_chr(seq_along(vector_of_strats),
-                           function(i) paste0(i ,
-                                              str_c("_", # This just means that one doesn't need to specify "trend" etc.
+                           function(i) paste0(i ,# This just means that one doesn't need to specify "trend" etc.
+                                              str_c("_", 
                                                          c(unlist(
                                                            str_split(
                                                              as.character(quote(list_of_plots)), "\\_")
