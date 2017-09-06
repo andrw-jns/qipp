@@ -38,7 +38,7 @@ cat("FYearIntToChar(x)
   Returns character from integer financial year (e.g. 201415 becomes 2014/15)")
 FYearIntToChar <- function(x){
   # Returns character from integer financial year (e.g. 201415)
-  return(paste0(substring(x, 1, 4), "/", substring(x, 5, 6)))
+  return(paste0(substring(x, 1, 4), "-", substring(x, 5, 6)))
 }
 
 cat("FYearDateToInt(x)

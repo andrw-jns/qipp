@@ -116,6 +116,16 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
               , colour = "#ec6555"
               , size = 1
     )+
+    geom_point(data = active_df,
+              aes(
+                FYearIntToChar(FYear), 
+                get(quote_y),
+                group = 1
+              ),
+              alpha = 0.2
+              , colour = "#ec6555"
+              , size = 3
+    )+
     # geom_line(data = active_df,
     #           aes(
     #             FYearIntToChar(FYear), 
@@ -134,11 +144,11 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
     labs(y = paste0("DSR per ",
                     scales::comma(funnelParameters$RatePerPeople)," population"),
          title = paste0("Trend in Directly Standardised Rate, ",
-                        str_sub(rocParameters$From ,1, 4), "/",
+                        str_sub(rocParameters$From ,1, 4), "-",
                         str_sub(rocParameters$From ,5, 6), " to "
-                        , str_sub(rocParameters$To ,1, 4), "/",
+                        , str_sub(rocParameters$To ,1, 4), "-",
                         str_sub(rocParameters$To ,5, 6))
-         , subtitle = "Directly Standardised Rate per 100k population [Vertical Axis]")+
+         , subtitle = "DSR per 100k population [Vertical Axis]")+
     scale_x_discrete(expand = c(0.0,0.0))
 
   if(comparator == T){
@@ -2046,23 +2056,25 @@ activeCCGInfo$CCGDescription
 
 
 # JOYPLOTS? OF RATES ----------------------------------------
+setwd("C:/2017_projects/")
+saveRDS(ipSmall, "ipSmall.RDS")
+
+ipSmall <- read_rds("ipSmall.RDS")
 
 tmp_summary <- ipSmall %>%
   filter(FYear == f_year) %>%
   select(-FYear, -DSRateVar, -DSCosts, -DSCostsVar) %>%
   gather(Strategy, Highlighted,  -Spells, -Costs, -DSRate, -CCGCode,  -CCGDescription, -ShortName, convert = T) %>% 
   group_by(Strategy, CCGCode ,CCGDescription, ShortName, Highlighted) %>%
-  summarise_each(
+  summarise_all(
     funs(sum(., na.rm = TRUE))
-    , Spells, Costs, DSRate
   ) %>%
   filter(Highlighted == 1) %>%
   select(-Highlighted) %>% 
   filter(Strategy == "ACS_Acute_v3")
 
-# Binwidth calculated using the Freedman-Diaconis rule:
+# Binwidth calculated using Freedman-Diaconis rule:
 # 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3))
 
 ggplot(tmp_summary, aes(DSRate))+
-  geom_histogram(binwidth = 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3)))+
-  geom_segment()
+  geom_freqpoly(binwidth = 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3)))
