@@ -7,7 +7,6 @@
 "Use package check system? See email"
 "Code seems to be unaffected by update to dplyr 0.7 etc."
 
-
 # Packages ----------------------------------------------------------------
 
 library(readxl)
@@ -104,7 +103,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               )
               , alpha = 0.4
-              , fill = "#ec6555" # - SWB Red # '#c52828' - original red
+              , fill = "#c52828" # - SWB Red # '#c52828' - original red
               )+
     geom_line(data = active_df,
               aes(
@@ -113,9 +112,10 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.8
-              , colour = "#ec6555"
+              , colour = "#c52828"
               , size = 1
     )+
+    # Semi transparent points:
     geom_point(data = active_df,
               aes(
                 FYearIntToChar(FYear), 
@@ -123,19 +123,20 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.2
-              , colour = "#ec6555"
+              , colour = "#c52828"
               , size = 3
     )+
-    # geom_line(data = active_df,
-    #           aes(
-    #             FYearIntToChar(FYear), 
-    #             get(quote_y),
-    #             group = 1
-    #           ),
-    #           alpha = 0.2
-    #           , colour = '#c52828'
-    #           , size = 2
-    # )+
+    # Highlighted points:
+    geom_point(data = active_df %>% 
+                 filter(FYear == f_year),
+               aes(
+                 FYearIntToChar(FYear), 
+                 get(quote_y),
+                 group = 1
+               )
+               , colour = "#c52828"
+               , size = 3
+    )+
     ylim(0, 1.2*max(active_y, comparator_y))+
     theme_strategy()+
     theme(panel.background = element_rect(fill = "white"),
@@ -149,7 +150,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                         , str_sub(rocParameters$To ,1, 4), "-",
                         str_sub(rocParameters$To ,5, 6))
          , subtitle = "DSR per 100k population [Vertical Axis]")+
-    scale_x_discrete(expand = c(0.0,0.0))
+    scale_x_discrete(expand = c(0.02,0.0))
 
   if(comparator == T){
     
@@ -162,7 +163,21 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                   )
                   # ,linetype = "longdash"
                   , alpha = 0.8
-    ) 
+    )+ 
+    geom_segment(data = comparator_df,
+                 aes(
+                   y = 0.1*max(comparator_y), yend = 0.1*max(comparator_y),
+                   x = 4.05, xend = 4.25
+                 )
+    )+
+    geom_text(data = comparator_df,
+              aes(x = 4.6, y = 0.1*max(comparator_y),
+                  label ="W.M. average",
+                  family = "Segoe UI",
+                  fontface = "plain"),
+               size = 2.5)
+    
+      
   } else {
     p  + geom_line(data = comparator_df,
                    aes(
@@ -171,7 +186,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                      group = 1
                    )
                    # ,linetype = "longdash"
-                   , alpha =0.8
+                   , alpha = 0.8
     )
   }
 }
@@ -217,13 +232,13 @@ plot_fun   <- function(df_funnels, df_units){
     #geom_hline(aes(yintercept = target)) +
     geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
     geom_text(data = df_funnels
-              , aes(x = 0.75*max(n), y = min(fnlLow, df_units$DSRate), label = "Standardised population 2016/17")
+              , aes(x = 0.75*max(n), y = min(fnlLow, df_units$DSRate), label = "Standardised population 2016-17")
               # , vjust = "bottom"
               # , hjust = "right"
               , family = "Segoe UI"
-              , size  = 3
+              , size  = 2.5
               , fontface  = "plain"
-              , color = "grey40"
+              , color = "grey30"
                )+
     geom_text_repel(data = df_units
       , aes(x = DerivedPopulation
@@ -252,7 +267,7 @@ plot_fun   <- function(df_funnels, df_units){
       , subtitle = paste0("DSR per 100k population [Vertical Axis]")  # , scales::comma(funnelParameters$RatePerPeople)," population")
       , title = paste0("Directly Standardised Rate, ", FYearIntToChar(f_year))
     )+
-    scale_color_manual(values = c("grey70", '#c52828'))
+    scale_color_manual(values = c("grey70", "#c52828"))
 
 }
 
@@ -286,13 +301,13 @@ plot_roc <- function(funnel_df, points_df, summary_df){
       , size = 3
     )+
     geom_text(data = summary_df
-              , aes(x = max(NewMaxSpells), y = min(NewMinRateOfChange), label = "Related Spells 2012/13")
+              , aes(x = max(NewMaxSpells), y = min(NewMinRateOfChange), label = "Related Spells 2012-13")
               , vjust = "bottom"
               , hjust = "right"
               , family = "Segoe UI"
-              , size  = 3
+              , size  = 2.5
               , fontface  = "plain"
-              , color = "grey40"
+              , color = "grey30"
     )+
     geom_text_repel(data = points_df
                     , aes(x = SpellsInBaseYear,
@@ -322,7 +337,7 @@ plot_roc <- function(funnel_df, points_df, summary_df){
                    FYearIntToChar)
       , y = paste0("Percentage change")
       , title = 
-        paste0("Rate of Change between "
+        paste0("Percentage Change in Directly Standardised Rate, "
                , points_df %>% 
                  filter(IsActiveCCG) %>% 
                  ungroup() %>% 
@@ -349,10 +364,10 @@ plot_roc <- function(funnel_df, points_df, summary_df){
           )+
     labs(
       # x = paste0("Rate of Change between ", FYearIntToChar(f_year))
-      subtitle = "Percentage change in Directly Standardised Rate [Vertical Axis]"
+      subtitle = "Percentage change in DSR [Vertical Axis]"
       #, title = paste0("Ratio of Follow-ups to First Appointments ", FYearIntToChar(f_year))
     )+
-    scale_color_manual(values = c("grey70", '#c52828'))
+    scale_color_manual(values = c("grey70", "#c52828"))
   
   #69D2E7,#A7DBD8,#E0E4CC,#F38630,#FA6900,#69D2E7,#A7DBD8,#E0E4CC
   #"grey70", '#c52828'
@@ -1217,6 +1232,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
    
 # ***** -----------------------------------------------------
 }
+
 rm(
    # plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
   funnel, plotFunnels, plotUnits
@@ -1595,7 +1611,7 @@ save_plots <- function(vector_of_strats, list_of_plots){
                                               str_c("_", 
                                                          c(unlist(
                                                            str_split(
-                                                             as.character(quote(list_of_plots)), "\\_")
+                                                             as.character(quote(vector_of_strats[i])), "\\_")
                                                            )[c(F, F, T)]),
                                                          "_"),
                                                vector_of_strats[i],
@@ -1605,6 +1621,17 @@ save_plots <- function(vector_of_strats, list_of_plots){
   
   pwalk(list(png_filenames, list_of_plots), qipp_save)
 }
+
+
+str_c("_", 
+      c(unlist(
+        str_split(
+          as.character(quote(list_of_plots)), "\\_")
+      )[c(F, F, T)]),
+      "_"),
+vector_of_strats[i],
+".png"
+)
 
 save_plots(ipPlottableStrategies$Strategy, plot_ip_fun)
 save_plots(ipPlottableStrategies$Strategy, plot_ip_roc)
