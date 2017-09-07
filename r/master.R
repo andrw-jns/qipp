@@ -344,7 +344,7 @@ plot_roc <- function(funnel_df, points_df, summary_df){
                  select(From) %>% 
                  unlist %>% unname %>% 
                  FYearIntToChar
-               , " and "
+               , " to "
                , points_df %>% 
                  filter(IsActiveCCG) %>% 
                  ungroup() %>% 

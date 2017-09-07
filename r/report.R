@@ -81,7 +81,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     ) 
  }
 
-filename <- "qipp_test9.pptx" # the document to produce
+filename <- "qipp_test10.pptx" # the document to produce
 # # TEST write qipp_report 
 writeDoc(qipp_report, filename)
 
