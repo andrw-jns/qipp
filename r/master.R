@@ -6,6 +6,7 @@
 # ***** --------------------------------------------------------------
 "Use package check system? See email"
 "Code seems to be unaffected by update to dplyr 0.7 etc."
+"Check colour blind friendly"
 
 # Packages ----------------------------------------------------------------
 
@@ -15,7 +16,7 @@ library(testthat)
 library(extrafont) # for theme_strategy.
 library(stringr)
 library(ReporteRs)
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 library(ggrepel)
 
 
@@ -52,6 +53,10 @@ qipp_ccgs  <- c(# Alphabetical:
 )
 
 # Parameters 2 -------------------------------------------------------------
+
+ip_colours <- c("#c52828", "#c52828")
+ae_colours <- c("#187B91", "#187B91")
+op_colours <- c("steelblue", "steelblue")
 
 # Funnel
 funnelParameters <- tibble(
@@ -93,7 +98,7 @@ source("funlData.R")
 pound <- dollar_format(prefix = "£")
 
 
-plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, comparator = T){
+plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, colour_block, comparator = T){
   
   p <- ggplot()+
     geom_area(data = active_df,
@@ -103,7 +108,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               )
               , alpha = 0.4
-              , fill = "#c52828" # - SWB Red # '#c52828' - original red
+              , fill = colour_block # "#c52828" # SWB Red: # '#c52828' - original red
               )+
     geom_line(data = active_df,
               aes(
@@ -112,7 +117,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.8
-              , colour = "#c52828"
+              , colour = colour_block
               , size = 1
     )+
     # Semi transparent points:
@@ -123,7 +128,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 group = 1
               ),
               alpha = 0.2
-              , colour = "#c52828"
+              , colour = colour_block
               , size = 3
     )+
     # Highlighted points:
@@ -134,7 +139,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                  get(quote_y),
                  group = 1
                )
-               , colour = "#c52828"
+               , colour = colour_block
                , size = 3
     )+
     ylim(0, 1.2*max(active_y, comparator_y))+
@@ -220,7 +225,7 @@ plot_cost  <- function(df){
     scale_fill_grey(start = 0.6)
 }
 
-plot_fun   <- function(df_funnels, df_units){
+plot_fun   <- function(df_funnels, df_units, colour_block){
   
   ggplot(df_funnels) +
     geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
@@ -267,7 +272,7 @@ plot_fun   <- function(df_funnels, df_units){
       , subtitle = paste0("DSR per 100k population [Vertical Axis]")  # , scales::comma(funnelParameters$RatePerPeople)," population")
       , title = paste0("Directly Standardised Rate, ", FYearIntToChar(f_year))
     )+
-    scale_color_manual(values = c("grey70", "#c52828"))
+    scale_color_manual(values = c("grey70", colour_block))
 
 }
 
@@ -283,7 +288,7 @@ convert_dsr_100k <- function(df) { # For DSR funnel
   }
 } 
 
-plot_roc <- function(funnel_df, points_df, summary_df){
+plot_roc <- function(funnel_df, points_df, summary_df, colour_block){
   
   ggplot(data = funnel_df) +
     geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "black", linetype =  44) +
@@ -367,7 +372,7 @@ plot_roc <- function(funnel_df, points_df, summary_df){
       subtitle = "Percentage change in DSR [Vertical Axis]"
       #, title = paste0("Ratio of Follow-ups to First Appointments ", FYearIntToChar(f_year))
     )+
-    scale_color_manual(values = c("grey70", "#c52828"))
+    scale_color_manual(values = c("grey70", colour_block))
   
   #69D2E7,#A7DBD8,#E0E4CC,#F38630,#FA6900,#69D2E7,#A7DBD8,#E0E4CC
   #"grey70", '#c52828'
@@ -466,66 +471,6 @@ activeCCGInfo <- allCCGs %>%
   mutate(CCGNameMinusCCG = stringr::str_replace(CCGDescription, " CCG", "")) # %>% 
   # unlist()
 
-" All years have data so no need for checks below"
-# What years do we want to run the rate of change for?
-# activeMinMaxIp <- ipCheck %>% 
-#   filter(CCGCode == active_ccg & !is.na(Spells)) %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     From = min(FYear, na.rm = TRUE)
-#     , To = max(FYear, na.rm = TRUE)
-#   ) %>%
-#   gather(Type, FYear, -Strategy, convert = TRUE)
-#   
-# activeMinMaxOp <- opCheck %>% 
-#   filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     From = min(FYear, na.rm = TRUE)
-#     , To = max(FYear, na.rm = TRUE)
-#   ) %>%
-#   gather(Type, FYear, -Strategy, convert = TRUE)
-# 
-# activeMinMaxAe <- aeCheck %>% 
-#   filter(CCGCode == active_ccg & !is.na(Attendances)) %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     From = min(FYear, na.rm = TRUE)
-#     , To = max(FYear, na.rm = TRUE)
-#   ) %>%
-#   gather(Type, FYear, -Strategy, convert = TRUE)
-#   
-#   
-# # Make sure that we're not missing any strategies where allll years are NA
-# activeMinMaxIp <- activeStrategies %>%
-#   filter(TableType == "IP") %>%
-#   select(Strategy) %>%
-#   left_join(activeMinMaxIp, by = "Strategy")
-# 
-# activeMinMaxOp <- activeStrategies %>%
-#   filter(TableType == "OP") %>%
-#   select(Strategy) %>%
-#   left_join(activeMinMaxOp, by = "Strategy")
-#   
-# activeMinMaxAe <- activeStrategies %>%
-#   filter(TableType == "AE") %>%
-#   select(Strategy) %>%
-#   left_join(activeMinMaxAe, by = "Strategy")
-#   
-# 
-# # This is a list of the Strategies to totally exlude
-# activeIPExclude <- activeMinMaxIp %>%
-#   filter(is.na(FYear)) %>%
-#   select(Strategy) %>% unlist %>% unname
-# 
-# activeOPExclude <- activeMinMaxOp %>%
-#   filter(is.na(FYear)) %>%
-#   select(Strategy) %>% unlist %>% unname
-# 
-# activeAEExclude <- activeMinMaxAe %>%
-#   filter(is.na(FYear)) %>%
-#   select(Strategy) %>% unlist %>% unname
-
 
 # Munge data ---------------------------------------------------------------
 # setwd(paste0(baseDir, "data"))
@@ -557,7 +502,6 @@ colnames(aeSmall)    <- gsub("Attendances", "Spells", colnames(aeSmall))
 colnames(opSmall)    <- gsub("Attendances", "Spells", colnames(opSmall))
 colnames(opSmallFUF) <- gsub("Attendances", "Spells", colnames(opSmallFUF))
 
-"Removed washer for now"
 
 # How many rows should there be? 
 ipBase <- expand.grid(
@@ -571,13 +515,6 @@ ipBase <- expand.grid(
 opBase <- expand.grid(
   CCGCode = comparatorCCGs2 %>% select(CCGCode) %>% unlist %>% unname
   , Strategy = activeStrategies %>% filter(TableType == "OP" & !grepl("^FUF.*", Strategy)) %>% select(Strategy) %>% unlist %>% unname
-  , FYear = unique(opData$FYear)
-  , stringsAsFactors = FALSE
-)
-
-opFUFBase <- expand.grid(
-  CCGCode = comparatorCCGs2 %>% select(CCGCode) %>% unlist %>% unname
-  , Strategy = activeStrategies %>% filter(TableType == "OP" & grepl("^FUF.*", Strategy)) %>% select(Strategy) %>% unlist %>% unname
   , FYear = unique(opData$FYear)
   , stringsAsFactors = FALSE
 )
@@ -615,41 +552,6 @@ ip <- ipSmall %>% process %>% right_join(ipBase, by = c("CCGCode", "Strategy", "
 op <- opSmall %>% process %>% right_join(opBase, by = c("CCGCode", "Strategy", "FYear"))
 ae <- aeSmall %>% process %>% right_join(aeBase, by = c("CCGCode", "Strategy", "FYear"))
 
-opFUFhold <- opSmallFUF %>%
-  select(-CCGDescription, -ShortName) %>%
-  gather(Strategy, Highlighted, -Spells, -CCGCode, -DSCosts
-         , -DSCostsVar, -Costs, -DSRate, -DSRateVar, -FYear, convert = T) %>%
-  filter(!is.na(Highlighted)) %>%
-  group_by(Strategy, CCGCode, FYear, Highlighted) %>%
-  summarise(
-    Spells = sum(Spells, na.rm = TRUE)
-    , Costs = sum(Costs, na.rm = TRUE)
-  ) %>%
-  mutate(FUF = ifelse(Highlighted == 1, "First", "FollowUp")) %>%
-  select(-Highlighted) 
-
-opFUFSpells <- opFUFhold %>%
-  select(-Costs) %>%
-  spread(FUF, Spells) %>%
-  mutate(
-    FUFRatio =  FollowUp / First
-    , IsActiveCCG = CCGCode == active_ccg) %>% 
-  ungroup()
-
-opFUFCosts <- opFUFhold %>%
-  select(-Spells) %>%
-  spread(FUF, Costs) %>%
-  rename(CostsFirst = First, CostsFollowUp = FollowUp) %>% 
-  ungroup()
-
-opFUF <- opFUFBase %>%
-  left_join(opFUFSpells, by = c("Strategy", "CCGCode", "FYear")) %>%
-  left_join(opFUFCosts, by = c("Strategy", "CCGCode", "FYear"))
-
-stopifnot(nrow(opFUF) == nrow(opFUFBase)) # # strategies * # ccgs * # financial years
-rm(opFUFhold, opFUFSpells, opFUFCosts)
-
-
 
 # ***** --------------------------------------------------------------
 
@@ -658,307 +560,75 @@ rm(opFUFhold, opFUFSpells, opFUFCosts)
 ipFunnelPoints    <- ip    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) %>% label_ccg()
 opFunnelPoints    <- op    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) %>% label_ccg()
 aeFunnelPoints    <- ae    %>% filter(FYear == f_year) %>% mutate(DSRate = DSRate/100000) %>% label_ccg()
-opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
-
-
-opFunnelSummaryFUF <- opFUF %>%
-  ungroup() %>%
-  group_by(Strategy) %>%
-  summarise(
-    AverageFUF = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
-    , ActualMinFirst = min(First, na.rm = TRUE)
-    , ActualMaxFirst = max(First, na.rm = TRUE)
-    , ActualMinFUFRatio = min(FUFRatio, na.rm = TRUE)
-    , ActualMaxFUFRatio = max(FUFRatio, na.rm = TRUE)
-  ) %>%
-  group_by(Strategy) %>%
-  mutate(
-    NewMinFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Min"]
-    , NewMaxFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Max"]
-    , NewMinFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Min"]
-    , NewMaxFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Max"]
-  )
-
-
-opFunnelFunnelsFUF <-
-  expand.grid(
-    Strategy = unique(opFunnelSummaryFUF$Strategy)
-    , RowNumber = seq(1, funnelParameters$Smoothness, 1)
-    , stringsAsFactors = FALSE
-  ) %>%
-  left_join(opFunnelSummaryFUF, by = "Strategy") %>%
-  mutate(EventSpells = NA) %>%
-  arrange(Strategy)
-
-  for (i in seq(length(opFunnelFunnelsFUF$EventSpells))){
-    if(opFunnelFunnelsFUF$RowNumber[i] == 1){
-      opFunnelFunnelsFUF$EventSpells[i] <- max(1, opFunnelFunnelsFUF$NewMinFirst[i])
-    } else {
-      opFunnelFunnelsFUF$EventSpells[i] <-
-        max(
-          round(
-            ((opFunnelFunnelsFUF$NewMaxFirst[i]) /
-               opFunnelFunnelsFUF$EventSpells[i - 1]) ^
-              (1 / ((funnelParameters$Smoothness + 1) - opFunnelFunnelsFUF$RowNumber[i])) * opFunnelFunnelsFUF$EventSpells[i - 1]
-          )
-          , opFunnelFunnelsFUF$EventSpells[i - 1] + 1
-        )
-    }
-  }
-
-  opFunnelFunnelsFUF <- opFunnelFunnelsFUF %>%
-    mutate(
-      Denominator = EventSpells
-      , FUIfAverage = Denominator * AverageFUF
-      , StandardError =  sqrt(1 / FUIfAverage + 1 / Denominator)
-      , ThreeSigmaLower  = (AverageFUF - (3 * StandardError))
-      , TwoSigmaLower  = (AverageFUF - (2 * StandardError))
-      , TwoSigmaHigher  = (AverageFUF +(2 * StandardError))
-      , ThreeSigmaHigher  = (AverageFUF + (3 * StandardError))
-    )
-  
 
 # Roc ----------------------------------------------------------
-  setwd(paste0(baseDir, "r"))
-  
-   source("rateOfChangePlotFunctions.R")
-  
-  ## AmbNoInvNoTreat has no results anywhere in 200910 or 201011
-  #checkAmbNoInvNoTreat <- aeData %>%
-  #  filter(AmbNoInvNoTreat_v1 == 1) %>%
-  #  group_by(CCGCode, FYear) %>%
-  #  summarise(Attendances = sum(Attendances, na.rm = TRUE))
-  
-  ## So we need to create some exceptions
-  
-  # rocExceptions <- data.frame( # I will fill this with any exceptions to the rules.
-  #   CCGCode = character()
-  #   , Strategy = character()
-  #   , From = integer()
-  #   , To = integer()
-  #   , stringsAsFactors = FALSE
-  # )
-  # # 
-  # 
-  #   source("opplcvExceptions.R")
-  # #
-  # rocExceptions <- rbind(
-  #   rocExceptions, 
-  #   (allCCGs %>% 
-  #      select(CCGCode) %>%
-  #      mutate(
-  #        Strategy = "AmbNoInvNoTreat_v1"
-  #        , From = 201213
-  #        , To=  201617))
-  #   , (activeStrategies %>% 
-  #        filter(Strategy != "AmbNoInvNoTreat_v1") %>%
-  #        mutate(
-  #          CCGCode = "03J" # North Kirklees
-  #          , From = 201213
-  #          , To =  201617) %>%
-  #        select(CCGCode, Strategy, From, To))
-  #   , (activeStrategies %>% 
-  #        filter(Strategy != "AmbNoInvNoTreat_v1") %>%
-  #        mutate(
-  #          CCGCode = "03R" #Wakefield
-  #          , From = 201213
-  #          , To =  201617) %>%
-  #        select(CCGCode, Strategy, From, To))) %>% 
-  #   bind_rows(opplcvExceptions)
-  
-  ## Amendments to Jonathan's original code in the line above:
-  ## CHANGE OF YEAr
-  # "BUT MAY NOT NECESSARY. AT SOME POINT WILL HAVE TO UNDERSTAND"
-  
-  
-  #General method to add a single exception:
-  #rocExceptions[nrow(rocExceptions) + 1, ] <- list("05X", "FrequentFlyers_v1", 200910, 201415)
-  
-  ####
-  
-  ipRoCAll <- ip %>% roc_all 
-  ipRoCAll <- ipRoCAll %>% left_join(
-    ipRoCAll %>% 
-      select(CCGCode, Strategy, FYear, Spells) %>%
-      rename(SpellsInBaseYear = Spells, From = FYear) 
-    , by = c("CCGCode", "Strategy", "From")) %>% 
-    unique.data.frame() # to remove duplicates from incl. base yr in roc_all
+setwd(paste0(baseDir, "r"))
 
-# tmp   <- ip %>% roc_all  %>% filter(CCGCode == "13P", Strategy == "ACS_Acute_v3")
-# tmp_a <- tmp %>% left_join(
-#   tmp %>% 
-#     filter(CCGCode == "13P", Strategy == "ACS_Acute_v3") %>% 
-#     select(CCGCode, Strategy, FYear, Spells) %>%
-#     rename(SpellsInBaseYear = Spells, From = FYear) 
-#   , by = c("CCGCode", "Strategy", "From"))
-#   
-# tmp_c <- ip %>% filter(FYear == 201213) %>% rename(SpellsInBaseYear = Spells)
-#   
-# tmp_d <- tmp_a %>% left_join(tmp_c, by = c("CCGCode", "Strategy", "From" = "FYear"))
-  
-  ipRoCActive <- ipRoCAll %>% roc_active
+ source("rateOfChangePlotFunctions.R")
 
-  ipRoC <- ipRoCAll %>%
-    inner_join(ipRoCActive, by = c("Strategy", "FYear", "From"))
-  
-  ipRoCCheck <- ipRoC %>% filter(!IsValid)
-  ipRoC <- ipRoC %>% filter(IsValid) #N Kirklees and Wakefield
-  
-  ipRoCSummary <- ipRoC %>% roc_summary
-  
-  ipRoCFunnels <- roc_funnels(ipRoCSummary, funnelParameters$Smoothness, personYears)
-  
-  ####
-  aeRoCAll <- ae %>% roc_all 
-  aeRoCAll <- aeRoCAll %>% left_join(
-    aeRoCAll %>% 
-      select(CCGCode, Strategy, FYear, Spells) %>%
-      rename(SpellsInBaseYear = Spells, From = FYear)
-    , by = c("CCGCode", "Strategy", "From"))%>% 
-    unique.data.frame() # to remove duplicates from incl. base yr in roc_all
-  
-  
-  aeRoCActive <- aeRoCAll %>% roc_active
-  
-  aeRoC <- aeRoCAll %>%
-    inner_join(aeRoCActive, by = c("Strategy", "FYear", "From"))
-  
-  aeRoCCheck <- aeRoC %>% filter(!IsValid)
-  aeRoC <- aeRoC %>% filter(IsValid) 
-  
-  aeRoCSummary <- aeRoC %>% roc_summary
-  
-  aeRoCFunnels <- roc_funnels(aeRoCSummary, funnelParameters$Smoothness, personYears)
-  ####
-  opRoCAll <- op %>% roc_all 
-  opRoCAll <- opRoCAll %>% left_join(
+ipRoCAll <- ip %>% roc_all 
+ipRoCAll <- ipRoCAll %>% left_join(
+  ipRoCAll %>% 
+    select(CCGCode, Strategy, FYear, Spells) %>%
+    rename(SpellsInBaseYear = Spells, From = FYear) 
+  , by = c("CCGCode", "Strategy", "From")) %>% 
+  unique.data.frame() # to remove duplicates from incl. base yr in roc_all
+
+
+ipRoCActive <- ipRoCAll %>% roc_active
+
+ipRoC <- ipRoCAll %>%
+  inner_join(ipRoCActive, by = c("Strategy", "FYear", "From"))
+
+ipRoCCheck <- ipRoC %>% filter(!IsValid)
+ipRoC <- ipRoC %>% filter(IsValid) #N Kirklees and Wakefield
+
+ipRoCSummary <- ipRoC %>% roc_summary
+
+ipRoCFunnels <- roc_funnels(ipRoCSummary, funnelParameters$Smoothness, personYears)
+
+####
+aeRoCAll <- ae %>% roc_all 
+aeRoCAll <- aeRoCAll %>% left_join(
+  aeRoCAll %>% 
+    select(CCGCode, Strategy, FYear, Spells) %>%
+    rename(SpellsInBaseYear = Spells, From = FYear)
+  , by = c("CCGCode", "Strategy", "From"))%>% 
+  unique.data.frame() # to remove duplicates from incl. base yr in roc_all
+
+
+aeRoCActive <- aeRoCAll %>% roc_active
+
+aeRoC <- aeRoCAll %>%
+  inner_join(aeRoCActive, by = c("Strategy", "FYear", "From"))
+
+aeRoCCheck <- aeRoC %>% filter(!IsValid)
+aeRoC <- aeRoC %>% filter(IsValid) 
+
+aeRoCSummary <- aeRoC %>% roc_summary
+
+aeRoCFunnels <- roc_funnels(aeRoCSummary, funnelParameters$Smoothness, personYears)
+####
+opRoCAll <- op %>% roc_all 
+opRoCAll <- opRoCAll %>% left_join(
     opRoCAll %>% 
       select(CCGCode, Strategy, FYear, Spells) %>%
       rename(SpellsInBaseYear = Spells, From = FYear)
     , by = c("CCGCode", "Strategy", "From")) %>% 
     unique.data.frame() # to remove duplicates f
   
-  opRoCActive <- opRoCAll %>% roc_active
-  
-  opRoC <- opRoCAll %>%
-    inner_join(opRoCActive, by = c("Strategy", "FYear", "From"))
-  
-  opRoCCheck <- opRoC %>% filter(!IsValid)
-  opRoC <- opRoC %>% filter(IsValid) 
-  
-  opRoCSummary <- opRoC %>% roc_summary
-  
-  opRoCFunnels <- roc_funnels(opRoCSummary, funnelParameters$Smoothness, personYears)
-  
-  
-  
-  # opRocFUF <- opSmallFUF %>%
-  #   select(-DSCosts, -DSCostsVar, -Costs, -DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
-  #   gather(Strategy, Highlighted, -Spells, -FYear, -CCGCode, convert = T ) %>%
-  #   group_by(Strategy, CCGCode, FYear, Highlighted) %>%
-  #   summarise(Spells = sum(Spells, na.rm = TRUE)) %>%
-  #   filter(!is.na(Highlighted)) %>%
-  #   mutate(FUF = ifelse(Highlighted == 1, "First", "FollowUp")) %>%
-  #   select(-Highlighted) %>%
-  #   spread(FUF, Spells) %>%
-  #   mutate(
-  #     FUFRatio =  FollowUp / First
-  #     , IsActiveCCG = CCGCode == active_ccg) %>%
-  #   group_by(CCGCode, Strategy, add = FALSE) %>%
-  #   left_join(rocExceptions, by = c("CCGCode", "Strategy", "FYear" = "From")) %>%
-  #   left_join(rocExceptions, by = c("CCGCode", "Strategy", "FYear" = "To")) %>%
-  #   mutate(IsException = !is.na(From)|!is.na(To)) %>%
-  #   select(-From, -To) %>%
-  #   filter(
-  #     (FYear == rocParameters$From | FYear == rocParameters$To)
-  #     | IsException 
-  #   ) %>% 
-  #   left_join(rocExceptions, by = c("CCGCode", "Strategy")) %>%
-  #   filter(IsException | is.na(From)) %>%
-  #   select(-From, -To) %>% 
-  #   mutate(
-  #     RateOfChange = FUFRatio - lag(FUFRatio, 1)
-  #     , FUFInBaseYear = lag(FUFRatio, 1)
-  #     , FirstInBaseYear = lag(First, 1)
-  #     , BaseYear = lag(FYear, 1)
-  #     , IsActiveCCG = CCGCode == active_ccg) %>%
-  #   filter(row_number() == n())
-  
-  # opRocSummaryFUF <- opRocFUF %>%
-  #   ungroup() %>%
-  #   group_by(Strategy, FYear) %>%
-  #   summarise(
-  #     AverageRateOfChange = mean(RateOfChange, na.rm = TRUE)
-  #     , ActualMinFirst = min(First, na.rm = TRUE)
-  #     , ActualMaxFirst = max(First, na.rm = TRUE)
-  #     , ActualMinFUFRatio = min(FUFRatio, na.rm = TRUE)
-  #     , ActualMaxFUFRatio = max(FUFRatio, na.rm = TRUE)
-  #     , ActualMinRateOfChange = min(RateOfChange, na.rm = TRUE)
-  #     , ActualMaxRateOfChange = max(RateOfChange, na.rm = TRUE)
-  #   ) %>%
-  #   group_by(Strategy, FYear) %>%
-  #   mutate(
-  #     NewMinFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Min"]
-  #     , NewMaxFirst = chartLimits(ActualMinFirst, ActualMaxFirst)["Max"]
-  #     , NewMinFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Min"]
-  #     , NewMaxFUFRatio = chartLimits(ActualMinFUFRatio, ActualMaxFUFRatio)["Max"]
-  #     , NewMinRateOfChange = roundTo(ActualMinRateOfChange -0.05, 0.05)
-  #     , NewMaxRateOfChange = roundTo(ActualMaxRateOfChange + 0.05, 0.05)
-  #   ) 
-  # 
-  # 
-  # opRocFunnelsFUF <- 
-  #   expand.grid(
-  #     Strategy = unique(opRocSummaryFUF$Strategy)
-  #     , RowNumber = seq(1, funnelParameters$Smoothness, 1)
-  #     , stringsAsFactors = FALSE
-  #   ) %>%
-  #   left_join(opRocSummaryFUF, by = "Strategy") %>%
-  #   mutate(EventSpells = NA) %>%
-  #   arrange(Strategy)  
-  # 
-  # for (i in seq(length(opRocFunnelsFUF$EventSpells))){
-  #   if(opRocFunnelsFUF$RowNumber[i] == 1){
-  #     opRocFunnelsFUF$EventSpells[i] <- max(1, opRocFunnelsFUF$NewMinFirst[i])
-  #   } else {
-  #     opRocFunnelsFUF$EventSpells[i] <- 
-  #       max(
-  #         round(
-  #           ((opRocFunnelsFUF$NewMaxFirst[i]) / 
-  #              opRocFunnelsFUF$EventSpells[i - 1]) ^ 
-  #             (1 / ((funnelParameters$Smoothness + 1) - opRocFunnelsFUF$RowNumber[i])) * opRocFunnelsFUF$EventSpells[i - 1]
-  #         )
-  #         , opRocFunnelsFUF$EventSpells[i - 1] + 1
-  #       )
-  #   }
-  # }
-  # 
-  # opRocFunnelsFUF <- opRocFunnelsFUF %>%
-  #   mutate(
-  #     Denominator = EventSpells 
-  #     , StandardError =  sqrt(1 / Denominator + 1 / (Denominator * (1 + AverageRateOfChange)))
-  #     , ThreeSigmaLower  = (AverageRateOfChange - (3 * StandardError)) 
-  #     , TwoSigmaLower  = (AverageRateOfChange - (2 * StandardError))
-  #     , TwoSigmaHigher  = (AverageRateOfChange +(2 * StandardError))
-  #     , ThreeSigmaHigher  = (AverageRateOfChange + (3 * StandardError))
-  #   )
-  
-  
-  
-  
-  
-  # #Checking row numbers
-  # if(n_groups(ipRoCSummary) * 2 != nrow(ipRoCSummary)){
-  #   cat("There is at least one group without a comparator year.")}
-  #   ipRoCSummary %>% count(vars = Strategy) %>% filter(n < 2)
-  
-  #funnelsWithNaN <- filter(rocFunnels, is.nan(StandardError))
-  
-  
-  # Remove bits from the ends of the funnels that would be above/below visible range of the funnel plot
-  # This is just to avoid a warning when plotting.
-  #rocFunnels <- rocFunnels %>%
-  #  filter(TwoSigmaHigher <= NewMaxRateOfChange & TwoSigmaLower >= NewMinRateOfChange)
+opRoCActive <- opRoCAll %>% roc_active
+
+opRoC <- opRoCAll %>%
+  inner_join(opRoCActive, by = c("Strategy", "FYear", "From"))
+
+opRoCCheck <- opRoC %>% filter(!IsValid)
+opRoC <- opRoC %>% filter(IsValid) 
+
+opRoCSummary <- opRoC %>% roc_summary
+
+opRoCFunnels <- roc_funnels(opRoCSummary, funnelParameters$Smoothness, personYears)
+
   
 
 # Trend  ---------------------------------------------------------
@@ -966,59 +636,15 @@ ipTrendActive <- ipSmall %>% trend_active
 aeTrendActive <- aeSmall %>% trend_active 
 opTrendActive <- opSmall %>% trend_active 
 
-opTrendFUF <- opSmallFUF %>%
-  mutate(IsActiveCCG = CCGCode == active_ccg) %>%
-  select(-DSCosts, -DSCostsVar, -DSRate, -DSRateVar, -CCGCode, -CCGDescription, -ShortName) %>%
-  gather(Strategy, Highlighted, -Spells, -Costs, -IsActiveCCG, -FYear, convert = T) %>%
-  group_by(Strategy, IsActiveCCG, FYear, Highlighted) %>%
-  summarise(
-    Spells = sum(Spells, na.rm = TRUE)
-    ) %>%
-  filter(!is.na(Highlighted)) %>%
-  mutate(FUF = ifelse(Highlighted == 1,"First", "FollowUp")) %>%
-  select(-Highlighted) %>%
-  spread(FUF, Spells) %>%
-  mutate(FUFRatio =  FollowUp / First)
-
-
 ipTrendComparators <- ipSmall %>% trend_comparators 
 aeTrendComparators <- aeSmall %>% trend_comparators 
 opTrendComparators <- opSmall %>% trend_comparators 
 
 # Cost [KEEP]-----------------------------------
+
 ipCost <- ipSmall %>% cost_ds 
 aeCost <- aeSmall %>% cost_ds 
 opCost <- opSmall %>% cost_ds 
-
-opCostFUF <- opSmallFUF %>%
-  filter(FYear == f_year) %>%
-  select(-FYear, -DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
-  gather(Strategy, Highlighted, -CCGCode, -Spells, -Costs, -DSCosts, -DSCostsVar, convert = T) %>%
-  group_by(CCGCode, Strategy, Highlighted) %>%
-  summarise(
-    Spells = sum(Spells, na.rm = TRUE)
-    , Costs = sum(Costs, na.rm = TRUE)
-    , DSCosts = sum(DSCosts, na.rm = TRUE)
-    , DSCostsVar = sum(DSCostsVar, na.rm = TRUE)
-    ) %>%
-  filter(Highlighted == 0) %>%
-  select(-Highlighted) %>%
-  left_join(ccgPopulation, by = "CCGCode") %>%
-  mutate(
-    CostPerHead = Costs / Population
-    , SpellsHigh = (Spells + 1) * (1 - 1/(9 * (Spells + 1)) + trendCV / (3 * sqrt(Spells + 1))) ^ 3
-    , SpellsLow = Spells * (1 - 1/(9 * Spells) - trendCV / (3 * sqrt(Spells))) ^ 3
-    , CostsHigh = (Costs + 1) * (1 - 1/(9 * (Costs + 1)) + trendCV / (3 * sqrt(Costs + 1))) ^ 3
-    , CostsLow = Costs * (1 - 1/(9 * Costs) - trendCV / (3 * sqrt(Costs))) ^ 3
-    , DSCostsCIUpper = DSCosts + sqrt(DSCostsVar / Costs) * (CostsHigh - Costs)
-    , DSCostsCILower = DSCosts + sqrt(DSCostsVar / Costs) * (CostsLow - Costs)    
-    , DSCostsPerHead = DSCosts / Population
-    , DSCostsPerHeadUpper = DSCostsCIUpper / Population
-    , DSCostsPerHeadLower = DSCostsCILower / Population
-    , IsActiveCCG = CCGCode == active_ccg) %>%
-  left_join(allCCGs, by = "CCGCode")
-
-opCost <- opCost %>% bind_rows(opCostFUF)
 
 # ***** --------------------------------------------------------------
 
@@ -1037,7 +663,6 @@ ipPlottableStrategies <- activeStrategies %>%
 
 plot_ip_fun   <- list()
 plot_ip_roc   <- list()
-plot_ip_cost  <- list()
 plot_ip_trend <- list()
 
 
@@ -1066,59 +691,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   " SUGGEST THIS JOIN IS INCORPORATED IN FUNCTION funl_data"
   " SUGGEST NEW NAME funl_data instead of funl_Data"
   
-  plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
+  plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = ip_colours[1])
   
- # plotFunnelPoints <- ipFunnelPoints %>%
- #   filter(Strategy == ipPlottableStrategies$Strategy[i])
- # plotFunnelFunnels <- ipFunnelFunnels %>%
- #   filter(Strategy == ipPlottableStrategies$Strategy[i])
- # plotFunnelSummary <- ipFunnelSummary %>%
- #   filter(Strategy == ipPlottableStrategies$Strategy[i])
- # 
- # 
- # plot_ip_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
- #   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
- #   geom_hline(aes(yintercept = Average)) +
- #   geom_point(
- #     data = plotFunnelPoints
- #     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
- #     , size = 4
- #     , shape = 20
- #   ) +
- #   scale_colour_manual(values = colourBlindPalette[c("blue", "red")] %>% unname) +
- #   scale_x_continuous(
- #     labels = scales::comma
- #      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
- #                   , plotFunnelSummary$NewMaxDerivedPopulation) 
- #    ) +
- #   scale_y_continuous(
- #     labels = scales::comma
- #     , limits = c(plotFunnelSummary$NewMinDSRate
- #                   , plotFunnelSummary$NewMaxDSRate) 
- #    ) +
- #   labs(
- #     x = paste0("Standardised population ", FYearIntToChar(f_year))
- #     , y = paste0("Direct standardised rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
- #     , title = paste0("Direct standardised rate ", FYearIntToChar(f_year))
- #   ) +
- #   theme(
- #     axis.line = element_line(colour="grey80")
- #     , axis.line.x = element_blank()
- #     , axis.text = element_text(colour = "black")
- #     , axis.ticks = element_line(colour = "black")
- #     , axis.title.y = element_text(size = 10)
- #     , legend.position = "none"
- #     , plot.background = element_blank()
- #     , plot.title = element_text(hjust = 0)
- #     , panel.grid.major.x = element_blank()
- #     , panel.grid.major.y = element_line(colour = "grey95")
- #     , panel.grid.minor = element_blank()
- #     , panel.border = element_blank()
- #     , panel.background= element_blank()
- #   )
 
 # Draw roc plot ------------------------------------------------------
 
@@ -1130,91 +704,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   plotRocSummary <- ipRoCSummary %>%
     filter(Strategy == ipPlottableStrategies$Strategy[i])
  
-  plot_ip_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary)
+  plot_ip_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = ip_colours[2])
   
-  # plot_ip_funroc[[i]] <- ggplot(data = plotRocFunnels) +
-  #   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
-  #   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
-  #   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
-  #   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
-  #   geom_hline(aes(yintercept = AverageRateOfChange)) +
-  #   geom_point(
-  #     data = plotRocPoints
-  #     , aes(x = SpellsInBaseYear, y = RateOfChange, colour = IsActiveCCG)
-  #     , size = 4
-  #     , shape = 20
-  #   ) +
-  #   scale_colour_manual(values = colourBlindPalette[c("blue", "red")] %>% unname) +
-  #   scale_x_continuous(
-  #     labels = scales::comma
-  #     , limits = c(plotRocSummary$NewMinSpells, plotRocSummary$NewMaxSpells)) +
-  #   scale_y_continuous(
-  #     labels = scales::percent
-  #     , limits = c(plotRocSummary$NewMinRateOfChange, plotRocSummary$NewMaxRateOfChange)) +
-  #   labs(
-  #     x = paste0("Related spells "
-  #                , plotRocPoints %>% 
-  #                  filter(IsActiveCCG) %>% 
-  #                  ungroup() %>% 
-  #                  select(From) %>% 
-  #                  unlist %>% unname %>% 
-  #                  FYearIntToChar)
-  #     , y = paste0("Percentage change")
-  #     , title = 
-  #       paste0("Rate of Change in DSR between "
-  #              , plotRocPoints %>% 
-  #                filter(IsActiveCCG) %>% 
-  #                ungroup() %>% 
-  #                select(From) %>% 
-  #                unlist %>% unname %>% 
-  #                FYearIntToChar
-  #              , " and "
-  #              , plotRocPoints %>% 
-  #                filter(IsActiveCCG) %>% 
-  #                ungroup() %>% 
-  #                select(FYear) %>% 
-  #                unlist %>% unname %>% 
-  #                FYearIntToChar)
-  #   ) +
-  #   theme(
-  #     axis.line = element_line(colour="grey80")
-  #     , axis.line.x = element_blank()
-  #     , axis.text = element_text(colour = "black")
-  #     , axis.ticks = element_line(colour = "black")
-  #     , axis.title.y = element_text(size = 10)
-  #     , legend.position = "none"
-  #     , plot.background = element_blank()
-  #     , panel.grid.major.x = element_blank()
-  #     , panel.grid.major.y = element_line(colour = "grey95")
-  #     , panel.grid.minor = element_blank()
-  #     , panel.border = element_blank()
-  #     , panel.background= element_blank()
-  #     , plot.title = element_text(hjust = 0)
-  #   ) 
-  # +
-  #   ggsave(
-  #     filename = paste0("Images/IP_", ipPlottableStrategies$Strategy[i], "_RoC.png")
-  #     , height = 8.9
-  #     , width = 13.3
-  #     , units = "cm")
-  
-  
- # Draw cost plot ----------------------------------------------------------
-  plotCostData <- ipCost %>%
-    filter(Strategy == ipPlottableStrategies$Strategy[i])
-  
-  plotCostFactorLevels <- plotCostData %>% 
-    ungroup() %>%
-    arrange(desc(DSCostsPerHead)) %>% 
-    select(ShortName) %>% unlist %>% unname
-  
-  plotCostData <- plotCostData %>%
-    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
-    mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
-  
-  
-  plot_ip_cost[[i]] <- plot_cost(plotCostData)
- 
   
 # Draw trend plots --------------------------------------------------------
 
@@ -1228,7 +719,8 @@ for(i in seq(ipPlottableStrategies$Strategy)){
                                    plotTrendComparators,
                                    "DSRate",
                                    plotTrendActive$DSRate,
-                                   plotTrendComparators$DSRate)
+                                   plotTrendComparators$DSRate,
+                                   colour_block = ip_colours[1])
    
 # ***** -----------------------------------------------------
 }
@@ -1248,7 +740,6 @@ aePlottableStrategies <- activeStrategies %>%
 
 plot_ae_fun   <- list()
 plot_ae_roc   <- list()
-plot_ae_cost  <- list()
 plot_ae_trend <- list()
 
 for(i in seq(aePlottableStrategies$Strategy)){
@@ -1266,75 +757,14 @@ for(i in seq(aePlottableStrategies$Strategy)){
                       , fnlMinEvents = NULL
                       , fnlMaxEvents = NULL
   ) 
-  
-  # What happens when you have a rate which does not come directly from (spells/population)?
-  # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
-  
+
   plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
   plotUnits   <- funnel[[2]] %>% 
     left_join(aeFunnelPoints %>% filter(Strategy == aePlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k()
   
-  plot_ae_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
-  
-  
-  # plotFunnelPoints <- aeFunnelPoints %>%
- #   filter(Strategy == aePlottableStrategies$Strategy[i])
- # plotFunnelFunnels <- aeFunnelFunnels %>%
- #   filter(Strategy == aePlottableStrategies$Strategy[i])
- # plotFunnelSummary <- aeFunnelSummary %>%
- #   filter(Strategy == aePlottableStrategies$Strategy[i])
- # 
- # plot_ae_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
- #   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
- #   geom_hline(aes(yintercept = Average)) +
- #   geom_point(
- #     data = plotFunnelPoints
- #     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
- #     , size = 4
- #     , shape = 20
- #   ) +
- #   scale_colour_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
- #   scale_x_continuous(
- #     labels = scales::comma
- #      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
- #                   , plotFunnelSummary$NewMaxDerivedPopulation) 
- #    ) +
- #   scale_y_continuous(
- #     labels = scales::comma
- #     , limits = c(plotFunnelSummary$NewMinDSRate
- #                   , plotFunnelSummary$NewMaxDSRate) 
- #    ) +
- #   labs(
- #     x = paste0("Standardised population ", FYearIntToChar(f_year))
- #     , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
- #     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
- #   ) +
- #   theme(
- #     axis.line = element_line(colour="grey80")
- #     , axis.line.x = element_blank()
- #     , axis.text = element_text(colour = "black")
- #     , axis.ticks = element_line(colour = "black")
- #     , axis.title.y = element_text(size = 10)
- #     , legend.position = "none"
- #     , plot.background = element_blank()
- #     , panel.grid.major.x = element_blank()
- #     , panel.grid.major.y = element_line(colour = "grey95")
- #     , panel.grid.minor = element_blank()
- #     , panel.border = element_blank()
- #     , panel.background= element_blank()
- #     , plot.title = element_text(hjust = 0)
- #   ) 
- # +
- #   ggsave(
- #     filename = paste0("Images/AE_", aePlottableStrategies$Strategy[i], "_Funnel.png")
- #     , height = 8.9
- #     , width = 13.3
- #     , units = "cm")
-  
+  plot_ae_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = ae_colours[1])
+ 
   
   # Draw roc plot ------------------------------------------------------
   
@@ -1345,26 +775,9 @@ for(i in seq(aePlottableStrategies$Strategy)){
   plotRocSummary <- aeRoCSummary %>%
     filter(Strategy == aePlottableStrategies$Strategy[i])
   
-  plot_ae_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary)
+  plot_ae_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = ae_colours[2])
   
   
-  
- 
-# Draw cost plot ----------------------------------------------------------
-  plotCostData <- aeCost %>%
-    filter(Strategy == aePlottableStrategies$Strategy[i])   
- 
-  plotCostFactorLevels <- plotCostData %>% 
-    ungroup() %>%
-    arrange(desc(DSCostsPerHead)) %>% 
-    select(ShortName) %>% unlist %>% unname
-
-  plotCostData <- plotCostData %>%
-    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
-    mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
-  
-  plot_ae_cost[[i]] <-  plot_cost(plotCostData) 
-
   
 # Draw trend plots --------------------------------------------------------
   plotTrendActive <- aeTrendActive %>%
@@ -1376,7 +789,8 @@ for(i in seq(aePlottableStrategies$Strategy)){
                                    plotTrendComparators,
                                    "DSRate",
                                    plotTrendActive$DSRate,
-                                   plotTrendComparators$DSRate)
+                                   plotTrendComparators$DSRate,
+                                   colour_block = ae_colours[1])
   
   
 # ***** ------------------------------------------------------------
@@ -1396,7 +810,6 @@ opPlottableStrategies <- activeStrategies %>%
 
 plot_op_fun   <- list()
 plot_op_roc   <- list()
-plot_op_cost  <- list()
 plot_op_trend <- list()
 
 for(i in seq(opPlottableStrategies$Strategy)){
@@ -1413,76 +826,13 @@ for(i in seq(opPlottableStrategies$Strategy)){
                       , fnlMinEvents = NULL
                       , fnlMaxEvents = NULL
   ) 
-  
-  # What happens when you have a rate which does not come directly from (spells/population)?
-  # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
-  
+
   plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
   plotUnits   <- funnel[[2]] %>% 
     left_join(opFunnelPoints %>% filter(Strategy == opPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k()
   
-  plot_op_fun[[i]] <- plot_fun(plotFunnels, plotUnits)
-  
-  
-  
- #   plotFunnelPoints <- opFunnelPoints %>%
- #   filter(Strategy == opPlottableStrategies$Strategy[i])
- # plotFunnelFunnels <- opFunnelFunnels %>%
- #   filter(Strategy == opPlottableStrategies$Strategy[i])
- # plotFunnelSummary <- opFunnelSummary %>%
- #   filter(Strategy == opPlottableStrategies$Strategy[i])
- # 
- # plot_op_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
- #   geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "grey40", linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = "longdash") +
- #   geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "grey40", linetype = "longdash") +
- #   geom_hline(aes(yintercept = Average)) +
- #   geom_point(
- #     data = plotFunnelPoints
- #     , aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG)
- #     , size = 4
- #     , shape = 20
- #   ) +
- #   scale_colour_manual(values = colourBlindPalette[c("sky blue", "red")] %>% unname) +
- #   scale_x_continuous(
- #     labels = scales::comma
- #      , limits = c(plotFunnelSummary$NewMinDerivedPopulation 
- #                   , plotFunnelSummary$NewMaxDerivedPopulation) 
- #    ) +
- #   scale_y_continuous(
- #     labels = scales::comma
- #     , limits = c(plotFunnelSummary$NewMinDSRate
- #                   , plotFunnelSummary$NewMaxDSRate) 
- #    ) +
- #   labs(
- #     x = paste0("Standardised population ", FYearIntToChar(f_year))
- #     , y = paste0("Direct Standardised Rate per ", scales::comma(funnelParameters$RatePerPeople)," population")
- #     , title = paste0("Direct Standardised Rate ", FYearIntToChar(f_year))
- #   ) +
- #   theme(
- #     axis.line = element_line(colour="grey80")
- #     , axis.line.x = element_blank()
- #     , axis.text = element_text(colour = "black")
- #     , axis.ticks = element_line(colour = "black")
- #     , axis.title.y = element_text(size = 10)
- #     , legend.position = "none"
- #     , plot.background = element_blank()
- #     , panel.grid.major.x = element_blank()
- #     , panel.grid.major.y = element_line(colour = "grey95")
- #     , panel.grid.minor = element_blank()
- #     , panel.border = element_blank()
- #     , panel.background= element_blank()
- #     , plot.title = element_text(hjust = 0)
- #   ) 
- # +
- #   ggsave(
- #     filename = paste0("Images/OP_", opPlottableStrategies$Strategy[i], "_Funnel.png")
- #     , height = 8.9
- #     , width = 13.3
- #     , units = "cm")
- # 
+  plot_op_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = op_colours[1])
   
 
   # Draw roc plot ------------------------------------------------------
@@ -1494,26 +844,10 @@ for(i in seq(opPlottableStrategies$Strategy)){
   plotRocSummary <- opRoCSummary %>%
     filter(Strategy == opPlottableStrategies$Strategy[i])
   
-  plot_op_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary)
+  plot_op_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = op_colours[2])
   
   
 
-# Draw cost plot ----------------------------------------------------------
-  plotCostData <- opCost %>%
-    filter(Strategy == opPlottableStrategies$Strategy[i])
-  
-  plotCostFactorLevels <- plotCostData %>% 
-    ungroup() %>%
-    arrange(desc(DSCostsPerHead)) %>% 
-    select(ShortName) %>% unlist %>% unname
-  
-  plotCostData <- plotCostData %>%
-    mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
-    mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
-  
-  
-  plot_op_cost[[i]] <- plot_cost(plotCostData)
-  
 # Draw trend plots --------------------------------------------------------
   plotTrendActive <- opTrendActive %>%
     filter(Strategy == opPlottableStrategies$Strategy[i])
@@ -1524,7 +858,8 @@ for(i in seq(opPlottableStrategies$Strategy)){
                                    plotTrendComparators,
                                    "DSRate",
                                    plotTrendActive$DSRate,
-                                   plotTrendComparators$DSRate)
+                                   plotTrendComparators$DSRate,
+                                   colour_block = op_colours[1])
   
 # ***** ---------------------------------------------------
 }
@@ -1647,101 +982,6 @@ save_plots(opPlottableStrategies$Strategy, plot_op_trend)
 
 
 # ***** --------------------------------------------------------------
-
-
-
-# # FUF plots ---------------------------------------------------------------
-# opPlottableFUFStrategies <- activeStrategies %>%
-#   filter(TableType == "OP") %>%
-#   filter((grepl("^FUF*", Strategy)))
-# 
-# plot_fuf_fun   <- list()
-# plot_fuf_cost  <- list()
-# plot_fuf_trend <- list()
-# 
-# for(i in seq(opPlottableFUFStrategies$Strategy)){
-# 
-# # Draw funnel plot --------------------------------------------------------
-#   
-#   plotFunnelPoints <- opFUFFunnelPoints %>%
-#    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-#  plotFunnelFunnels <- opFunnelFunnelsFUF %>%
-#    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-#  plotFunnelSummary <- opFunnelSummaryFUF %>%
-#    filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-#  
-#  plot_fuf_fun[[i]] <- ggplot(data = plotFunnelFunnels) +
-#    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "black", linetype =  44) +
-#    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = 44) +
-#    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = 44) +
-#    geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "black", linetype =  44) +
-#    # geom_hline(aes(yintercept = AverageFUF)) +
-#    geom_segment(aes(  x      = min(Denominator)
-#                       , xend = max(Denominator)
-#                       , y    = AverageFUF
-#                       , yend = AverageFUF))+
-#    geom_point(
-#      data = plotFunnelPoints
-#      , aes(x = First, y = FUFRatio, colour = IsActiveCCG)
-#      , size = 3
-#    )+
-#    scale_x_continuous(labels = scales::comma)+
-#    scale_y_continuous(limits = c(0.8*min(plotFunnelPoints$FUFRatio)
-#                                  , 1.2*max(plotFunnelPoints$FUFRatio)
-#                                  )
-#                       , labels = scales::comma)+
-#    theme_strategy()+
-#    theme(legend.position = "none")+
-#    labs(
-#      x = paste0("First appointments ", FYearIntToChar(f_year))
-#      , y = "Ratio of follow-ups to first"
-#      , title = paste0("Ratio of Follow-ups to First Appointments ", FYearIntToChar(f_year))
-#    )+
-#    scale_color_manual(values = c("grey70", '#c52828'))
-# 
-# 
-# # Draw cost plot ----------------------------------------------------------
-#   plotCostData <- opCostFUF %>%
-#     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-#   
-#   plotCostFactorLevels <- plotCostData %>% 
-#     ungroup() %>%
-#     arrange(desc(DSCostsPerHead)) %>% 
-#     select(ShortName) %>% unlist %>% unname
-#   
-#   plotCostData <- plotCostData %>%
-#     mutate(ShortName = factor(ShortName, levels = plotCostFactorLevels)) %>% 
-#     mutate(for_label = format(round(DSCostsPerHead, 1), nsmall = 2))
-#   
-#   
-#   plot_fuf_cost[[i]] <- plot_cost(plotCostData)
-#  
-# # Draw trend plots --------------------------------------------------------
-# "May have to look into this. IsActiveCCG == False may be all other CCGs?"
-#   plotTrendActive <- opTrendFUF %>%
-#     filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-#    # plotTrendComparators <- opTrendComparators %>%
-#    #   filter(Strategy == opPlottableFUFStrategies$Strategy[i])
-#   
-#   plot_fuf_trend[[i]] <-   plot_trend(plotTrendActive %>% filter(IsActiveCCG == T),
-#                                       plotTrendActive %>% filter(IsActiveCCG == F),
-#                                       "FUFRatio",
-#                                       plotTrendActive$FUFRatio,
-#                                       plotTrendActive$FUFRatio, # or 0,
-#                                       F # for comparator
-#                                       )
-#   
-#   
-# # ***** --------------------------------------------------------
-# }
-# rm(plotFunnelPoints, plotFunnelFunnels, plotFunnelSummary
-#    #, plotFUFRocPoints, plotFUFRocFunnels, plotFUFRocSummary
-#    , plotCostData, plotCostFactorLevels
-#    , plotTrendActive
-#    , i)
-# 
-# detach("package:testthat", unload=TRUE) # remove this conflict by loading tidyverse last
-
 
 # Summary tables -------------------------------------------------------------
 setwd(baseDir)
