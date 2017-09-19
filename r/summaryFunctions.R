@@ -66,29 +66,31 @@ summary_output <- function(dataSmall, savingsAnyOne, significanceSummary, totalA
     select(-FYear, -DSRateVar, -DSCosts, -DSCostsVar, -CCGCode, -CCGDescription, -ShortName) %>%
     gather(Strategy, Highlighted,  -Spells, -Costs, -DSRate, convert = T) %>%
     group_by(Strategy, Highlighted) %>%
-    summarise_each(
+    summarise_all(
       funs(sum(., na.rm = TRUE))
-      , Spells, Costs, DSRate
+      #, Spells, Costs, DSRate
     ) %>%
     filter(Highlighted == 1) %>%
     select(-Highlighted) %>%
     left_join(savingsAnyOne, by = "Strategy") %>%
-    mutate_each(
-      funs(
-        Comparators = (.)
-        , SavingsIf = (Costs - (. / DSRate) * Costs)) #generate savings if average
-      , Average, TopQuartile, TopDecile) %>%
-    mutate_each(funs(ifelse( . < 0 , 0, .)), matches("_SavingsIf")) %>% # remove negative savings
+    mutate_at(vars(Average, TopQuartile, TopDecile),
+              funs(
+                Comparators = (.)
+                , SavingsIf = (Costs - (. / DSRate) * Costs)) #generate savings if average
+    ) %>%
+    mutate_at(vars(matches("_SavingsIf")), funs(ifelse( . < 0 , 0, .))) %>% # remove negative savings
     mutate(
       SpellsRounded = roundTo(Spells, 10)
       , propSpells = Spells / totalActivity$Spells) %>%
-    mutate_each(funs(
-      Actual = (.)
-      , Rounded = roundTo(., 1000)
-    ), Costs, matches("_SavingsIf")) %>%
+    mutate_at(vars(matches("_SavingsIf"), Costs), 
+              funs(
+                Actual = (.)
+                , Rounded = roundTo(., 1000)
+              )) %>%
     left_join(activeStrategies, by = "Strategy") %>%
     select(-StrategyType) %>%
     left_join(significanceSummary, by ="Strategy")
   
   return(summaryOutput)
 }
+
