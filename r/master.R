@@ -5,8 +5,15 @@
 
 # ***** --------------------------------------------------------------
 "Use package check system? See email"
-"Code seems to be unaffected by update to dplyr 0.7 etc."
+"Code seems to be unaffected by update to dplyr 0.7 etc except summaries"
+"which now updated to use mutate_at() etc."
 "Check colour blind friendly"
+"Lancs CCGs: Data appears from 2014-15"
+"Need to adjust names in savings plot in line with whatever"
+"names for opportunities are selected"
+"Fix size of savings plots"
+"Savings plots don't really give you enough - must be used in
+conjunction with funnels to work out where easiest savings are"
 
 # Packages ----------------------------------------------------------------
 
@@ -50,7 +57,7 @@ qipp_ccgs  <- c(# Alphabetical:
                # "05H", # WKN -- OUTSIDE CSU
                "06A", # WOL#
                "06D"  # WYR#
-)
+               )
 
 # Parameters 2 -------------------------------------------------------------
 
@@ -985,12 +992,10 @@ save_plots(opPlottableStrategies$Strategy, plot_op_trend)
 
 # Summary tables -------------------------------------------------------------
 setwd(baseDir)
-"CAREFUL IF RE-RUNNING THE FUNNEL PLOTS AFTERWARD"
-"These required for summary tables"
+
 summ_ipFunnelPoints    <- ip    %>% filter(FYear == f_year) 
 summ_opFunnelPoints    <- op    %>% filter(FYear == f_year)
 summ_aeFunnelPoints    <- ae    %>% filter(FYear == f_year)
-summ_opFUFFunnelPoints <- opFUF %>% filter(FYear == f_year) 
 
 summ_ipFunnelSummary <- summ_ipFunnelPoints %>% funnel_summary
 summ_aeFunnelSummary <- summ_aeFunnelPoints %>% funnel_summary
@@ -1001,11 +1006,11 @@ summ_aeFunnelFunnels <- funnel_funnels(summ_aeFunnelSummary, funnelParameters$Sm
 summ_opFunnelFunnels <- funnel_funnels(summ_opFunnelSummary, funnelParameters$Smoothness, personYears)
 
 
+# Comparator table
+
 comparatorsOut <- comparatorCCGs2 %>%
   filter(CCGCode != active_ccg) %>%
   select(CCGCode, CCGDescription)
-
-# Comparator table
 
 flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
@@ -1109,7 +1114,7 @@ flex_ip_cost <- setFlexTableBorders(flex_ip_cost
 
 
 
-# IP save plot -----------------------------------------------
+# IP savings plot -----------------------------------------------
 
 savingsIP <- summaryOutputIP %>%
   ungroup() %>% 
@@ -1159,13 +1164,15 @@ geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0
 # A&E ---------------------------------------------------------------------
 totalActivityAE <- aeSmall %>% total_activity
 savingsAnyOneAE <- aeTrendComparators %>% savings_any_one
-aeSignificance <- significance_summary(aeFunnelPoints, aeFunnelFunnels, aeRoC, aeRoCFunnels)
+
+aeSignificance <- significance_summary(summ_aeFunnelPoints, summ_aeFunnelFunnels, aeRoC, aeRoCFunnels)
+
 summaryOutputAE <- aeSmall %>% summary_output(., savingsAnyOneAE, aeSignificance, totalActivityAE) %>%
   group_by(ReviewNumber, add = FALSE) %>%
   mutate(ReviewDupe = row_number()) %>%
   mutate(ReviewDupe = paste0(ReviewNumber, ReviewDupe)) %>%
   left_join(aeTrendActive %>% 
-    filter(FYear == 201415) %>%
+    filter(FYear == f_year) %>%
     ungroup() %>%
     select(Strategy, DSRateCIUpper, DSRateCILower)
     , by = "Strategy") %>%
@@ -1174,16 +1181,124 @@ summaryOutputAE <- aeSmall %>% summary_output(., savingsAnyOneAE, aeSignificance
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
 
+
+# AE tbl summary -----------------------------------------------------
+
+
+summ_ae_summ_out <- summaryOutputAE %>%
+  ungroup %>%
+  select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
+  mutate(SpellsRounded = scales::comma(SpellsRounded),
+         Costs_Rounded =  pound(Costs_Rounded)
+  ) 
+
+flex_ae_summ    <- setZebraStyle(vanilla.table(summ_ae_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+
+flex_ae_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+flex_ae_summ[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+
+flex_ae_summ[, 1]                <- parLeft()
+flex_ae_summ[, 1, to = "header"] <- parLeft()
+
+
+flex_ae_summ <- setFlexTableBorders(flex_ae_summ
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
+
+
+# AE cost summary ----------------------------------------------------
+
+summ_ae_cost_out <- # head(
+  summaryOutputAE %>%
+  ungroup %>%
+  select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
+  mutate(Costs_Rounded =  pound(Costs_Rounded)
+         , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
+         , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
+  )
+
+
+flex_ae_cost    <-  setZebraStyle(vanilla.table(summ_ae_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
+flex_ae_cost[,] <-  textProperties(font.family = "Segoe UI"
+                                 , font.size = 12)
+
+flex_ae_cost[to = "header"]  <-  textProperties(font.size = 14,
+                                              font.family = "Segoe UI")
+
+flex_ae_cost[, 1]                <- parLeft()
+flex_ae_cost[, 1, to = "header"] <- parLeft()
+
+
+flex_ae_cost <- setFlexTableBorders(flex_ae_cost
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
+
+
+
+# AE savings plot -----------------------------------------------
+
+savingsAE <- summaryOutputAE %>%
+  ungroup() %>% 
+  select(Strategy, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded, TopDecile_SavingsIf_Rounded) %>% 
+  rename(average = Average_SavingsIf_Rounded 
+         , quartile = TopQuartile_SavingsIf_Rounded 
+         , decile = TopDecile_SavingsIf_Rounded 
+  ) 
+
+# basic name adjust
+savingsAE$Strategy <-  savingsAE$Strategy %>% 
+  str_replace_all("v[0-9]?", "") %>%
+  str_replace_all("\\_"," ") %>%
+  str_trim()
+
+"Can make this plot a function?"
+# so have multiple variables again.
+# error in stacked  bars! should not be stacked
+# ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
+plot_savings_ae <- ggplot(savingsAE, aes(reorder(Strategy, average), average))+
+  geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+  geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+  # geom_bar(stat = "identity", position = "stack") +
+  coord_flip()+
+  theme_strategy_large()+
+  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+                     , position = "top")+
+  # scale_y_continuous(labels = scales::comma_format())
+  theme(legend.title = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = c(0.82, 0.18),
+        legend.background = element_rect(fill = "white"))+
+  scale_fill_manual(
+    name = "line Colour"
+    ,values=c(myline1 = "lightblue", myline2 = "lightblue")
+    , labels=c("Savings if Average", "Savings if Top Quartile"))+
+  # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+  #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+  ylab("Potential savings (millions of pounds)")+
+  guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+
+
+# ***** --------------------------------------------------------------
+
+
 # Outpatients -------------------------------------------------------------
 totalActivityOP <- opSmall %>% total_activity
 savingsAnyOneOP <- opTrendComparators %>% savings_any_one
-opSignificance <- significance_summary(opFunnelPoints, opFunnelFunnels, opRoC, opRoCFunnels)
+
+opSignificance <- significance_summary(summ_opFunnelPoints, summ_opFunnelFunnels, opRoC, opRoCFunnels)
+
 summaryOutputOP <- opSmall %>% summary_output(., savingsAnyOneOP, opSignificance, totalActivityOP) %>%
   group_by(ReviewNumber, add = FALSE) %>%
   mutate(ReviewDupe = row_number()) %>%
   mutate(ReviewDupe = paste0(ReviewNumber, ReviewDupe)) %>%
   left_join(opTrendActive %>% 
-    filter(FYear == 201415) %>%
+    filter(FYear == f_year) %>%
     ungroup() %>%
     select(Strategy, DSRateCIUpper, DSRateCILower)
     , by = "Strategy") %>%
@@ -1193,128 +1308,114 @@ summaryOutputOP <- opSmall %>% summary_output(., savingsAnyOneOP, opSignificance
     , by = c("CCGCode", "Strategy"))
 
 
-# totalActivityOPFUF <- opSmallFUF %>% total_activity
-# 
-# spendFUF <- opCostFUF %>%
-#   filter(CCGCode == active_ccg) %>%
-#   select(Strategy, Costs)
-# 
-# opTopFUF <- opSmallFUF %>%
-#   select(-DSCosts, -DSCostsVar, -DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
-#   gather(Strategy, Highlighted, -Spells, -Costs, -CCGCode, -FYear, convert = T) %>%
-#   group_by(Strategy, CCGCode, FYear, Highlighted) %>%
-#   summarise(
-#     Spells = sum(Spells, na.rm = TRUE)
-#     ) %>%
-#   filter(!is.na(Highlighted)) %>%
-#   mutate(FUF = ifelse(Highlighted == 1,"First", "FollowUp")) %>%
-#   select(-Highlighted) %>%
-#   spread(FUF, Spells) %>%
-#   mutate(FUFRatio =  FollowUp / First) %>%
-#   filter(FYear == f_year) %>%
-#   group_by(Strategy) %>%
-#   summarise(
-#     Average = sum(FollowUp, na.rm = TRUE) / sum(First, na.rm = TRUE)
-#     , TopQuartile = quantile(FUFRatio, 0.25, na.rm = TRUE)
-#     , TopDecile = quantile(FUFRatio, 0.1, na.rm = TRUE)
-#     #, MaxFUFRatio = max(FUFRatio, na.rm = TRUE)
-#     #, MinFUFRatio = min(FUFRatio, na.rm = TRUE)
-#   ) 
-# 
-# 
-# savingsAnyOneOPFUF <- opTrendFUF %>% 
-#   filter(FYear == f_year, IsActiveCCG) %>%
-#   left_join(spendFUF, by = "Strategy") %>%
-#   select(-IsActiveCCG) %>%
-#   left_join(opTopFUF, by = "Strategy") %>%
-#   mutate(
-#     SavingsIfAverage = Costs - (Average / FUFRatio) * Costs 
-#     , SavingsIfTopQuartile = Costs - (TopQuartile / FUFRatio) * Costs
-#     , SavingsIfTopDecile = Costs - (TopDecile / FUFRatio) * Costs
-#   ) %>%
-#   ungroup() %>%
-#   select(Strategy, SavingsIfAverage, SavingsIfTopQuartile, SavingsIfTopDecile) %>%
-#   mutate(
-#     SavingsIfAverage = ifelse(SavingsIfAverage < 0, 0, SavingsIfAverage)
-#     , SavingsIfTopQuartile = ifelse(SavingsIfTopQuartile < 0, 0, SavingsIfTopQuartile)
-#     , SavingsIfTopDecile = ifelse(SavingsIfTopDecile < 0, 0, SavingsIfTopDecile)
-#   )
-# 
-# 
-# opSignificanceFUF <- opFUFFunnelPoints %>% 
-#   filter(CCGCode == active_ccg) %>%
-#   left_join(opFunnelFunnelsFUF, by = "Strategy") %>%
-#   group_by(Strategy) %>%
-#   mutate(Test = First - Denominator
-#          , AbsTest = abs(Test)
-#          , TestRank = rank(AbsTest, ties.method = "first")) %>%
-#   filter(TestRank == 1) %>%
-#   mutate(Significance = ifelse(FUFRatio > TwoSigmaHigher, "High", 
-#                       ifelse(FUFRatio < TwoSigmaLower, "Low", "Not Significant"))) %>%
-#   select(CCGCode, Strategy, Significance) 
-# 
-#   opRocFUF2 <- opRocFUF %>%
-#     filter(CCGCode == active_ccg) %>% ungroup() %>% select(-CCGCode)
-#   opRocFunnelsFUF2 <- opRocFunnelsFUF %>% select(-FYear)
-# 
-# opSignificanceFUF <- opSignificanceFUF %>%
-#   left_join(opRocFUF2, by = "Strategy") %>%
-#   left_join(opRocFunnelsFUF2, by = "Strategy") %>%
-#   mutate(Test = FirstInBaseYear - Denominator
-#          , AbsTest = abs(Test)
-#          , TestRank = rank(AbsTest, ties.method = "first")) %>%
-#   filter(TestRank == 1) %>%
-#   mutate(
-#     RocSignificance = ifelse(RateOfChange > TwoSigmaHigher, "High"
-#                         , ifelse(RateOfChange < TwoSigmaLower, "Low", "Not Significant"))
-#     , ReviewNumber = ifelse(Significance == "Low", 1
-#                      , ifelse(Significance == "Not Significant", 2
-#                       , ifelse(Significance == "High", 3))) + 
-#                     ifelse(RocSignificance == "Low", 0
-#                      , ifelse(RocSignificance == "Not Significant", 3
-#                       , ifelse(RocSignificance == "High", 6)))
-#     , ReviewGroup = ifelse(ReviewNumber <= 3, "Review"
-#                      , ifelse(ReviewNumber == 8, "Close monitoring"
-#                       , ifelse(ReviewNumber %in% c(4, 5, 7), "Background monitoring", "Explore")))
-#   ) %>%
-#   select(CCGCode, Strategy, Significance, RocSignificance, ReviewNumber, ReviewGroup) 
-# 
-# 
-# summaryOutputOPFUF <- 
-#   opTrendFUF %>%
-#   filter(FYear == f_year & IsActiveCCG) %>%
-#   select(-IsActiveCCG) %>%
-#   left_join(opTopFUF, by = "Strategy") %>%
-#   left_join(savingsAnyOneOPFUF, by = "Strategy") %>%
-#   left_join(opSignificanceFUF, by = "Strategy") %>%
-#   left_join(activeStrategies, by = "Strategy") %>%
-#   left_join(spendFUF, by = c("Strategy", "CCGCode")) %>%
-#   mutate(
-#     SpellsRounded = round(FollowUp, -0.5) #FollowUp_Rounded
-#     , Costs_Rounded = round(Costs, -3)
-#     , Average_SavingsIf_Rounded = roundTo(SavingsIfAverage, 1000)
-#     , TopQuartile_SavingsIf_Rounded = roundTo(SavingsIfTopQuartile, 1000)
-#     , TopDecile_SavingsIf_Rounded = roundTo(SavingsIfTopDecile, 1000)
-#   ) %>%
-#   ungroup() %>%
-#   select(-IsActiveCCG)
+
+# OP tbl summary -----------------------------------------------------
+
+summ_op_summ_out <- summaryOutputOP %>%
+  ungroup %>%
+  select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
+  mutate(SpellsRounded = scales::comma(SpellsRounded),
+         Costs_Rounded =  pound(Costs_Rounded)
+  ) 
+
+flex_op_summ    <- setZebraStyle(vanilla.table(summ_op_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+
+flex_op_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+flex_op_summ[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+
+flex_op_summ[, 1]                <- parLeft()
+flex_op_summ[, 1, to = "header"] <- parLeft()
 
 
-# write.table(summaryOutputOP, "Data/R_SummaryOutputOP.csv", sep = ",", row.names = FALSE)
-# write.table(summaryOutputOPFUF, "Data/R_SummaryOutputOPFUF.csv", sep = ",", row.names = FALSE)
-# write.table(summaryOutputOP, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputOP.csv"), sep = ",", row.names = FALSE)
-# write.table(summaryOutputOPFUF, paste0("Data/ByCCG/R_", active_ccg, "SummaryOutputOPFUF.csv"), sep = ",", row.names = FALSE)
-# 
-# comparatorsOut <- comparatorCCGs %>%
-#   filter(NeighbourCCGCode != activeCCG) %>%
-#   select(ClosenessRank, NeighbourCCGCode, CCGDescription)
+flex_op_summ <- setFlexTableBorders(flex_op_summ
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
 
-# messes with the comparators table in Excel
 
-# write.table(comparatorsOut, "Data/R_ComparatorCCGs.csv", sep = ",", row.names = FALSE)
-# write.table(comparatorsOut, paste0("Data/ByCCG/R_", active_ccg, "ComparatorCCGs.csv"), sep = ",", row.names = FALSE)
+# OP cost summary ----------------------------------------------------
 
-#  -------------------------------------------------------------------
+summ_op_cost_out <- # head(
+  summaryOutputOP %>%
+  ungroup %>%
+  select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
+  mutate(Costs_Rounded =  pound(Costs_Rounded)
+         , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
+         , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
+  )
+
+
+flex_op_cost    <-  setZebraStyle(vanilla.table(summ_op_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
+flex_op_cost[,] <-  textProperties(font.family = "Segoe UI"
+                                 , font.size = 12)
+
+flex_op_cost[to = "header"]  <-  textProperties(font.size = 14,
+                                              font.family = "Segoe UI")
+
+flex_op_cost[, 1]                <- parLeft()
+flex_op_cost[, 1, to = "header"] <- parLeft()
+
+
+flex_op_cost <- setFlexTableBorders(flex_op_cost
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
+
+
+
+# OP savings plot -----------------------------------------------
+
+savingsOP <- summaryOutputOP %>%
+  ungroup() %>% 
+  select(Strategy, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded, TopDecile_SavingsIf_Rounded) %>% 
+  rename(average = Average_SavingsIf_Rounded 
+         , quartile = TopQuartile_SavingsIf_Rounded 
+         , decile = TopDecile_SavingsIf_Rounded 
+  )
+
+# basic name adjust
+savingsOP$Strategy <-  savingsOP$Strategy %>% 
+  str_replace_all("v[0-9]?", "") %>%
+  str_replace_all("\\_"," ") %>%
+  str_trim()
+
+# so have multiple variables again.
+# error in stacked  bars! should not be stacked
+# ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
+plot_savings_op <- ggplot(savingsOP, aes(reorder(Strategy, average), average))+
+  geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+  geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+  # geom_bar(stat = "identity", position = "stack") +
+  coord_flip()+
+  theme_strategy_large()+
+  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+                     , position = "top")+
+  # scale_y_continuous(labels = scales::comma_format())
+  theme(legend.title = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = c(0.82, 0.18),
+        legend.background = element_rect(fill = "white"))+
+  scale_fill_manual(
+    name = "line Colour"
+    ,values=c(myline1 = "lightblue", myline2 = "lightblue")
+    , labels=c("Savings if Average", "Savings if Top Quartile"))+
+  # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+  #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+  ylab("Potential savings (millions of pounds)")+
+  guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+
+
+
+
+#  *****--------------------------------------------------------------
+
+
+
+#  END-------------------------------------------------------------
 
 
 cat("Ends")
