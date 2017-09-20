@@ -17,6 +17,7 @@ conjunction with funnels to work out where easiest savings are"
 
 # Packages ----------------------------------------------------------------
 
+library(here)
 library(readxl)
 library(scales, warn.conflicts = FALSE)
 library(testthat)
@@ -29,7 +30,7 @@ library(ggrepel)
 
 # Parameters 1--------------------------------------------------------
 
-baseDir  <- "C:/2017_projects/qipp/"
+# baseDir  <- "C:/2017_projects/qipp/" # using here, now
 
 active_ccg <- "05L"
 f_year     <- 201617
@@ -88,18 +89,24 @@ trendCV <- qnorm((1 - trendParameters$Significance)/2, lower.tail = FALSE)
 
 # Functions ---------------------------------------------------------------
 "Careful with summary functions <- many old parameters exist here"
-"some hard coded"
+"some hard coded. Also may be affected by updates to packages"
 
-setwd(paste0(baseDir, "r"))
-source("roundingAndChartLimitFunctions.R")
-source("funnelPlotFunctions.R")
-source("trendPlotFunctions.R")
-source("costPlotFunctions.R")
-source("summaryFunctions.R") 
-source("theme_strategy.R")
 
-setwd("C:/2017_projects/funnel/funnel/")
-source("funlData.R")
+source_here <- function(name){
+ source(here::here("r", name))
+  }
+
+source_here("roundingAndChartLimitFunctions.R")
+source_here("roundingAndChartLimitFunctions.R")
+source_here("funnelPlotFunctions.R")
+source_here("trendPlotFunctions.R")
+source_here("costPlotFunctions.R")
+source_here("summaryFunctions.R") 
+source_here("theme_strategy.R")
+
+#setwd("C:/2017_projects/funnel/funnel/")
+source("C:/2017_projects/funnel/funnel/funlData.R")
+# to hopefully get the newest version of the funnel plot code.
 
 # This, believe it or not, works like a function : pound()
 pound <- dollar_format(prefix = "£")
