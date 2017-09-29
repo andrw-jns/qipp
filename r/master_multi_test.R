@@ -43,6 +43,8 @@ qipp_ccgs  <- c(# Alphabetical:
 
 ccg_stp <- tbl(con_ref, "CCG_to_STP_slim") %>% collect()
 
+ccg_stp <- read_rds("C:/2017_projects/qipp/data/ccg_stp.RDS")
+
 list_stps <- ccg_stp %>% 
   filter(CCG16CDH %in% qipp_ccgs) 
 
@@ -57,11 +59,14 @@ tmp1 <- unique(list_stps$STP17NM)
   rm(active_ccg)
   stp_avg      <- tibble()
   stp_top_qrt  <- tibble()
+
+
+# * Commencer la loup ------------------------------------------------
+
+
+  for(j in df$CCG16CDH){
   
-  for(i) in df$CCG16CDH){
-    print(i)
-  }
-    active_ccg <- j
+    active_ccg <- df$CCG16CDH[1]
   
   # 2. Wrangle ---------------------------------------------------------
   # source_here("2_wrang_master.R")
