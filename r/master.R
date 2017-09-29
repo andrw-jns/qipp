@@ -30,7 +30,7 @@ library(ggrepel)
 
 # Parameters 1--------------------------------------------------------
 
-# baseDir  <- "C:/2017_projects/qipp/" # using here, now
+baseDir  <- "C:/2017_projects/qipp/" # using here, now
 
 active_ccg <- "05L"
 f_year     <- 201617
