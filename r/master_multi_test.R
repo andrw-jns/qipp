@@ -2,18 +2,18 @@
 " QIPP WRAP "
 " STP WRAPPER FOR QIPP PACK"
 ###########################################################################
-
-suppressPackageStartupMessages(library(tidyverse))
-library(DBI)
-library(odbc)
-library(dbplyr)
-
-con_ref <- dbConnect(odbc::odbc(),
-                     driver   = "SQL Server",
-                     server   = "CSU-SQL-03",
-                     database = "StrategicReference",
-                     port     = 1433
-)
+# 
+# suppressPackageStartupMessages(library(tidyverse))
+# library(DBI)
+# library(odbc)
+# library(dbplyr)
+# 
+# con_ref <- dbConnect(odbc::odbc(),
+#                      driver   = "SQL Server",
+#                      server   = "CSU-SQL-03",
+#                      database = "StrategicReference",
+#                      port     = 1433
+# )
 
 qipp_ccgs  <- c(# Alphabetical:
   "13P", # BXC
@@ -41,7 +41,7 @@ qipp_ccgs  <- c(# Alphabetical:
 
 # dbListTables(con_ref)
 
-ccg_stp <- tbl(con_ref, "CCG_to_STP_slim") %>% collect()
+# ccg_stp <- tbl(con_ref, "CCG_to_STP_slim") %>% collect()
 
 ccg_stp <- read_rds("C:/2017_projects/qipp/data/ccg_stp.RDS")
 
@@ -64,9 +64,9 @@ tmp1 <- unique(list_stps$STP17NM)
 # * Commencer la loup ------------------------------------------------
 
 
-  for(j in df$CCG16CDH){
+  for(i in seq_along(df$CCG16CDH)){
   
-    active_ccg <- df$CCG16CDH[1]
+    active_ccg <- df$CCG16CDH[i]
   
   # 2. Wrangle ---------------------------------------------------------
   # source_here("2_wrang_master.R")
@@ -420,11 +420,11 @@ tmp1 <- unique(list_stps$STP17NM)
   strats <- summ_ip_cost_out %>% 
     select(Strategy)
   
-  av_save  <- summ_ip_cost_out %>% select(get = Average_SavingsIf_Rounded)
-  top_save <- summ_ip_cost_out %>% select(get = TopQuartile_SavingsIf_Rounded)
+  av_save  <- summ_ip_cost_out %>% select(col = Average_SavingsIf_Rounded)
+  top_save <- summ_ip_cost_out %>% select(col = TopQuartile_SavingsIf_Rounded)
   
-  stp_avg      <- bind_cols(stp_avg, av_save)
-  stp_top_qrt  <- bind_cols(stp_top_qrt, top_save)
+  stp_avg      <- if(i == 1){av_save}  else {bind_cols(stp_avg, av_save)}
+  stp_top_qrt  <- if(i == 1){top_save} else {bind_cols(stp_top_qrt, top_save)}
   
   rm(av_save, top_save, active_ccg)
   # rm(ipData) # RAM saver!
@@ -432,7 +432,10 @@ tmp1 <- unique(list_stps$STP17NM)
   
   }
 
-
+  
+  
+  
+head(stp_avg, 20)
 
 
 
