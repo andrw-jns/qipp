@@ -1,5 +1,5 @@
 ############################################################################
-" QIPP: RUN "
+" RUN QIPP FOR STP SUMMARY TABLES"
 ###########################################################################
 
 source_here <- function(name){
@@ -27,19 +27,18 @@ stp_top_qrt  <- tibble()
 
 # 1.2. begin loop ---------------------------------------------------------
 
-
 for(i in seq_along(loop_df$CCG16CDH)){
   
   active_ccg <- loop_df$CCG16CDH[i]
 
-# 2. Wrangle ---------------------------------------------------------
+# 2. wrangle ---------------------------------------------------------
 source_here("2_wrang_master.R")
 
-# detach("package:testthat", unload=TRUE)
+
 # 3. Summaries -------------------------------------------------------
 source_here("3_summary_master.R")
 
-# What is taken from the tables?
+# Extract what is needed from the summaries:
 
   strats <- summ_ip_cost_out %>% 
     select(Strategy)
@@ -51,13 +50,47 @@ source_here("3_summary_master.R")
   stp_top_qrt  <- if(i == 1){top_save} else {bind_cols(stp_top_qrt, top_save)}
   
   rm(av_save, top_save, active_ccg)
-  # rm(ipData) # RAM saver!
-  # gc() # call after a large object has been removed
-  
+ 
 }
 
+final_av  <- bind_cols(strats, stp_avg %>%
+                         # to sum rows must remove the pound and comma
+                         mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
+                         mutate_all(funs(as.numeric)) %>% 
+                         mutate(total = rowSums(.)) %>% 
+                         mutate_all(funs(pound)) %>%  
+                         mutate_all(funs(comma)) 
+)
+
+                       
+final_top <- bind_cols(strats, stp_top_qrt %>%
+                         # to sum rows must remove the pound and comma
+                         mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
+                         mutate_all(funs(as.numeric)) %>% 
+                         mutate(total = rowSums(.)) %>% 
+                         mutate_all(funs(pound)) %>%  
+                         mutate_all(funs(comma)))
 
 
+flex_stp <- function(df){
+  
+  table <- setZebraStyle(vanilla.table(df), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+  
+  table[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+  table[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+  
+  table[, 1]                <- parLeft()
+  table[, 1, to = "header"] <- parLeft()
+  
+  
+  table <- setFlexTableBorders(table
+                               , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                               , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                               , outer.vertical = borderProperties( width = 2, color = "white"  )
+                               , outer.horizontal = borderProperties( width = 2, color = "white"  )
+  )
+  
+  table
+}
 
-
-
+flex_stp(final_top)
