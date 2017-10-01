@@ -432,10 +432,40 @@ tmp1 <- unique(list_stps$STP17NM)
   
   }
 
+
+final_av  <- bind_cols(strats, stp_avg)
+final_top <- bind_cols(strats, stp_top_qrt)
+  
+# head(stp_avg, 20)
+
+
+# Flextable ---------------------------------------------------------------
+# write fun
+
+flex_stp <- function(df){
+  
+  table <- setZebraStyle(vanilla.table(df), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+  
+  table[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+  table[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+  
+  table[, 1]                <- parLeft()
+  table[, 1, to = "header"] <- parLeft()
   
   
+  table <- setFlexTableBorders(table
+                               , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                               , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                               , outer.vertical = borderProperties( width = 2, color = "white"  )
+                               , outer.horizontal = borderProperties( width = 2, color = "white"  )
+  )
   
-head(stp_avg, 20)
+  table
+}
+
+flex_stp(final_top)
+
+
 
 
 
