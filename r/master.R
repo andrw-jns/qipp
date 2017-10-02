@@ -320,7 +320,7 @@ plot_roc <- function(funnel_df, points_df, summary_df, colour_block){
       , size = 3
     )+
     geom_text(data = summary_df
-              , aes(x = max(NewMaxSpells), y = min(NewMinRateOfChange), label = "Related Spells 2012-13")
+              , aes(x = max(NewMaxSpells), y = min(NewMinRateOfChange), label = "Related Activity 2012-13")
               , vjust = "bottom"
               , hjust = "right"
               , family = "Segoe UI"

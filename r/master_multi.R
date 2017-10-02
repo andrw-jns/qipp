@@ -17,7 +17,7 @@ ccg_stp <- read_rds("C:/2017_projects/qipp/data/ccg_stp.RDS") %>%
 
 stp_unique <- unique(ccg_stp$STP17NM)
 
-loop_df <- ccg_stp %>% filter(STP17NM == stp_unique[1])
+loop_df <- ccg_stp %>% filter(STP17NM == stp_unique[2])
 
 # empty dfs for loop
 stp_avg      <- tibble()
@@ -69,7 +69,8 @@ final_top <- bind_cols(strats, stp_top_qrt %>%
                          mutate_all(funs(as.numeric)) %>% 
                          mutate(total = rowSums(.)) %>% 
                          mutate_all(funs(pound)) %>%  
-                         mutate_all(funs(comma)))
+                         mutate_all(funs(comma))) %>% 
+  `colnames<-`(c("Opportunity", loop_df$CCG16NM, "STP total"))
 
 
 flex_stp <- function(df){
