@@ -23,7 +23,7 @@
 library(ReporteRs)
 library(stringr)
 
-setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
+setwd("C:/2017_projects/qipp_extra")
 
 qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
@@ -62,9 +62,9 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
 # 3: BODY IP ---------------------------------------------------------
 
-setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
+# setwd("//clients.its.local/csu/users01/andrew.jones/Desktop")
 
-qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
+# qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 
 for(i in seq(ipPlottableStrategies$Strategy)){
   
@@ -79,11 +79,76 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     addImage(
       paste0(baseDir, "output/", i, "_roc_", ipPlottableStrategies$Strategy[i], ".png")
     ) 
- }
+}
 
-filename <- "qipp_test10.pptx" # the document to produce
+
+# 4: TITLE AE ---------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "poster") %>%
+  addImage("qipp_photo_inpatient.png") %>% 
+  addTitle("A&E") 
+
+
+# 4: BODY AE ---------------------------------------------------------
+
+
+for(i in seq(aePlottableStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "new_body") %>% 
+    addTitle(noquote(str_replace_all(aePlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addImage(
+      paste0(baseDir, "output/", i, "_trend_", aePlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_fun_", aePlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_roc_", aePlottableStrategies$Strategy[i], ".png")
+    ) 
+}
+
+
+
+# 5: TITLE OP ---------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "poster") %>%
+  addImage("qipp_photo_inpatient.png") %>% 
+  addTitle("Outpatients") 
+
+
+# 5: BODY OP ---------------------------------------------------------
+
+for(i in seq(opPlottableStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "new_body") %>% 
+    addTitle(noquote(str_replace_all(opPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addImage(
+      paste0(baseDir, "output/", i, "_trend_", opPlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_fun_", opPlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_roc_", opPlottableStrategies$Strategy[i], ".png")
+    ) 
+}
+
+
+
+filename <- "qipp_test101.pptx" # the document to produce
 # # TEST write qipp_report 
 writeDoc(qipp_report, filename)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -116,6 +181,13 @@ for(i in seq(ipPlottableStrategies$Strategy)){
  filename <- "qipp_test8.pptx" # the document to produce
 # # TEST write qipp_report 
 writeDoc(qipp_report, filename)
+
+
+
+
+
+
+
 
 # # plot(x)
 # # windows.options(height = 1 , width =1, pointsize = 0.2)
