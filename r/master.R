@@ -320,7 +320,7 @@ plot_roc <- function(funnel_df, points_df, summary_df, colour_block){
       , size = 3
     )+
     geom_text(data = summary_df
-              , aes(x = max(NewMaxSpells), y = min(NewMinRateOfChange), label = "Related Activity 2012-13")
+              , aes(x = max(NewMaxSpells), y = min(NewMinRateOfChange), label = "Related activity 2012-13")
               , vjust = "bottom"
               , hjust = "right"
               , family = "Segoe UI"
@@ -783,7 +783,8 @@ for(i in seq(aePlottableStrategies$Strategy)){
   # Draw roc plot ------------------------------------------------------
   
   plotRocPoints <- aeRoC %>%
-    filter(Strategy == aePlottableStrategies$Strategy[i])
+    filter(Strategy == aePlottableStrategies$Strategy[i]) %>% 
+    label_ccg()
   plotRocFunnels <- aeRoCFunnels %>%
     filter(Strategy == aePlottableStrategies$Strategy[i])
   plotRocSummary <- aeRoCSummary %>%
@@ -852,7 +853,8 @@ for(i in seq(opPlottableStrategies$Strategy)){
   # Draw roc plot ------------------------------------------------------
   
   plotRocPoints <- opRoC %>%
-    filter(Strategy == opPlottableStrategies$Strategy[i])
+    filter(Strategy == opPlottableStrategies$Strategy[i]) %>% 
+    label_ccg()
   plotRocFunnels <- opRoCFunnels %>%
     filter(Strategy == opPlottableStrategies$Strategy[i])
   plotRocSummary <- opRoCSummary %>%
@@ -953,46 +955,46 @@ for(i in seq_along(opPlottableStrategies$Strategy)){
 
 "Next time you come to print, try to write a closure to reduce duplication."
 
-save_plots <- function(vector_of_strats, list_of_plots){
-  
-  png_filenames <- map_chr(seq_along(vector_of_strats),
-                           function(i) paste0(i ,# This just means that one doesn't need to specify "trend" etc.
-                                              str_c("_", 
-                                                         c(unlist(
-                                                           str_split(
-                                                             as.character(quote(vector_of_strats[i])), "\\_")
-                                                           )[c(F, F, T)]),
-                                                         "_"),
-                                               vector_of_strats[i],
-                                              ".png"
-                                              )
-                           )
-  
-  pwalk(list(png_filenames, list_of_plots), qipp_save)
-}
-
-
-str_c("_", 
-      c(unlist(
-        str_split(
-          as.character(quote(list_of_plots)), "\\_")
-      )[c(F, F, T)]),
-      "_"),
-vector_of_strats[i],
-".png"
-)
-
-save_plots(ipPlottableStrategies$Strategy, plot_ip_fun)
-save_plots(ipPlottableStrategies$Strategy, plot_ip_roc)
-save_plots(ipPlottableStrategies$Strategy, plot_ip_trend)
-
-save_plots(aePlottableStrategies$Strategy, plot_ae_fun)
-save_plots(aePlottableStrategies$Strategy, plot_ae_roc)
-save_plots(aePlottableStrategies$Strategy, plot_ae_trend)
-
-save_plots(opPlottableStrategies$Strategy, plot_op_fun)
-save_plots(opPlottableStrategies$Strategy, plot_op_roc)
-save_plots(opPlottableStrategies$Strategy, plot_op_trend)
+# save_plots <- function(vector_of_strats, list_of_plots){
+#   
+#   png_filenames <- map_chr(seq_along(vector_of_strats),
+#                            function(i) paste0(i ,# This just means that one doesn't need to specify "trend" etc.
+#                                               str_c("_", 
+#                                                          c(unlist(
+#                                                            str_split(
+#                                                              as.character(quote(vector_of_strats[i])), "\\_")
+#                                                            )[c(F, F, T)]),
+#                                                          "_"),
+#                                                vector_of_strats[i],
+#                                               ".png"
+#                                               )
+#                            )
+#   
+#   pwalk(list(png_filenames, list_of_plots), qipp_save)
+# }
+# 
+# 
+# str_c("_", 
+#       c(unlist(
+#         str_split(
+#           as.character(quote(list_of_plots)), "\\_")
+#       )[c(F, F, T)]),
+#       "_"),
+# vector_of_strats[i],
+# ".png"
+# )
+# 
+# save_plots(ipPlottableStrategies$Strategy, plot_ip_fun)
+# save_plots(ipPlottableStrategies$Strategy, plot_ip_roc)
+# save_plots(ipPlottableStrategies$Strategy, plot_ip_trend)
+# 
+# save_plots(aePlottableStrategies$Strategy, plot_ae_fun)
+# save_plots(aePlottableStrategies$Strategy, plot_ae_roc)
+# save_plots(aePlottableStrategies$Strategy, plot_ae_trend)
+# 
+# save_plots(opPlottableStrategies$Strategy, plot_op_fun)
+# save_plots(opPlottableStrategies$Strategy, plot_op_roc)
+# save_plots(opPlottableStrategies$Strategy, plot_op_trend)
 
 
 # ***** --------------------------------------------------------------
