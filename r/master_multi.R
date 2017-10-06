@@ -17,7 +17,12 @@ ccg_stp <- read_rds("C:/2017_projects/qipp/data/ccg_stp.RDS") %>%
 
 stp_unique <- unique(ccg_stp$STP17NM)
 
-loop_df <- ccg_stp %>% filter(STP17NM == stp_unique[2])
+
+# Choose STP --------------------------------------------------------------
+stp_choice <- stp_unique[2]
+#  ------------------------------------------------------------------------
+
+loop_df <- ccg_stp %>% filter(STP17NM == stp_choice)
 
 # empty dfs for loop
 stp_avg      <- tibble()
@@ -59,8 +64,11 @@ final_av  <- bind_cols(strats, stp_avg %>%
                          mutate_all(funs(as.numeric)) %>% 
                          mutate(total = rowSums(.)) %>% 
                          mutate_all(funs(pound)) %>%  
-                         mutate_all(funs(comma)) 
-)
+                         mutate_all(funs(comma))) %>% 
+                         `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+                         mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
+                       
+                       
 
                        
 final_top <- bind_cols(strats, stp_top_qrt %>%
@@ -70,7 +78,10 @@ final_top <- bind_cols(strats, stp_top_qrt %>%
                          mutate(total = rowSums(.)) %>% 
                          mutate_all(funs(pound)) %>%  
                          mutate_all(funs(comma))) %>% 
-  `colnames<-`(c("Opportunity", loop_df$CCG16NM, "STP total"))
+  `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+  mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
+
+
 
 
 flex_stp <- function(df){
@@ -94,4 +105,5 @@ flex_stp <- function(df){
   table
 }
 
-flex_stp(final_top)
+flex_top_q <- flex_stp(final_top)
+flex_av <- flex_stp(final_av)

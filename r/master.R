@@ -4,7 +4,7 @@
 ###########################################################################
 
 # ***** --------------------------------------------------------------
-"Use package check system? See email"
+"Use package check system: checkpoint? See email"
 "Code seems to be unaffected by update to dplyr 0.7 etc except summaries"
 "which now updated to use mutate_at() etc."
 "Check colour blind friendly"
@@ -1026,10 +1026,11 @@ flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("go
 flex_comparat[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
 flex_comparat[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
 
+# align left
 flex_comparat[, ]                <- parLeft()
 flex_comparat[, , to = "header"] <- parLeft()
 
-
+# borders
 flex_comparat <- setFlexTableBorders(flex_comparat
                                     , inner.vertical = borderProperties( style = "dashed", color = "white" )
                                     , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
