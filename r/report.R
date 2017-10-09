@@ -89,6 +89,23 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
   addTitle("A&E") 
 
 
+# 5: TABLES AE ------------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(flex_ae_summ)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(flex_ae_cost)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>% 
+  addTitle("Potential for Savings - Any One Group") %>%  # "ACS Vaccine Preventable Conditions"
+  addPlot(function() plot(plot_savings_ae)) 
+#   
+
+
+
 # 4: BODY AE ---------------------------------------------------------
 
 
@@ -114,6 +131,23 @@ for(i in seq(aePlottableStrategies$Strategy)){
 qipp_report <- addSlide(qipp_report, "poster") %>%
   addImage("qipp_photo_inpatient.png") %>% 
   addTitle("Outpatients") 
+
+
+# 5. TABLES OP ------------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(flex_op_summ)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Flextable: Proof of Concept") %>%
+  addFlexTable(flex_op_cost)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>% 
+  addTitle("Potential for Savings - Any One Group") %>%  # "ACS Vaccine Preventable Conditions"
+  addPlot(function() plot(plot_savings_op)) 
+#   
+
 
 
 # 5: BODY OP ---------------------------------------------------------

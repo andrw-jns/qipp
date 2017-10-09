@@ -1072,7 +1072,10 @@ summ_ip_summ_out <- summaryOutputIP %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
-  ) 
+  ) %>% 
+  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
+                 "Rate", "Rate of Change"))
+# add footnote "compared to CCGs in the West Midlands"
 
 flex_ip_summ    <- setZebraStyle(vanilla.table(summ_ip_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
