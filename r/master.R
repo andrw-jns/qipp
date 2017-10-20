@@ -14,6 +14,7 @@
 "Fix size of savings plots"
 "Savings plots don't really give you enough - must be used in
 conjunction with funnels to work out where easiest savings are"
+"GP referrals v1 vs v2? Strategy (from SQL vs oldName)"
 
 # Packages ----------------------------------------------------------------
 
@@ -455,13 +456,13 @@ test <- slice(activeStrategies, c(1:34, 39:45))
 
 "Adapt (wrangle) new names master list:"
 tmp <- new_strat_list %>% 
-  select(id, shortName, longName, breakdownAvailable, matches("breakdown[1-5]"))
+  select(id, oldName, shortName, longName, breakdownAvailable, matches("breakdown[1-5]"))
 
 # fix for alcohol
 tmp[2, 6:7] <- "should be updated to match indicator source"
 
 
-tmp2 <- gather(tmp, "breakdown", "sub-header", 5:9)
+tmp2 <- gather(tmp, "breakdown", "sub_header", 5:9)
 # tmp2 <- tmp2 %>% distinct(id, breakdown, .keep_all = T)
 
 tmp3 <- tmp2 %>% 
@@ -480,6 +481,7 @@ tmp_final <- bind_rows(tmp3, tmp4) %>%
 
 activeStrategies <- bind_cols(test, tmp_final)
 
+# trial <- activeStrategies %>% select(Strategy, oldName)
 
 # if run from powershell:
 
