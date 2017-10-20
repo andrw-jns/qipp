@@ -430,18 +430,57 @@ setwd(paste0(baseDir, "data"))
 
 "Take care to note whether data was handled by PowerShell"
 
-# List of strategies
+"Now do some wrangling to add new set of names to activeStrategies:"
+
+# manually assign ids (based on matching old strats to master list with names):
+id_ref <- c(1,   1,   1,  2,  2,  2, 26, 25, 29,  5, 8,
+            7,  24,  33, 33, 33, 33, 35, 23,  6,  9,
+            9,   9,   9,  9, 28, 28, 28, 28, 11, 12,
+            14, 14,  NA, 13, 32, 32, 32, 32, 13, 13,     # OP PLCV = NA
+            10,  39, 39,  4,  3)
+
 new_strat_list <- qippStrategiesMasterList_csv <- read_excel("C:/2017_projects/qipp/data/qippStrategiesMasterList.xlsx") %>% 
-  select(- planned, -type, -oldName)
+  filter(id %in% id_ref)
+
 
 activeStrategies <- read_csv("listActiveStrategies.csv") %>% 
-  # manually assign ids (based on matching old strats to master list)
-  mutate(id = c(1, 1, 1, 2, 2, 2, 26, 25, 29, 5, 8,
-                7, 24, 33, 33, 33, 33, 35, 23, 6, 9,
-                9, 9, 9, 9, 28, 28, 28, 28, 11, 12,
-                14, 14, NA, 13, 32, 32, 32, 32, 13, # OP PLCV = NA
-                13, 10, 39, 39, 4, 3)) %>% 
-  left_join(new_strat_list, by = "id")
+  # manually assign ids (based on matching old strats to master list with names)
+  mutate(id = id_ref) %>% 
+  # left_join(new_strat_list, by = "id") %>% 
+  arrange(id)
+
+# removing unused strategies (FUF, OP PLCV):
+test <- slice(activeStrategies, c(1:34, 39:45))
+
+
+"Adapt (wrangle) new names master list:"
+tmp <- new_strat_list %>% 
+  select(id, shortName, longName, breakdownAvailable, matches("breakdown[1-5]"))
+
+# fix for alcohol
+tmp[2, 6:7] <- "should be updated to match indicator source"
+
+
+tmp2 <- gather(tmp, "breakdown", "sub-header", 5:9)
+# tmp2 <- tmp2 %>% distinct(id, breakdown, .keep_all = T)
+
+tmp3 <- tmp2 %>% 
+  filter(breakdownAvailable == 0) %>% 
+  distinct(longName, .keep_all = T)
+
+tmp4 <- tmp2 %>% 
+  filter(breakdownAvailable == 1) %>% 
+  arrange(id) %>% 
+  na.omit()
+
+tmp_final <- bind_rows(tmp3, tmp4) %>% 
+  arrange(id)
+
+# This "join" is in fact a bind cols - so may not work in future:
+
+activeStrategies <- bind_cols(test, tmp_final)
+
+
 # if run from powershell:
 
 # How many strategies for each type of data
@@ -515,16 +554,16 @@ aeSmall <- aeData %>% removeInvalidCCGs
 opSmall <- opData %>% removeInvalidCCGs %>%
   select(-starts_with("FUF"))
 
-opSmallFUF <- opData %>%
-  select(
-    DSRate, DSRateVar, DSCosts, DSCostsVar, Attendances, Costs, FYear, CCGCode
-    , starts_with("FUF")) %>% removeInvalidCCGs 
+# opSmallFUF <- opData %>%
+#   select(
+#     DSRate, DSRateVar, DSCosts, DSCostsVar, Attendances, Costs, FYear, CCGCode
+#     , starts_with("FUF")) %>% removeInvalidCCGs 
 
 
 # I'm going to call attendances Spells so that I can reuse functions
 colnames(aeSmall)    <- gsub("Attendances", "Spells", colnames(aeSmall))
 colnames(opSmall)    <- gsub("Attendances", "Spells", colnames(opSmall))
-colnames(opSmallFUF) <- gsub("Attendances", "Spells", colnames(opSmallFUF))
+# colnames(opSmallFUF) <- gsub("Attendances", "Spells", colnames(opSmallFUF))
 
 
 # How many rows should there be? 
@@ -1033,6 +1072,11 @@ comparatorsOut <- comparatorCCGs2 %>%
 
 flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
+
+flex_comparat    <- vanilla.table(comparatorsOut)
+
+
+
 flex_comparat[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
 flex_comparat[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
 
@@ -1088,6 +1132,9 @@ summ_ip_summ_out <- summaryOutputIP %>%
 # add footnote "compared to CCGs in the West Midlands"
 
 flex_ip_summ    <- setZebraStyle(vanilla.table(summ_ip_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+
+flex_ip_summ    <- vanilla.table(summ_ip_summ_out)
+
 
 flex_ip_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
 flex_ip_summ[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
