@@ -22,10 +22,11 @@
 # library(tidyverse)
 library(ReporteRs)
 library(stringr)
+library(stringi)
 
 setwd("C:/2017_projects/qipp_extra")
 
-qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
+qipp_report <- pptx(title = "qipp_one", template = "su_brand4.pptx")
 
 # slide.layouts(qipp_report)
 # slide.layouts(qipp_report, "qipp_body")
@@ -69,7 +70,7 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand2.pptx")
 for(i in seq(ipPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body") %>% 
-    addTitle(noquote(str_replace_all(ipPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addTitle(stringi::stri_trans_totitle(ipPlottableStrategies$longName[i])) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_trend_", ipPlottableStrategies$Strategy[i], ".png")
     ) %>% 
@@ -78,7 +79,10 @@ for(i in seq(ipPlottableStrategies$Strategy)){
     ) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_roc_", ipPlottableStrategies$Strategy[i], ".png")
-    ) 
+    ) %>% 
+    ReporteRs::addParagraph("summary table here") %>% 
+    ReporteRs::addParagraph(ifelse(is.na(ipPlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(ipPlottableStrategies$sub_header)[i])) 
+  
 }
 
 
@@ -112,7 +116,7 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
 for(i in seq(aePlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body") %>% 
-    addTitle(noquote(str_replace_all(aePlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addTitle(stringi::stri_trans_totitle(aePlottableStrategies$longName[i])) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_trend_", aePlottableStrategies$Strategy[i], ".png")
     ) %>% 
@@ -121,7 +125,9 @@ for(i in seq(aePlottableStrategies$Strategy)){
     ) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_roc_", aePlottableStrategies$Strategy[i], ".png")
-    ) 
+    ) %>% 
+    ReporteRs::addParagraph("summary table here") %>% 
+    ReporteRs::addParagraph(ifelse(is.na(aePlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(aePlottableStrategies$sub_header)[i])) 
 }
 
 
@@ -155,7 +161,7 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
 for(i in seq(opPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body") %>% 
-    addTitle(noquote(str_replace_all(opPlottableStrategies$StrategyDescription[i],"[^[:alnum:][:space:]-]", ""))) %>%  # "ACS Vaccine Preventable Conditions"
+    addTitle(stringi::stri_trans_totitle(opPlottableStrategies$longName[i])) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_trend_", opPlottableStrategies$Strategy[i], ".png")
     ) %>% 
@@ -164,7 +170,9 @@ for(i in seq(opPlottableStrategies$Strategy)){
     ) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_roc_", opPlottableStrategies$Strategy[i], ".png")
-    ) 
+    ) %>% 
+    ReporteRs::addParagraph("summary table here") %>% 
+    ReporteRs::addParagraph(ifelse(is.na(opPlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(opPlottableStrategies$sub_header)[i])) 
 }
 
 
