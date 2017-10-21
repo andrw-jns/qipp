@@ -459,10 +459,10 @@ tmp <- new_strat_list %>%
   select(id, oldName, shortName, longName, breakdownAvailable, matches("breakdown[1-5]"))
 
 # fix for alcohol
-tmp[2, 6:7] <- "should be updated to match indicator source"
+tmp[2, 7:8] <- "should be updated to match indicator source"
 
 
-tmp2 <- gather(tmp, "breakdown", "sub_header", 5:9)
+tmp2 <- gather(tmp, "breakdown", "sub_header", 6:10)
 # tmp2 <- tmp2 %>% distinct(id, breakdown, .keep_all = T)
 
 tmp3 <- tmp2 %>% 
@@ -482,8 +482,6 @@ tmp_final <- bind_rows(tmp3, tmp4) %>%
 activeStrategies <- bind_cols(test, tmp_final)
 
 # trial <- activeStrategies %>% select(Strategy, oldName)
-
-# if run from powershell:
 
 # How many strategies for each type of data
 numberOfStrategies <- activeStrategies %>% 
