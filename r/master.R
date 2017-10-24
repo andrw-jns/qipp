@@ -524,11 +524,10 @@ ccgPopulation <- read_csv("CCGPopulation.csv", skip = 1)
 # *****chckpnt**** -----------------------------------------------------------------
 
 # CCG selections
-comparatorCCGs2 <- allCCGs %>%
-  filter(CCGCode %in% qipp_ccgs,
-         CCGCode != active_ccg)
+# comparatorCCGs2 <- allCCGs %>%
+#   filter(CCGCode %in% qipp_ccgs,
+#          CCGCode != active_ccg)
 
-  
 activeCCGInfo <- allCCGs %>% 
   filter(CCGCode == active_ccg) %>% 
   mutate(CCGNameMinusCCG = stringr::str_replace(CCGDescription, " CCG", "")) # %>% 
@@ -540,6 +539,7 @@ activeCCGInfo <- allCCGs %>%
 
 comparatorCCGs2 <- allCCGs %>% 
   filter(CCGCode %in% qipp_ccgs)
+
 
 # Remove rows where the CCGCode is not valid.
 removeInvalidCCGs <- . %>%
@@ -1118,6 +1118,45 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
     , by = c("CCGCode", "Strategy"))
 
 
+# IP labels for charts / tables------------------------------------------
+
+labels_ip <- summaryOutputIP %>%
+  ungroup() %>% 
+  select(Strategy) %>% 
+  mutate(Opportunity = c("ACS Acute",
+                         "ACS Chronic",
+                         "ACS Vaccine",
+                         "Alcohol [25% to 75%]",
+                         "Alcohol [5% to 25%]",
+                         "Alcohol [75% to 100%]",
+                         "",
+                         "EOLC [3-14 days]",
+                         "EOLC [0-2 days]",
+                         "Falls",
+                         "Frail Elderly [occasional]",
+                         "Frail Elderly [usual]",
+                         "Medically Unexplained",
+                         "Meds Explicit",
+                         "Meds Implicit AntiDiab",
+                         "Meds Implicit Benzo",
+                         "Meds Implicit Diuretics",
+                         "Meds Implicit NSAIDs",
+                         "Obesity [largely]",
+                         "Obesity [marginal]",
+                         "Obesity [somewhat]",
+                         "PLCV Cosmetic",
+                         "PLCV Alternative",
+                         "PLCV Ineffective",
+                         "PLCV Risks",
+                         "MH admissions from ED",
+                         "",
+                         "Self-harm",
+                         "Smoking [large]",
+                         "Smoking [somewhat]",
+                         "Zero LOS [adult]",
+                         "Zero LOS [child]"))
+
+
 # IP tbl summary -----------------------------------------------------
 
 summ_ip_summ_out <- summaryOutputIP %>%
@@ -1127,13 +1166,18 @@ summ_ip_summ_out <- summaryOutputIP %>%
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
-  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
-                 "Rate", "Rate of Change"))
+  `colnames<-`(c("Strategy", "Activity", "Spend 2016-17",
+                 "Rate", "Rate of Change")) %>% 
+  left_join(labels_ip, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
+
+
 # add footnote "compared to CCGs in the West Midlands"
 
 flex_ip_summ    <- setZebraStyle(vanilla.table(summ_ip_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
-flex_ip_summ    <- vanilla.table(summ_ip_summ_out)
+# black and white
+# flex_ip_summ    <- vanilla.table(summ_ip_summ_out)
 
 
 flex_ip_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
@@ -1162,8 +1206,11 @@ summ_ip_cost_out <- # head(
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
   ) %>% 
-  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile"))
+  `colnames<-`(c("Strategy", "Spend 2016-17", "Total Savings if Average",
+                 "Total Savings if Top Quartile")) %>% 
+  left_join(labels_ip, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
+
 # add footnote "compared to CCGs in the West Midlands"
 
 flex_ip_cost    <-  setZebraStyle(vanilla.table(summ_ip_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
@@ -1195,21 +1242,19 @@ savingsIP <- summaryOutputIP %>%
          , quartile = TopQuartile_SavingsIf_Rounded 
          , decile = TopDecile_SavingsIf_Rounded 
   ) %>% 
-  filter(Strategy != "Readmissions_v1", Strategy != "Canc_Op_v1") # %>% 
-  # gather(level, saving, 2:4)
+  filter(Strategy != "Readmissions_v1", Strategy != "Canc_Op_v1")  %>% 
+  # gather(level, saving, 2:4)  %>% 
+left_join(labels_ip, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 
-# basic name adjust
-savingsIP$Strategy <-  savingsIP$Strategy %>% 
-    str_replace_all("v[0-9]?", "") %>%
-    str_replace_all("\\_"," ") %>%
-    str_trim()
+
 
 # so have multiple variables again.
 # error in stacked  bars! should not be stacked
 # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-plot_savings_ip <- ggplot(savingsIP, aes(reorder(Strategy, average), average))+
-geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+plot_savings_ip <- ggplot(savingsIP, aes(reorder(Opportunity, average), average))+
+  geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+  geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
   # geom_bar(stat = "identity", position = "stack") +
   coord_flip()+
   theme_strategy_large()+
@@ -1254,6 +1299,18 @@ summaryOutputAE <- aeSmall %>% summary_output(., savingsAnyOneAE, aeSignificance
     , by = c("CCGCode", "Strategy"))
 
 
+# A&E labels for charts / tables------------------------------------------
+
+labels_ae <- summaryOutputAE %>%
+  ungroup() %>% 
+  select(Strategy) %>% 
+  mutate(Opportunity = c("Ambulance Treat",
+                         "Frequent Attenders",
+                         "Left Before Seen",
+                         "Low Acuity ED"
+                          ))
+
+
 # AE tbl summary -----------------------------------------------------
 
 
@@ -1264,7 +1321,9 @@ summ_ae_summ_out <- summaryOutputAE %>%
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
   `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
-                 "Rate", "Rate of Change"))
+                 "Rate", "Rate of Change")) %>% 
+  left_join(labels_ae, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 
 flex_ae_summ    <- setZebraStyle(vanilla.table(summ_ae_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
@@ -1294,7 +1353,9 @@ summ_ae_cost_out <- # head(
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
   )%>% 
   `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile"))
+                 "Total Savings if Top Quartile")) %>% 
+  left_join(labels_ae, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 # add footnote "compared to CCGs in the West Midlands"
 
 
@@ -1326,21 +1387,23 @@ savingsAE <- summaryOutputAE %>%
   rename(average = Average_SavingsIf_Rounded 
          , quartile = TopQuartile_SavingsIf_Rounded 
          , decile = TopDecile_SavingsIf_Rounded 
-  ) 
+  ) %>% 
+  left_join(labels_ae, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy) 
 
 # basic name adjust
-savingsAE$Strategy <-  savingsAE$Strategy %>% 
-  str_replace_all("v[0-9]?", "") %>%
-  str_replace_all("\\_"," ") %>%
-  str_trim()
+# savingsAE$Strategy <-  savingsAE$Strategy %>% 
+#   str_replace_all("v[0-9]?", "") %>%
+#   str_replace_all("\\_"," ") %>%
+#   str_trim()
 
 "Can make this plot a function?"
 # so have multiple variables again.
 # error in stacked  bars! should not be stacked
 # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-plot_savings_ae <- ggplot(savingsAE, aes(reorder(Strategy, average), average))+
+plot_savings_ae <- ggplot(savingsAE, aes(reorder(Opportunity, average), average))+
   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-  geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+  geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
   # geom_bar(stat = "identity", position = "stack") +
   coord_flip()+
   theme_strategy_large()+
@@ -1385,6 +1448,21 @@ summaryOutputOP <- opSmall %>% summary_output(., savingsAnyOneOP, opSignificance
     , by = c("CCGCode", "Strategy"))
 
 
+# OP labels for charts / tables------------------------------------------
+
+labels_op <- summaryOutputOP %>%
+  ungroup() %>% 
+  select(Strategy) %>% 
+  mutate(Opportunity = c("Consultant-Consultant Refer",
+                         "GP referred Medical [adult]",
+                         "GP referred Medical [child]",
+                         "GP referred Surg [adult]",
+                         "GP referred Surg [child]",
+                         ""
+  ))
+
+
+
 
 # OP tbl summary -----------------------------------------------------
 
@@ -1395,7 +1473,9 @@ summ_op_summ_out <- summaryOutputOP %>%
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
   `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
-                 "Rate", "Rate of Change"))
+                 "Rate", "Rate of Change")) %>% 
+  left_join(labels_op, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 
 flex_op_summ    <- setZebraStyle(vanilla.table(summ_op_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
@@ -1425,7 +1505,9 @@ summ_op_cost_out <- # head(
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
   )%>% 
   `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile"))
+                 "Total Savings if Top Quartile"))%>% 
+  left_join(labels_op, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 # add footnote "compared to CCGs in the West Midlands"
 
 
@@ -1457,20 +1539,22 @@ savingsOP <- summaryOutputOP %>%
   rename(average = Average_SavingsIf_Rounded 
          , quartile = TopQuartile_SavingsIf_Rounded 
          , decile = TopDecile_SavingsIf_Rounded 
-  )
+  ) %>% 
+  left_join(labels_op, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 
 # basic name adjust
-savingsOP$Strategy <-  savingsOP$Strategy %>% 
-  str_replace_all("v[0-9]?", "") %>%
-  str_replace_all("\\_"," ") %>%
-  str_trim()
+# savingsOP$Strategy <-  savingsOP$Strategy %>% 
+#   str_replace_all("v[0-9]?", "") %>%
+#   str_replace_all("\\_"," ") %>%
+#   str_trim()
 
 # so have multiple variables again.
 # error in stacked  bars! should not be stacked
 # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-plot_savings_op <- ggplot(savingsOP, aes(reorder(Strategy, average), average))+
+plot_savings_op <- ggplot(savingsOP, aes(reorder(Opportunity, average), average))+
   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-  geom_bar(aes(Strategy, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+  geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
   # geom_bar(stat = "identity", position = "stack") +
   coord_flip()+
   theme_strategy_large()+
@@ -1496,6 +1580,27 @@ plot_savings_op <- ggplot(savingsOP, aes(reorder(Strategy, average), average))+
 #  *****--------------------------------------------------------------
 
 
+# Population differences ---------------------------------------------
+
+
+# For comparison
+# ccg_regist <- read_csv("ccg-reg-patients.csv", 
+#                        col_types = cols_only(CCG_CODE = "c", TOTAL_ALL = "i"))
+
+# 
+# pop_comparisons <- ccgPopulation %>% 
+#   left_join(ccg_regist, by = c("CCGCode" = "CCG_CODE")) %>% 
+#   right_join(comparatorCCGs2, by = "CCGCode") %>% 
+#   select(CCGDescription, everything(), - CCGCode, -ShortName) %>% 
+#   mutate(reg_minus_res = TOTAL_ALL - Population) %>% 
+#   rename(resident = Population, registered = TOTAL_ALL) %>% 
+#   mutate(greater = ifelse(reg_minus_res > 0, "registered", "resident")) %>% 
+#   mutate(diff_magnitude = abs(reg_minus_res)) %>% 
+#   select(-reg_minus_res) %>% 
+#   mutate(res_over_reg = resident/registered) %>% 
+#   mutate(flag = ifelse(res_over_reg <0.95 | res_over_reg > 1.05, "!", ""))
+# 
+# write_csv(pop_comparisons, "population_comparisons.csv")
 
 #  END-------------------------------------------------------------
 
