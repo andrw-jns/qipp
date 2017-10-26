@@ -19,17 +19,40 @@
 
 # setup --------------------------------------------------------------
 # install.packages("ReporteRs")
-# library(tidyverse)
+library(tidyverse)
 library(ReporteRs)
 library(stringr)
 library(stringi)
 
 setwd("C:/2017_projects/qipp_extra")
 
-qipp_report <- pptx(title = "qipp_one", template = "su_brand4.pptx")
+qipp_report <- pptx(title = "qipp_one", template = "su_brand5.pptx")
+
+qipp_report <- addSlide(qipp_report, "new_body_ip") %>% 
+  addTitle(stri_trans_totitle(ipPlottableStrategies$longName[i])) %>% 
+  addParagraph(ifelse(is.na(ipPlottableStrategies$sub_header[1]), "", stringi::stri_trans_totitle(ipPlottableStrategies$sub_header)[1])) %>% 
+  addImage(
+    paste0(baseDir, "output/", 1, "_trend_", ipPlottableStrategies$Strategy[1], ".png")
+  ) %>% 
+  addImage(
+    paste0(baseDir, "output/", 1, "_fun_", ipPlottableStrategies$Strategy[1], ".png")
+  ) %>% 
+  addImage(
+    paste0(baseDir, "output/", 1, "_roc_", ipPlottableStrategies$Strategy[1], ".png")
+  ) %>% 
+  addParagraph(format(round(summaryOutputIP$Spells[1], -1), big.mark = ",")) %>% 
+  # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[1], -3), big.mark = ","))) %>%
+  addParagraph(str_c("£", round(summaryOutputIP$Costs[1]/1e6, 1), "M")) %>% 
+  addParagraph(paste0(round(summaryOutputIP$propSpells[1]*100, 1), "%")) %>% 
+  addParagraph(paste0("£", format(round(summaryOutputIP$Costs[1]/summaryOutputIP$Spells[1], -1), big.mark = ","))) 
+
+
+filename <- "text_test.pptx" # the document to produce
+# # TEST write qipp_report 
+writeDoc(qipp_report, filename)
 
 # slide.layouts(qipp_report)
-# slide.layouts(qipp_report, "qipp_body")
+slide.layouts(qipp_report, "new_body_ip")
 
 # 0: TITLE --------------------------------------------------------------
 
