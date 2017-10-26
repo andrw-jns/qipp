@@ -1320,10 +1320,10 @@ summ_ae_summ_out <- summaryOutputAE %>%
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
+  right_join(labels_ae, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy) %>% 
   `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
-                 "Rate", "Rate of Change")) %>% 
-  left_join(labels_ae, by = c("Strategy")) %>% 
-  select(Opportunity, everything(), -Strategy)
+                 "Rate", "Rate of Change"))
 
 flex_ae_summ    <- setZebraStyle(vanilla.table(summ_ae_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
@@ -1352,10 +1352,10 @@ summ_ae_cost_out <- # head(
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
   )%>% 
-  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile")) %>% 
   left_join(labels_ae, by = c("Strategy")) %>% 
-  select(Opportunity, everything(), -Strategy)
+  select(Opportunity, everything(), -Strategy) %>% 
+  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
+                 "Total Savings if Top Quartile")) 
 # add footnote "compared to CCGs in the West Midlands"
 
 
@@ -1467,15 +1467,16 @@ labels_op <- summaryOutputOP %>%
 # OP tbl summary -----------------------------------------------------
 
 summ_op_summ_out <- summaryOutputOP %>%
+  filter(!Strategy %in% c("PLCV_v1")) %>%
   ungroup %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
-  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
-                 "Rate", "Rate of Change")) %>% 
   left_join(labels_op, by = c("Strategy")) %>% 
-  select(Opportunity, everything(), -Strategy)
+  select(Opportunity, everything(), -Strategy) %>% 
+  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
+                 "Rate", "Rate of Change")) 
 
 flex_op_summ    <- setZebraStyle(vanilla.table(summ_op_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
 
@@ -1496,19 +1497,19 @@ flex_op_summ <- setFlexTableBorders(flex_op_summ
 
 # OP cost summary ----------------------------------------------------
 
-summ_op_cost_out <- # head(
-  summaryOutputOP %>%
+summ_op_cost_out <- summaryOutputOP %>%
+  filter(!Strategy %in% c("PLCV_v1")) %>%
   ungroup %>%
   select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
   )%>% 
-  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile"))%>% 
   left_join(labels_op, by = c("Strategy")) %>% 
-  select(Opportunity, everything(), -Strategy)
+  select(Opportunity, everything(), -Strategy) %>%
 # add footnote "compared to CCGs in the West Midlands"
+  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
+                 "Total Savings if Top Quartile")) 
 
 
 flex_op_cost    <-  setZebraStyle(vanilla.table(summ_op_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
@@ -1534,6 +1535,7 @@ flex_op_cost <- setFlexTableBorders(flex_op_cost
 # OP savings plot -----------------------------------------------
 
 savingsOP <- summaryOutputOP %>%
+  filter(!Strategy %in% c("PLCV_v1")) %>%
   ungroup() %>% 
   select(Strategy, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded, TopDecile_SavingsIf_Rounded) %>% 
   rename(average = Average_SavingsIf_Rounded 
