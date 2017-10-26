@@ -18,7 +18,7 @@
 
 
 # setup --------------------------------------------------------------
-# install.packages("ReporteRs")
+
 library(tidyverse)
 library(ReporteRs)
 library(stringr)
@@ -28,23 +28,79 @@ setwd("C:/2017_projects/qipp_extra")
 
 qipp_report <- pptx(title = "qipp_one", template = "su_brand5.pptx")
 
+# 3: BODY IP ---------------------------------------------------------
+
+for(i in seq(ipPlottableStrategies$Strategy)){
+
 qipp_report <- addSlide(qipp_report, "new_body_ip") %>% 
   addTitle(stri_trans_totitle(ipPlottableStrategies$longName[i])) %>% 
-  addParagraph(ifelse(is.na(ipPlottableStrategies$sub_header[1]), "", stringi::stri_trans_totitle(ipPlottableStrategies$sub_header)[1])) %>% 
+  addParagraph(ifelse(is.na(ipPlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(ipPlottableStrategies$sub_header)[i])) %>% 
   addImage(
-    paste0(baseDir, "output/", 1, "_trend_", ipPlottableStrategies$Strategy[1], ".png")
+    paste0(baseDir, "output/", i, "_trend_", ipPlottableStrategies$Strategy[i], ".png")
   ) %>% 
   addImage(
-    paste0(baseDir, "output/", 1, "_fun_", ipPlottableStrategies$Strategy[1], ".png")
+    paste0(baseDir, "output/", i, "_fun_", ipPlottableStrategies$Strategy[i], ".png")
   ) %>% 
   addImage(
-    paste0(baseDir, "output/", 1, "_roc_", ipPlottableStrategies$Strategy[1], ".png")
+    paste0(baseDir, "output/", i, "_roc_", ipPlottableStrategies$Strategy[i], ".png")
   ) %>% 
-  addParagraph(format(round(summaryOutputIP$Spells[1], -1), big.mark = ",")) %>% 
-  # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[1], -3), big.mark = ","))) %>%
-  addParagraph(str_c("£", round(summaryOutputIP$Costs[1]/1e6, 1), "M")) %>% 
-  addParagraph(paste0(round(summaryOutputIP$propSpells[1]*100, 1), "%")) %>% 
-  addParagraph(paste0("£", format(round(summaryOutputIP$Costs[1]/summaryOutputIP$Spells[1], -1), big.mark = ","))) 
+  addParagraph(format(round(summaryOutputIP$Spells[i], -1), big.mark = ",")) %>% 
+  # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","))) %>%
+  addParagraph(str_c("£", round(summaryOutputIP$Costs[i]/1e6, 1), "M")) %>% 
+  addParagraph(paste0(round(summaryOutputIP$propSpells[i]*100, 1), "%")) %>% 
+  addParagraph(paste0("£", format(round(summaryOutputIP$Costs[i]/summaryOutputIP$Spells[i], -1), big.mark = ","))) 
+
+}
+
+
+# 3: BODY AE ---------------------------------------------------------
+
+for(i in seq(aePlottableStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "new_body_ae") %>% 
+    addTitle(stri_trans_totitle(aePlottableStrategies$longName[i])) %>% 
+    addParagraph(ifelse(is.na(aePlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(aePlottableStrategies$sub_header)[i])) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_trend_", aePlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_fun_", aePlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_roc_", aePlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addParagraph(format(round(summaryOutputAE$Spells[i], -1), big.mark = ",")) %>% 
+    # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","))) %>%
+    addParagraph(str_c("£", round(summaryOutputAE$Costs[i]/1e6, 1), "M")) %>% 
+    addParagraph(paste0(round(summaryOutputAE$propSpells[i]*100, 1), "%")) %>% 
+    addParagraph(paste0("£", format(round(summaryOutputAE$Costs[i]/summaryOutputAE$Spells[i], -1), big.mark = ","))) 
+  
+}
+
+
+# 3: BODY OP ---------------------------------------------------------
+
+for(i in seq(opPlottableStrategies$Strategy)){
+  
+  qipp_report <- addSlide(qipp_report, "new_body_op") %>% 
+    addTitle(stri_trans_totitle(opPlottableStrategies$longName[i])) %>% 
+    addParagraph(ifelse(is.na(opPlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(opPlottableStrategies$sub_header)[i])) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_trend_", opPlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_fun_", opPlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addImage(
+      paste0(baseDir, "output/", i, "_roc_", opPlottableStrategies$Strategy[i], ".png")
+    ) %>% 
+    addParagraph(format(round(summaryOutputOP$Spells[i], -1), big.mark = ",")) %>% 
+    # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","))) %>%
+    addParagraph(str_c("£", round(summaryOutputOP$Costs[i]/1e6, 1), "M")) %>% 
+    addParagraph(paste0(round(summaryOutputOP$propSpells[i]*100, 1), "%")) %>% 
+    addParagraph(paste0("£", format(round(summaryOutputOP$Costs[i]/summaryOutputOP$Spells[i], -1), big.mark = ","))) 
+  
+}
 
 
 filename <- "text_test.pptx" # the document to produce
@@ -52,7 +108,7 @@ filename <- "text_test.pptx" # the document to produce
 writeDoc(qipp_report, filename)
 
 # slide.layouts(qipp_report)
-slide.layouts(qipp_report, "new_body_ip")
+# slide.layouts(qipp_report, "new_body_ip")
 
 # 0: TITLE --------------------------------------------------------------
 
