@@ -106,7 +106,7 @@ source_here("summaryFunctions.R")
 source_here("theme_strategy.R")
 
 #setwd("C:/2017_projects/funnel/funnel/")
-source("C:/2017_projects/funnel/funnel/funlData.R")
+source("C:/2017_projects/funnel/funnel/funlplotr20171024.R")
 # to hopefully get the newest version of the funnel plot code.
 
 # This - believe it or not - works like a function : pound()
