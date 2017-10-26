@@ -28,7 +28,48 @@ setwd("C:/2017_projects/qipp_extra")
 
 qipp_report <- pptx(title = "qipp_one", template = "su_brand5.pptx")
 
-# 3: BODY IP ---------------------------------------------------------
+
+# 0: TITLE --------------------------------------------------------------
+
+
+# qipp_report <- addSlide(qipp_report, "title" ) %>% 
+#   addTitle(value = "Identifying potential QIPP opportunities") %>% 
+#   addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
+
+
+
+# *** ----------------------------------------------------------------
+
+
+
+# 3: IP  TITLE ---------------------------------------------------------
+# 
+# qipp_report <- addSlide(qipp_report, "poster") %>%
+#   addImage("qipp_photo_inpatient.png") %>% 
+#   addTitle("Inpatients") 
+
+
+
+
+# 3: IP  TABLES------------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Inpatient Summary Table") %>%
+  addFlexTable(flex_ip_summ)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Inpatient Cost Summary*") %>%
+  addFlexTable(flex_ip_cost)
+# add footnote?
+
+qipp_report <- addSlide(qipp_report, "contentA") %>% 
+  addTitle("Potential Savings by Opportunity*") %>%  # "ACS Vaccine Preventable Conditions"
+  addPlot(function() plot(plot_savings_ip)) 
+#   
+
+
+
+# 3: IP  BODY ---------------------------------------------------------
 
 for(i in seq(ipPlottableStrategies$Strategy)){
 
@@ -53,7 +94,36 @@ qipp_report <- addSlide(qipp_report, "new_body_ip") %>%
 }
 
 
-# 3: BODY AE ---------------------------------------------------------
+
+# *** ----------------------------------------------------------------
+
+
+
+# 4: AE TITLE ---------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "poster") %>%
+  addImage("qipp_photo_inpatient.png") %>% 
+  addTitle("ED") 
+
+
+# 4: AE TABLES ------------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("ED Summary Table") %>%
+  addFlexTable(flex_ae_summ)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("ED Cost Summary") %>%
+  addFlexTable(flex_ae_cost)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>% 
+  addTitle("Savings by Opportunity") %>%  # "ACS Vaccine Preventable Conditions"
+  addPlot(function() plot(plot_savings_ae)) 
+#   
+
+
+
+# 4: AE BODY ---------------------------------------------------------
 
 for(i in seq(aePlottableStrategies$Strategy)){
   
@@ -78,7 +148,35 @@ for(i in seq(aePlottableStrategies$Strategy)){
 }
 
 
-# 3: BODY OP ---------------------------------------------------------
+# *** ----------------------------------------------------------------
+
+
+
+# 5: TITLE OP ---------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "poster") %>%
+  addImage("qipp_photo_inpatient.png") %>% 
+  addTitle("Outpatients") 
+
+
+# 5. TABLES OP ------------------------------------------------------------
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Outpatient Summary Table") %>%
+  addFlexTable(flex_op_summ)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Outpatient Cost Summary") %>%
+  addFlexTable(flex_op_cost)
+
+qipp_report <- addSlide(qipp_report, "contentA") %>% 
+  addTitle("Savings by Opportunity*") %>%  # "ACS Vaccine Preventable Conditions"
+  addPlot(function() plot(plot_savings_op)) 
+#   
+
+
+
+# 5: BODY OP ---------------------------------------------------------
 
 for(i in seq(opPlottableStrategies$Strategy)){
   
@@ -109,6 +207,20 @@ writeDoc(qipp_report, filename)
 
 # slide.layouts(qipp_report)
 # slide.layouts(qipp_report, "new_body_ip")
+
+
+
+
+# *** ----------------------------------------------------------------
+
+
+
+# *** ----------------------------------------------------------------
+
+
+# *** ----------------------------------------------------------------
+
+
 
 # 0: TITLE --------------------------------------------------------------
 
