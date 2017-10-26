@@ -19,7 +19,7 @@ stp_unique <- unique(ccg_stp$STP17NM)
 
 
 # Choose STP --------------------------------------------------------------
-stp_choice <- stp_unique[2]
+stp_choice <- stp_unique[4]
 #  ------------------------------------------------------------------------
 
 loop_df <- ccg_stp %>% filter(STP17NM == stp_choice)
@@ -105,5 +105,5 @@ flex_stp <- function(df){
   table
 }
 
-flex_top_q <- flex_stp(final_top)
 flex_av <- flex_stp(final_av)
+flex_top_q <- flex_stp(final_top)

@@ -175,5 +175,5 @@ allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
 
 
 # CCG populations for cost charts
-ccgPopulation <- read_csv("CCGPopulation.csv")
+ccgPopulation <- read_csv("CCGPopulation.csv", skip = 1)
 
