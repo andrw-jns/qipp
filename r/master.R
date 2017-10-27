@@ -33,7 +33,7 @@ library(ggrepel)
 
 baseDir  <- "C:/2017_projects/qipp/" # using here, now
 
-active_ccg <- "05L"
+active_ccg <- "05T"
 f_year     <- 201617
 first_year <- 201213
 
@@ -1351,7 +1351,7 @@ summ_ae_cost_out <- # head(
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
-  )%>% 
+  ) %>% 
   left_join(labels_ae, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) %>% 
   `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
@@ -1504,7 +1504,7 @@ summ_op_cost_out <- summaryOutputOP %>%
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
-  )%>% 
+  ) %>% 
   left_join(labels_op, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) %>%
 # add footnote "compared to CCGs in the West Midlands"
