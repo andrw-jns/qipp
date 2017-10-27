@@ -38,6 +38,47 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
             , by = c("CCGCode", "Strategy"))
 
 
+
+# IP labels for charts / tables------------------------------------------
+
+labels_ip <- summaryOutputIP %>%
+  ungroup() %>% 
+  select(Strategy) %>% 
+  mutate(Opportunity = c("ACS Acute",
+                         "ACS Chronic",
+                         "ACS Vaccine",
+                         "Alcohol [25% to 75%]",
+                         "Alcohol [5% to 25%]",
+                         "Alcohol [75% to 100%]",
+                         "",
+                         "EOLC [3-14 days]",
+                         "EOLC [0-2 days]",
+                         "Falls",
+                         "Frail Elderly [occasional]",
+                         "Frail Elderly [usual]",
+                         "Medically Unexplained",
+                         "Meds Explicit",
+                         "Meds Implicit AntiDiab",
+                         "Meds Implicit Benzo",
+                         "Meds Implicit Diuretics",
+                         "Meds Implicit NSAIDs",
+                         "Obesity [largely]",
+                         "Obesity [marginal]",
+                         "Obesity [somewhat]",
+                         "PLCV Cosmetic",
+                         "PLCV Alternative",
+                         "PLCV Ineffective",
+                         "PLCV Risks",
+                         "MH admissions from ED",
+                         "",
+                         "Self-harm",
+                         "Smoking [large]",
+                         "Smoking [somewhat]",
+                         "Zero LOS [adult]",
+                         "Zero LOS [child]"))
+
+
+
 # IP tbl summary -----------------------------------------------------
 
 summ_ip_summ_out <- summaryOutputIP %>%
@@ -46,7 +87,11 @@ summ_ip_summ_out <- summaryOutputIP %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
-  ) 
+  ) %>% 
+  `colnames<-`(c("Strategy", "Activity", "Spend 2016-17",
+                 "Rate", "Rate of Change")) %>% 
+  left_join(labels_ip, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 
 
 # IP cost summary ----------------------------------------------------
@@ -59,7 +104,11 @@ summ_ip_cost_out <- # head(
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
-  )
+  )%>% 
+  `colnames<-`(c("Strategy", "Spend 2016-17", "Total Savings if Average",
+                 "Total Savings if Top Quartile")) %>% 
+  left_join(labels_ip, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy)
 
 
 
@@ -85,6 +134,19 @@ summaryOutputAE <- aeSmall %>% summary_output(., savingsAnyOneAE, aeSignificance
             , by = c("CCGCode", "Strategy"))
 
 
+
+# A&E labels for charts / tables------------------------------------------
+
+labels_ae <- summaryOutputAE %>%
+  ungroup() %>% 
+  select(Strategy) %>% 
+  mutate(Opportunity = c("Ambulance Treat",
+                         "Frequent Attenders",
+                         "Left Before Seen",
+                         "Low Acuity ED"
+  ))
+
+
 # AE tbl summary -----------------------------------------------------
 
 
@@ -93,7 +155,11 @@ summ_ae_summ_out <- summaryOutputAE %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
-  ) 
+  ) %>% 
+  right_join(labels_ae, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy) %>% 
+  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
+                 "Rate", "Rate of Change"))
 
 
 # AE cost summary ----------------------------------------------------
@@ -105,7 +171,11 @@ summ_ae_cost_out <- # head(
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
-  )
+  ) %>% 
+  left_join(labels_ae, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy) %>% 
+  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
+                 "Total Savings if Top Quartile")) 
 
 
 
@@ -130,6 +200,19 @@ summaryOutputOP <- opSmall %>% summary_output(., savingsAnyOneOP, opSignificance
             , by = c("CCGCode", "Strategy"))
 
 
+# OP labels for charts / tables------------------------------------------
+
+labels_op <- summaryOutputOP %>%
+  ungroup() %>% 
+  select(Strategy) %>% 
+  mutate(Opportunity = c("Consultant-Consultant Refer",
+                         "GP referred Medical [adult]",
+                         "GP referred Medical [child]",
+                         "GP referred Surg [adult]",
+                         "GP referred Surg [child]",
+                         ""
+  ))
+
 
 # OP tbl summary -----------------------------------------------------
 
@@ -138,7 +221,11 @@ summ_op_summ_out <- summaryOutputOP %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
-  ) 
+  )  %>% 
+  left_join(labels_op, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy) %>% 
+  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
+                 "Rate", "Rate of Change"))  
 
 
 # OP cost summary ----------------------------------------------------
@@ -150,6 +237,12 @@ summ_op_cost_out <- # head(
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
-  )
+  ) %>% 
+  left_join(labels_op, by = c("Strategy")) %>% 
+  select(Opportunity, everything(), -Strategy) %>%
+  # add footnote "compared to CCGs in the West Midlands"
+  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
+                 "Total Savings if Top Quartile")) 
+
 
 

@@ -45,20 +45,45 @@ source_here("3_summary_master.R")
 
 # Extract what is needed from the summaries:
 
-  strats <- summ_ip_cost_out %>% 
-    select(Strategy)
+  strats_ip <- summ_ip_cost_out %>% 
+    select(Opportunity)
   
-  av_save  <- summ_ip_cost_out %>% select(col = Average_SavingsIf_Rounded)
-  top_save <- summ_ip_cost_out %>% select(col = TopQuartile_SavingsIf_Rounded)
+  strats_ae <- summ_ae_cost_out %>% 
+    select(Opportunity)
   
-  stp_avg      <- if(i == 1){av_save}  else {bind_cols(stp_avg, av_save)}
-  stp_top_qrt  <- if(i == 1){top_save} else {bind_cols(stp_top_qrt, top_save)}
+  strats_op <- summ_op_cost_out %>% 
+    select(Opportunity)
   
-  rm(av_save, top_save, active_ccg)
+  
+  av_save_ip  <- summ_ip_cost_out %>% select(col = `Total Savings if Average`)
+  av_save_ae  <- summ_ae_cost_out %>% select(col = `Total Savings if Average`)
+  av_save_op  <- summ_op_cost_out %>% select(col = `Total Savings if Average`)
+  
+  
+  top_save_ip <- summ_ip_cost_out %>% select(col = `Total Savings if Top Quartile`)
+  top_save_ae <- summ_ae_cost_out %>% select(col = `Total Savings if Top Quartile`)
+  top_save_op <- summ_op_cost_out %>% select(col = `Total Savings if Top Quartile`)
+  
+  
+  stp_avg_ip    <- if(i == 1){av_save_ip}  else {bind_cols(stp_avg_ip, av_save_ip)}
+  stp_avg_ae    <- if(i == 1){av_save_ae}  else {bind_cols(stp_avg_ae, av_save_ae)}
+  stp_avg_op    <- if(i == 1){av_save_op}  else {bind_cols(stp_avg_op, av_save_op)}
+  
+  
+  stp_top_qrt_ip  <- if(i == 1){top_save_ip} else {bind_cols(stp_top_qrt_ip, top_save_ip)}
+  stp_top_qrt_ae  <- if(i == 1){top_save_ae} else {bind_cols(stp_top_qrt_ae, top_save_ae)}
+  stp_top_qrt_op  <- if(i == 1){top_save_op} else {bind_cols(stp_top_qrt_op, top_save_op)}
+  
+  rm(av_save_ip, av_save_ae, av_save_op,
+     top_save_ip, top_save_ae, top_save_op,
+     active_ccg)
  
 }
 
-final_av  <- bind_cols(strats, stp_avg %>%
+
+# STP: Savings Av ----------------------------------------------------
+
+final_av_ip  <- bind_cols(strats_ip, stp_avg_ip %>%
                          # to sum rows must remove the pound and comma
                          mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
                          mutate_all(funs(as.numeric)) %>% 
@@ -68,23 +93,70 @@ final_av  <- bind_cols(strats, stp_avg %>%
                          `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
                          mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
                        
-                       
 
-                       
-final_top <- bind_cols(strats, stp_top_qrt %>%
+final_av_ae  <- bind_cols(strats_ae, stp_avg_ae %>%
+                            # to sum rows must remove the pound and comma
+                            mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
+                            mutate_all(funs(as.numeric)) %>% 
+                            mutate(total = rowSums(.)) %>% 
+                            mutate_all(funs(pound)) %>%  
+                            mutate_all(funs(comma))) %>%
+                            `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+                            mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
+
+
+
+
+final_av_op  <- bind_cols(strats_op, stp_avg_op %>%
+                            # to sum rows must remove the pound and comma
+                            mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
+                            mutate_all(funs(as.numeric)) %>% 
+                            mutate(total = rowSums(.)) %>% 
+                            mutate_all(funs(pound)) %>%  
+                            mutate_all(funs(comma))) %>%
+                            `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+                            mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
+
+
+
+# STP: Savings TQ ----------------------------------------------------
+
+
+final_top_ip <- bind_cols(strats_ip, stp_top_qrt_ip %>%
                          # to sum rows must remove the pound and comma
                          mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
                          mutate_all(funs(as.numeric)) %>% 
                          mutate(total = rowSums(.)) %>% 
                          mutate_all(funs(pound)) %>%  
                          mutate_all(funs(comma))) %>% 
-  `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
-  mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
+                         `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+                         mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
+
+
+final_top_ae <- bind_cols(strats_ae, stp_top_qrt_ae %>%
+                            # to sum rows must remove the pound and comma
+                            mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
+                            mutate_all(funs(as.numeric)) %>% 
+                            mutate(total = rowSums(.)) %>% 
+                            mutate_all(funs(pound)) %>%  
+                            mutate_all(funs(comma))) %>% 
+                            `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+                            mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
 
 
 
+final_top_op <- bind_cols(strats_op, stp_top_qrt_op %>%
+                            # to sum rows must remove the pound and comma
+                            mutate_all(funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
+                            mutate_all(funs(as.numeric)) %>% 
+                            mutate(total = rowSums(.)) %>% 
+                            mutate_all(funs(pound)) %>%  
+                            mutate_all(funs(comma))) %>% 
+                            `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+                            mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
 
-flex_stp <- function(df){
+
+flexerize_gold <- function(df){
   
   table <- setZebraStyle(vanilla.table(df), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
   
@@ -105,5 +177,20 @@ flex_stp <- function(df){
   table
 }
 
-flex_av <- flex_stp(final_av)
-flex_top_q <- flex_stp(final_top)
+
+# IP Tables --------------------------------------------------
+
+flex_av_ip    <- flexerize_gold(final_av_ip)
+flex_top_ip   <- flexerize_gold(final_top_ip)
+
+# AE Tables ----------------------------------------------------------
+
+flex_av_ae    <- flexerize_gold(final_av_ae)
+flex_top_ae   <- flexerize_gold(final_top_ae)
+
+
+# OP Tables ----------------------------------------------------------
+
+flex_av_op    <- flexerize_gold(final_av_op)
+flex_top_op   <- flexerize_gold(final_top_op)
+

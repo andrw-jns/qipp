@@ -136,6 +136,55 @@ setwd(paste0(baseDir, "data"))
 
 "Take care to note whether data was handled by PowerShell"
 
+"Now do some wrangling to add new set of names to activeStrategies:"
+
+# manually assign ids (based on matching old strats to master list with names):
+id_ref <- c(1,   1,   1,  2,  2,  2, 26, 25, 29,  5, 8,
+            7,  24,  33, 33, 33, 33, 35, 23,  6,  9,
+            9,   9,   9,  9, 28, 28, 28, 28, 11, 12,
+            14, 14,  NA, 13, 32, 32, 32, 32, 13, 13,     # OP PLCV = NA
+            10,  39, 39,  4,  3)
+
+new_strat_list <- qippStrategiesMasterList_csv <- read_excel("C:/2017_projects/qipp/data/qippStrategiesMasterList.xlsx") %>% 
+  filter(id %in% id_ref)
+
+
+activeStrategies <- read_csv("listActiveStrategies.csv") %>% 
+  # manually assign ids (based on matching old strats to master list with names)
+  mutate(id = id_ref) %>% 
+  # left_join(new_strat_list, by = "id") %>% 
+  arrange(id)
+
+# removing unused strategies (FUF, OP PLCV):
+test <- slice(activeStrategies, c(1:34, 39:45))
+
+
+"Adapt (wrangle) new names master list:"
+tmp <- new_strat_list %>% 
+  select(id, oldName, shortName, longName, breakdownAvailable, matches("breakdown[1-5]"))
+
+# fix for alcohol
+tmp[2, 7:8] <- "should be updated to match indicator source"
+
+
+tmp2 <- gather(tmp, "breakdown", "sub_header", 6:10)
+# tmp2 <- tmp2 %>% distinct(id, breakdown, .keep_all = T)
+
+tmp3 <- tmp2 %>% 
+  filter(breakdownAvailable == 0) %>% 
+  distinct(longName, .keep_all = T)
+
+tmp4 <- tmp2 %>% 
+  filter(breakdownAvailable == 1) %>% 
+  arrange(id) %>% 
+  na.omit()
+
+tmp_final <- bind_rows(tmp3, tmp4) %>% 
+  arrange(id)
+
+# This "join" is in fact a bind cols - so may not work in future:
+
+activeStrategies <- bind_cols(test, tmp_final)
 # List of strategies
 activeStrategies <- read_csv("listActiveStrategies.csv")
 # if run from powershell:

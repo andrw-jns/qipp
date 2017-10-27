@@ -17,16 +17,51 @@ qipp_report_stp <- addSlide(qipp_report_stp, "title" ) %>%
 # TABLES ------------------------------------------------------------------
 
 
-qipp_report_stp <- addSlide(qipp_report_stp, "contentA") %>%
-  addTitle("Flextable: Proof of Concept") %>%
-  addFlexTable(flex_av)
+# IP -----------------------------------------------------------------
 
 
 qipp_report_stp <- addSlide(qipp_report_stp, "contentA") %>%
-  addTitle("Flextable: Proof of Concept") %>%
-  addFlexTable(flex_top_q)
+  addTitle("Potential savings by matching average performers*") %>%
+  addFlexTable(flex_av_ip)
 
 
-filename <- "qipp_test_stp.pptx" # the document to produce
+qipp_report_stp <- addSlide(qipp_report_stp, "contentA") %>%
+  addTitle("Potential savings by matching top quartile performers*") %>%
+  addFlexTable(flex_top_ip)
+
+
+# AE -----------------------------------------------------------------
+
+
+qipp_report_stp <- addSlide(qipp_report_stp, "contentA") %>%
+  addTitle("Potential savings by matching average performers*") %>%
+  addFlexTable(flex_av_ae)
+
+
+qipp_report_stp <- addSlide(qipp_report_stp, "contentA") %>%
+  addTitle("Potential savings by matching top quartile performers*") %>%
+  addFlexTable(flex_top_ae)
+
+
+
+# OP -----------------------------------------------------------------
+
+qipp_report_stp <- addSlide(qipp_report_stp, "contentA") %>%
+  addTitle("Potential savings by matching average performers*") %>%
+  addFlexTable(flex_av_op)
+
+
+qipp_report_stp <- addSlide(qipp_report_stp, "contentA") %>%
+  addTitle("Potential savings by matching top quartile performers*") %>%
+  addFlexTable(flex_top_op)
+
+
+#  -------------------------------------------------------------------
+
+
+
+filename <- "qipp_test_stp_2.pptx" # the document to produce
 # # TEST write qipp_report 
 writeDoc(qipp_report_stp, filename)
+
+
