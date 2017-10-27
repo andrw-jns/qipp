@@ -194,3 +194,28 @@ flex_top_ae   <- flexerize_gold(final_top_ae)
 flex_av_op    <- flexerize_gold(final_av_op)
 flex_top_op   <- flexerize_gold(final_top_op)
 
+
+
+#  Treemap----------------------------------------------------------
+
+tmp_tree <- final_top_ip %>% 
+  select(Opportunity, `STP total`) %>% 
+  mutate(cost = as.numeric(str_replace_all(`STP total`, c("£|,"), ""))) 
+
+
+library(treemap)
+treemap(tmp_tree, #Your data frame object
+        index=c("Opportunity"),  #A list of your categorical variables
+        vSize = "cost",  #This is your quantitative variable
+        type="index", #Type sets the organization and color scheme of your treemap
+        palette = "Reds",  #Select your color palette from the RColorBrewer presets or make your own.
+        title="Worcester CCGs Total Spend", #Customize your title
+        fontsize.title = 12 #Change the font size of the title
+)
+
+getwd()
+savePlot(filename = "Rplot", type = "png", device = "png")
+
+png('rplot.png', width = 1024, height = 768)
+
+dev.off()
