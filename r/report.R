@@ -59,7 +59,8 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Inpatient Summary Table") %>%
-  addFlexTable(flex_ip_summ)
+  addFlexTable(flex_ip_summ) %>% 
+  addFooter("NB. Rate and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Inpatient Cost Summary*") %>%
@@ -113,7 +114,8 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("ED Summary Table") %>%
-  addFlexTable(flex_ae_summ)
+  addFlexTable(flex_ae_summ) %>% 
+  addFooter("NB. Rate and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("ED Cost Summary") %>%
@@ -166,7 +168,8 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Outpatient Summary Table") %>%
-  addFlexTable(flex_op_summ)
+  addFlexTable(flex_op_summ)%>% 
+  addFooter("NB. Rate and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Outpatient Cost Summary") %>%
