@@ -32,23 +32,27 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand5.pptx")
 # 0: TITLE --------------------------------------------------------------
 
 
-# qipp_report <- addSlide(qipp_report, "title" ) %>% 
-#   addTitle(value = "Identifying potential QIPP opportunities") %>% 
-#   addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
+qipp_report <- addSlide(qipp_report, "title" ) %>%
+  addTitle(value = "Identifying potential QIPP opportunities") %>%
+  addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
 
+
+
+# *** ADD ONE-OFF POPULATION DIFFERENCE ------------------------------
+
+qipp_report <- addSlide(qipp_report, "contentA") %>%
+  addTitle("Populations") %>%
+  addFlexTable(flex_pop)
 
 
 # *** ----------------------------------------------------------------
 
 
-
 # 3: IP  TITLE ---------------------------------------------------------
-# 
-# qipp_report <- addSlide(qipp_report, "poster") %>%
-#   addImage("qipp_photo_inpatient.png") %>% 
-#   addTitle("Inpatients") 
 
-
+qipp_report <- addSlide(qipp_report, "poster") %>%
+  addImage("qipp_photo_inpatient.png") %>%
+  addTitle("Inpatients")
 
 
 # 3: IP  TABLES------------------------------------------------------------
@@ -68,14 +72,13 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
 #   
 
 
-
 # 3: IP  BODY ---------------------------------------------------------
 
 for(i in seq(ipPlottableStrategies$Strategy)){
 
 qipp_report <- addSlide(qipp_report, "new_body_ip") %>% 
   addTitle(stri_trans_totitle(ipPlottableStrategies$longName[i])) %>% 
-  addParagraph(ifelse(is.na(ipPlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(ipPlottableStrategies$sub_header)[i])) %>% 
+  addParagraph(ifelse(is.na(ipPlottableStrategies$sub_header[i]), " ", ipPlottableStrategies$sub_header[i])) %>% 
   addImage(
     paste0(baseDir, "output/", i, "_trend_", ipPlottableStrategies$Strategy[i], ".png")
   ) %>% 
@@ -129,7 +132,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body_ae") %>% 
     addTitle(stri_trans_totitle(aePlottableStrategies$longName[i])) %>% 
-    addParagraph(ifelse(is.na(aePlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(aePlottableStrategies$sub_header)[i])) %>% 
+    addParagraph(ifelse(is.na(aePlottableStrategies$sub_header[i]), " ", aePlottableStrategies$sub_header[i])) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_trend_", aePlottableStrategies$Strategy[i], ".png")
     ) %>% 
@@ -182,7 +185,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body_op") %>% 
     addTitle(stri_trans_totitle(opPlottableStrategies$longName[i])) %>% 
-    addParagraph(ifelse(is.na(opPlottableStrategies$sub_header[i]), "", stringi::stri_trans_totitle(opPlottableStrategies$sub_header)[i])) %>% 
+    addParagraph(ifelse(is.na(opPlottableStrategies$sub_header[i]), " ", opPlottableStrategies$sub_header[i])) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_trend_", opPlottableStrategies$Strategy[i], ".png")
     ) %>% 
@@ -201,7 +204,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
 }
 
 
-filename <- "text_test.pptx" # the document to produce
+filename <- "draft_slides_14.pptx" # the document to produce
 # # TEST write qipp_report 
 writeDoc(qipp_report, filename)
 
