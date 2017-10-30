@@ -22,7 +22,8 @@ stp_unique <- unique(ccg_stp$STP17NM)
 stp_choice <- stp_unique[4]
 #  ------------------------------------------------------------------------
 
-loop_df <- ccg_stp %>% filter(STP17NM == stp_choice)
+loop_df <- ccg_stp %>% filter(STP17NM   == stp_choice,
+                              !CCG16CDH == "05F") # Remove Hereford.
 
 # empty dfs for loop
 stp_avg      <- tibble()

@@ -430,6 +430,8 @@ setwd(paste0(baseDir, "data"))
 
 "Now do some wrangling to add new set of names to activeStrategies:"
 
+"WARNING: THIS IS A MANUAL PROCESS"
+"FOUNDATIONS (THE FORMAT OF THE SOURCE CSV) COULD BE IMPROVED IN FUTURE"
 # manually assign ids (based on matching old strats to master list with names):
 id_ref <- c(1,   1,   1,  2,  2,  2, 26, 25, 29,  5, 8,
             7,  24,  33, 33, 33, 33, 35, 23,  6,  9,
