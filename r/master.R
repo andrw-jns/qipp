@@ -60,9 +60,9 @@ qipp_ccgs  <- c(# Alphabetical:
 
 # Parameters 2 -------------------------------------------------------------
 
-ip_colours <- c("#c52828", "#c52828")
-ae_colours <- c("#187B91", "#187B91")
-op_colours <- c("steelblue", "steelblue")
+ip_colours <- c("#c52828", "darkviolet")
+ae_colours <- c("#187B91", "darkviolet")
+op_colours <- c("dodgerblue", "darkviolet")
 
 # Funnel
 funnelParameters <- tibble(
@@ -1210,7 +1210,7 @@ summ_ip_cost_out <- # head(
 
 # add footnote "compared to CCGs in the West Midlands"
 
-flex_ip_cost    <-  setZebraStyle(vanilla.table(summ_ip_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
+flex_ip_cost    <-  setZebraStyle(vanilla.table(summ_ip_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("dodgerblue2", 0.1))
 flex_ip_cost[,] <-  textProperties(font.family = "Segoe UI"
                                    , font.size = 12)
 
@@ -1356,7 +1356,7 @@ summ_ae_cost_out <- # head(
 # add footnote "compared to CCGs in the West Midlands"
 
 
-flex_ae_cost    <-  setZebraStyle(vanilla.table(summ_ae_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
+flex_ae_cost    <-  setZebraStyle(vanilla.table(summ_ae_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("dodgerblue2", 0.1))
 flex_ae_cost[,] <-  textProperties(font.family = "Segoe UI"
                                  , font.size = 12)
 
@@ -1509,7 +1509,7 @@ summ_op_cost_out <- summaryOutputOP %>%
                  "Total Savings if Top Quartile")) 
 
 
-flex_op_cost    <-  setZebraStyle(vanilla.table(summ_op_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("white", 1))
+flex_op_cost    <-  setZebraStyle(vanilla.table(summ_op_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("dodgerblue2", 0.1))
 flex_op_cost[,] <-  textProperties(font.family = "Segoe UI"
                                  , font.size = 12)
 
