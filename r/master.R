@@ -8,11 +8,8 @@
 "Code seems to be unaffected by update to dplyr 0.7 etc except summaries"
 "which now updated to use mutate_at() etc."
 "Check colour blind friendly"
-"Lancs CCGs: Data appears from 2014-15"
-"Need to adjust names in savings plot in line with whatever"
-"names for opportunities are selected"
 "Fix size of savings plots"
-"Savings plots don't really give you enough - must be used in
+"Savings plots don't really give enough detail - must be used in
 conjunction with funnels to work out where easiest savings are"
 "GP referrals v1 vs v2? Strategy (from SQL vs oldName)"
 
@@ -412,7 +409,7 @@ label_ccg <- function(df){
   .$CCGCode == "05N" ~ "Shr",
   .$CCGCode == "05P" ~ "Sol",
   .$CCGCode == "05Q" ~ "Ses",
-  .$CCGCode == "05T" ~ "Swa",
+  .$CCGCode == "05T" ~ "Swo",
   .$CCGCode == "05V" ~ "Sas",
   .$CCGCode == "05W" ~ "Sto",
   .$CCGCode == "05X" ~ "Tel",
