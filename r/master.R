@@ -1210,7 +1210,7 @@ summ_ip_cost_out <- # head(
 
 # add footnote "compared to CCGs in the West Midlands"
 
-flex_ip_cost    <-  setZebraStyle(vanilla.table(summ_ip_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("dodgerblue2", 0.1))
+flex_ip_cost    <-  setZebraStyle(vanilla.table(summ_ip_cost_out), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
 flex_ip_cost[,] <-  textProperties(font.family = "Segoe UI"
                                    , font.size = 12)
 
@@ -1310,7 +1310,6 @@ labels_ae <- summaryOutputAE %>%
 
 # AE tbl summary -----------------------------------------------------
 
-
 summ_ae_summ_out <- summaryOutputAE %>%
   ungroup %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
@@ -1356,7 +1355,7 @@ summ_ae_cost_out <- # head(
 # add footnote "compared to CCGs in the West Midlands"
 
 
-flex_ae_cost    <-  setZebraStyle(vanilla.table(summ_ae_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("dodgerblue2", 0.1))
+flex_ae_cost    <-  setZebraStyle(vanilla.table(summ_ae_cost_out), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
 flex_ae_cost[,] <-  textProperties(font.family = "Segoe UI"
                                  , font.size = 12)
 
@@ -1509,7 +1508,7 @@ summ_op_cost_out <- summaryOutputOP %>%
                  "Total Savings if Top Quartile")) 
 
 
-flex_op_cost    <-  setZebraStyle(vanilla.table(summ_op_cost_out), odd = alpha("dodgerblue2", 0.2), even = alpha("dodgerblue2", 0.1))
+flex_op_cost    <-  setZebraStyle(vanilla.table(summ_op_cost_out), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
 flex_op_cost[,] <-  textProperties(font.family = "Segoe UI"
                                  , font.size = 12)
 
@@ -1583,22 +1582,46 @@ plot_savings_op <- ggplot(savingsOP, aes(reorder(Opportunity, average), average)
 
 
 # For comparison
-# ccg_regist <- read_csv("ccg-reg-patients.csv", 
-#                        col_types = cols_only(CCG_CODE = "c", TOTAL_ALL = "i"))
+setwd(paste0(baseDir, "data"))
+ccg_regist <- read_csv("ccg-reg-patients.csv",
+                       col_types = cols_only(CCG_CODE = "c", TOTAL_ALL = "i"))
 
-# 
-# pop_comparisons <- ccgPopulation %>% 
-#   left_join(ccg_regist, by = c("CCGCode" = "CCG_CODE")) %>% 
-#   right_join(comparatorCCGs2, by = "CCGCode") %>% 
-#   select(CCGDescription, everything(), - CCGCode, -ShortName) %>% 
-#   mutate(reg_minus_res = TOTAL_ALL - Population) %>% 
-#   rename(resident = Population, registered = TOTAL_ALL) %>% 
-#   mutate(greater = ifelse(reg_minus_res > 0, "registered", "resident")) %>% 
-#   mutate(diff_magnitude = abs(reg_minus_res)) %>% 
-#   select(-reg_minus_res) %>% 
-#   mutate(res_over_reg = resident/registered) %>% 
-#   mutate(flag = ifelse(res_over_reg <0.95 | res_over_reg > 1.05, "!", ""))
-# 
+
+pop_comparisons <- ccgPopulation %>%
+  left_join(ccg_regist, by = c("CCGCode" = "CCG_CODE")) %>%
+  right_join(comparatorCCGs2, by = "CCGCode") %>%
+  select(CCGDescription, everything(), - CCGCode, -ShortName) %>%
+  mutate(reg_minus_res = TOTAL_ALL - Population) %>%
+  rename(resident = Population, registered = TOTAL_ALL) %>%
+  mutate(greater = ifelse(reg_minus_res > 0, "registered", "resident")) %>%
+  mutate(diff_magnitude = abs(reg_minus_res)) %>%
+  select(-reg_minus_res) %>%
+  mutate(res_over_reg = round(resident/registered, 2)*100) %>%
+  arrange(res_over_reg)
+  # mutate(flag = ifelse(res_over_reg <0.95 | res_over_reg > 1.05, "!", "")) %>% 
+
+
+
+
+flex_pop    <-  setZebraStyle(vanilla.table(pop_comparisons), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
+flex_pop[,] <-  textProperties(font.family = "Segoe UI"
+                                   , font.size = 12)
+
+flex_pop[to = "header"]  <-  textProperties(font.size = 14,
+                                                font.family = "Segoe UI")
+
+flex_pop[, 1]                <- parLeft()
+flex_pop[, 1, to = "header"] <- parLeft()
+
+
+flex_pop <- setFlexTableBorders(flex_pop
+                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
+                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
+)
+
+
 # write_csv(pop_comparisons, "population_comparisons.csv")
 
 #  END-------------------------------------------------------------
