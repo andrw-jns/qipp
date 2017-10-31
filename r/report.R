@@ -40,9 +40,9 @@ qipp_report <- addSlide(qipp_report, "title" ) %>%
 
 # *** ADD ONE-OFF POPULATION DIFFERENCE ------------------------------
 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("Populations") %>%
-  addFlexTable(flex_pop)
+# qipp_report <- addSlide(qipp_report, "contentA") %>%
+#   addTitle("Populations") %>%
+#   addFlexTable(flex_pop)
 
 
 # *** ----------------------------------------------------------------
@@ -60,7 +60,7 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Inpatient Summary Table") %>%
   addFlexTable(flex_ip_summ) %>% 
-  addFooter("NB. Rate and rate of change vs Comparator CCGs")
+  addFooter("NB. Rate, and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Inpatient Cost Summary*") %>%
@@ -98,7 +98,6 @@ qipp_report <- addSlide(qipp_report, "new_body_ip") %>%
 }
 
 
-
 # *** ----------------------------------------------------------------
 
 
@@ -115,7 +114,7 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("ED Summary Table") %>%
   addFlexTable(flex_ae_summ) %>% 
-  addFooter("NB. Rate and rate of change vs Comparator CCGs")
+  addFooter("NB. Rate, and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("ED Cost Summary") %>%
@@ -169,7 +168,7 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Outpatient Summary Table") %>%
   addFlexTable(flex_op_summ)%>% 
-  addFooter("NB. Rate and rate of change vs Comparator CCGs")
+  addFooter("NB. Rate, and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Outpatient Cost Summary") %>%
@@ -213,8 +212,6 @@ writeDoc(qipp_report, filename)
 
 # slide.layouts(qipp_report)
 # slide.layouts(qipp_report, "new_body_ip")
-
-
 
 
 # *** ----------------------------------------------------------------
