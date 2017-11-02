@@ -218,6 +218,7 @@ labels_op <- summaryOutputOP %>%
 
 summ_op_summ_out <- summaryOutputOP %>%
   ungroup %>%
+  filter(!Strategy %in% c("PLCV_v1")) %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
@@ -233,6 +234,7 @@ summ_op_summ_out <- summaryOutputOP %>%
 summ_op_cost_out <- # head(
   summaryOutputOP %>%
   ungroup %>%
+  filter(!Strategy %in% c("PLCV_v1")) %>%
   select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
