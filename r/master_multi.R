@@ -8,6 +8,7 @@ source_here <- function(name){
 
 # 1. Load data (minus plot funs) -------------------------------------
 source_here("1_init_master.R") # it loads the data (needed only once)
+source_here("theme_strategy.R")
 
 
 # 1.01 Functions ----------------------------------------------
@@ -39,6 +40,45 @@ format_savings <- function(strats_pod, pod_df){
 }
 
 
+
+wrangle_saveif <- function(df_av, df_tquart){
+  
+  bind_cols(df_av %>% select(Opportunity, `STP total`),
+            df_tquart %>% select(`STP total`)) %>%
+    rename(opportunity = Opportunity,
+           average     = `STP total`,
+           t_quartile  = `STP total1`) %>%
+    mutate_at(vars(c("average", "t_quartile")), funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
+    mutate_at(vars(c("average", "t_quartile")), funs(as.numeric))
+}
+
+
+plot_saveif <- function(df, opportunity, average, t_quartile){
+  
+  ggplot(df, aes(reorder(opportunity, average), average))+
+    geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+    geom_bar(aes(opportunity, t_quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+    # geom_bar(stat = "identity", position = "stack") +
+    coord_flip()+
+    theme_strategy_large()+
+    scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+                       , position = "top")+
+    # scale_y_continuous(labels = scales::comma_format())
+    theme(legend.title = element_blank(),
+          axis.title.y = element_blank(),
+          legend.position = c(0.82, 0.18),
+          legend.background = element_rect(fill = "white"))+
+    scale_fill_manual(
+      name = "line Colour",
+      values = c(myline1 = "lightblue", myline2 = "lightblue"),
+      labels = c("Savings if Average", "Savings if Top Quartile"))+
+    # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+    #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+    ylab("Potential savings (millions of pounds)")+
+    guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+}
+
+
 conditional_worcs <- function(df){
   
   rag_colours <- RColorBrewer::brewer.pal(9, "RdYlGn")
@@ -46,18 +86,18 @@ conditional_worcs <- function(df){
   data <- flexerize_gold(df)
   
   data[df$`Redditch and Bromsgrove CCG` == "Low", 2] = chprop(myCellProps, background.color = rag_colours[6])
-  data[df$`Redditch and Bromsgrove CCG` == "Not Significant", 2] = chprop(myCellProps, background.color = rag_colours[4])
-  data[df$`Redditch and Bromsgrove CCG` == "High", 2] = chprop(myCellProps, background.color = rag_colours[3])
+  data[df$`Redditch and Bromsgrove CCG` == "Not Significant", 2] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
+  data[df$`Redditch and Bromsgrove CCG` == "High", 2] = chprop(myCellProps, background.color = rag_colours[4])
   
   
   data[df$`South Worcestershire CCG` == "Low", 3] = chprop(myCellProps, background.color = rag_colours[6])
-  data[df$`South Worcestershire CCG` == "Not Significant", 3] = chprop(myCellProps, background.color = rag_colours[4])
-  data[df$`South Worcestershire CCG` == "High", 3] = chprop(myCellProps, background.color = rag_colours[3])
+  data[df$`South Worcestershire CCG` == "Not Significant", 3] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
+  data[df$`South Worcestershire CCG` == "High", 3] = chprop(myCellProps, background.color = rag_colours[4])
   
   
   data[df$`Wyre Forest CCG` == "Low", 4] = chprop(myCellProps, background.color = rag_colours[6])
-  data[df$`Wyre Forest CCG` == "Not Significant", 4] = chprop(myCellProps, background.color = rag_colours[4])
-  data[df$`Wyre Forest CCG` == "High", 4] = chprop(myCellProps, background.color = rag_colours[3])
+  data[df$`Wyre Forest CCG` == "Not Significant", 4] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
+  data[df$`Wyre Forest CCG` == "High", 4] = chprop(myCellProps, background.color = rag_colours[4])
   
   
   
@@ -88,7 +128,10 @@ loop_df <- ccg_stp %>% filter(STP17NM   == stp_choice,
                               !CCG16CDH == "05F") # Remove Hereford.
 
 
-# 1.2. begin loop ---------------------------------------------------------
+# *** ----------------------------------------------------------------
+
+
+# 1.2. BEGIN loop ---------------------------------------------------------
 
 for(i in seq_along(loop_df$CCG16CDH)){
   
@@ -176,6 +219,9 @@ source_here("3_summary_master.R")
 }
 
 
+# *** ----------------------------------------------------------------
+
+
 # STP: Spend ---------------------------------------------------------
 
 final_spend_ip  <- format_savings(strats_ip, stp_spend_ip)
@@ -208,6 +254,22 @@ final_rates_op <- format_rates_n_roc(strats_op, stp_rates_op)
 final_roc_ip <- format_rates_n_roc(strats_ip, stp_roc_ip)
 final_roc_ae <- format_rates_n_roc(strats_ae, stp_roc_ae)
 final_roc_op <- format_rates_n_roc(strats_op, stp_roc_op)
+
+
+# STP: Potential savings plots ---------------------------------------
+
+final_saveif_ip <- wrangle_saveif(final_av_ip, final_top_ip)
+final_saveif_ae <- wrangle_saveif(final_av_ae, final_top_ae)
+final_saveif_op <- wrangle_saveif(final_av_op, final_top_op)
+
+plot_saveif_ip <- plot_saveif(final_saveif_ip, opportunity, average, t_quartile)
+plot_saveif_ae <- plot_saveif(final_saveif_ae, opportunity, average, t_quartile)
+plot_saveif_op <- plot_saveif(final_saveif_op, opportunity, average, t_quartile)
+
+
+# *** ----------------------------------------------------------------
+
+# *** ----------------------------------------------------------------
 
 
 # FLEXTABLES-------------------------------------------------
@@ -269,6 +331,7 @@ flex_rates_op <- conditional_worcs(final_rates_op)
 flex_roc_ip <- conditional_worcs(final_roc_ip)
 flex_roc_ae <- conditional_worcs(final_roc_ae)
 flex_roc_op <- conditional_worcs(final_roc_op)
+
 
 
 #  Treemap----------------------------------------------------------
