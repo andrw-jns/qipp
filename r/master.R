@@ -1265,31 +1265,63 @@ savingsIP <- summaryOutputIP %>%
   select(Opportunity, everything(), -Strategy)
 
 
+plot_the_savings <- function(df){
+  
+  ggplot(df, aes(reorder(Opportunity, average), average))+
+    geom_bar(stat = "identity",  aes(fill = "myline1"))+
+    geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+    # geom_bar(stat = "identity", position = "stack") +
+    coord_flip()+
+    theme_strategy_large()+
+    scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+                       , position = "top"
+                       , expand = c(0,0))+
+    # scale_y_continuous(labels = scales::comma_format())
+    theme(legend.title = element_blank(),
+          axis.title.y = element_blank(),
+          legend.position = c(0.82, 0.18),
+          legend.background = element_rect(fill = "white"))+
+    scale_fill_manual(
+      name = "line Colour"
+      ,values=c(myline1 = "#5881c1", myline2 = "#5881c1")
+      , labels=c("Savings if average", "Savings if top quartile"))+
+    # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+    #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+    ylab("Potential savings (£ millions)")+
+    guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2))))+ # the second alpha does not have to relate
+  theme(# panel.grid.major = element_blank(),
+        panel.background = element_blank())+
+    scale_x_discrete(expand = c(0,0))
+  
+}
+  
+plot_savings_ip <- plot_the_savings(savingsIP)   
+
 
 # so have multiple variables again.
 # error in stacked  bars! should not be stacked
 # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-plot_savings_ip <- ggplot(savingsIP, aes(reorder(Opportunity, average), average))+
-  geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-  geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
-  # geom_bar(stat = "identity", position = "stack") +
-  coord_flip()+
-  theme_strategy_large()+
-  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
-                     , position = "top")+
-  # scale_y_continuous(labels = scales::comma_format())
-  theme(legend.title = element_blank(),
-        axis.title.y = element_blank(),
-        legend.position = c(0.82, 0.18),
-        legend.background = element_rect(fill = "white"))+
-  scale_fill_manual(
-    name = "line Colour"
-    ,values=c(myline1 = "lightblue", myline2 = "lightblue")
-                    , labels=c("Savings if Average", "Savings if Top Quartile"))+
-  # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
-  #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-  ylab("Potential savings (millions of pounds)")+
-  guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+# plot_savings_ip <- ggplot(savingsIP, aes(reorder(Opportunity, average), average))+
+#   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+#   geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+#   # geom_bar(stat = "identity", position = "stack") +
+#   coord_flip()+
+#   theme_strategy_large()+
+#   scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+#                      , position = "top")+
+#   # scale_y_continuous(labels = scales::comma_format())
+#   theme(legend.title = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.position = c(0.82, 0.18),
+#         legend.background = element_rect(fill = "white"))+
+#   scale_fill_manual(
+#     name = "line Colour"
+#     ,values=c(myline1 = "#5881c1", myline2 = "#5881c1")
+#                     , labels=c("Savings if Average", "Savings if Top Quartile"))+
+#   # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+#   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+#   ylab("Potential savings (millions of pounds)")+
+#   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
 
 
 # ***** --------------------------------------------------------------
@@ -1382,6 +1414,8 @@ savingsAE <- summaryOutputAE %>%
   left_join(labels_ae, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) 
 
+plot_savings_ae <- plot_the_savings(savingsAE)
+
 # basic name adjust
 # savingsAE$Strategy <-  savingsAE$Strategy %>% 
 #   str_replace_all("v[0-9]?", "") %>%
@@ -1389,30 +1423,30 @@ savingsAE <- summaryOutputAE %>%
 #   str_trim()
 
 "Can make this plot a function?"
-# so have multiple variables again.
-# error in stacked  bars! should not be stacked
-# ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-plot_savings_ae <- ggplot(savingsAE, aes(reorder(Opportunity, average), average))+
-  geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-  geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
-  # geom_bar(stat = "identity", position = "stack") +
-  coord_flip()+
-  theme_strategy_large()+
-  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
-                     , position = "top")+
-  # scale_y_continuous(labels = scales::comma_format())
-  theme(legend.title = element_blank(),
-        axis.title.y = element_blank(),
-        legend.position = c(0.82, 0.18),
-        legend.background = element_rect(fill = "white"))+
-  scale_fill_manual(
-    name = "line Colour"
-    ,values=c(myline1 = "lightblue", myline2 = "lightblue")
-    , labels=c("Savings if Average", "Savings if Top Quartile"))+
-  # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
-  #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-  ylab("Potential savings (millions of pounds)")+
-  guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+# # so have multiple variables again.
+# # error in stacked  bars! should not be stacked
+# # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
+# plot_savings_ae <- ggplot(savingsAE, aes(reorder(Opportunity, average), average))+
+#   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+#   geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+#   # geom_bar(stat = "identity", position = "stack") +
+#   coord_flip()+
+#   theme_strategy_large()+
+#   scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+#                      , position = "top")+
+#   # scale_y_continuous(labels = scales::comma_format())
+#   theme(legend.title = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.position = c(0.82, 0.18),
+#         legend.background = element_rect(fill = "white"))+
+#   scale_fill_manual(
+#     name = "line Colour"
+#     ,values=c(myline1 = "lightblue", myline2 = "lightblue")
+#     , labels=c("Savings if Average", "Savings if Top Quartile"))+
+#   # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+#   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+#   ylab("Potential savings (millions of pounds)")+
+#   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
 
 
 # ***** --------------------------------------------------------------
@@ -1519,30 +1553,32 @@ savingsOP <- summaryOutputOP %>%
 #   str_replace_all("\\_"," ") %>%
 #   str_trim()
 
+plot_savings_op <- plot_the_savings(savingsOP)
+
 # so have multiple variables again.
 # error in stacked  bars! should not be stacked
 # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-plot_savings_op <- ggplot(savingsOP, aes(reorder(Opportunity, average), average))+
-  geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-  geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
-  # geom_bar(stat = "identity", position = "stack") +
-  coord_flip()+
-  theme_strategy_large()+
-  scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
-                     , position = "top")+
-  # scale_y_continuous(labels = scales::comma_format())
-  theme(legend.title = element_blank(),
-        axis.title.y = element_blank(),
-        legend.position = c(0.82, 0.18),
-        legend.background = element_rect(fill = "white"))+
-  scale_fill_manual(
-    name = "line Colour"
-    ,values=c(myline1 = "lightblue", myline2 = "lightblue")
-    , labels=c("Savings if Average", "Savings if Top Quartile"))+
-  # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
-  #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-  ylab("Potential savings (millions of pounds)")+
-  guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+# plot_savings_op <- ggplot(savingsOP, aes(reorder(Opportunity, average), average))+
+#   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+#   geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+#   # geom_bar(stat = "identity", position = "stack") +
+#   coord_flip()+
+#   theme_strategy_large()+
+#   scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+#                      , position = "top")+
+#   # scale_y_continuous(labels = scales::comma_format())
+#   theme(legend.title = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.position = c(0.82, 0.18),
+#         legend.background = element_rect(fill = "white"))+
+#   scale_fill_manual(
+#     name = "line Colour"
+#     ,values=c(myline1 = "lightblue", myline2 = "lightblue")
+#     , labels=c("Savings if Average", "Savings if Top Quartile"))+
+#   # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
+#   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
+#   ylab("Potential savings (millions of pounds)")+
+#   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
 
 
 
