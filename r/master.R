@@ -304,8 +304,8 @@ plot_roc <- function(funnel_df, points_df, summary_df, colour_block){
   
   ggplot(data = funnel_df) +
     geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "black", linetype =  44) +
-    geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = 44) +
-    geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = 44) +
+    # geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = 44) +
+    # geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = 44) +
     geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "black", linetype =  44) +
     geom_segment(aes(x      = min(Denominator)
                      , xend = max(Denominator)
@@ -391,7 +391,7 @@ plot_roc <- function(funnel_df, points_df, summary_df, colour_block){
   #"#69D2E7", '#FA6900'
 }
 
-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary)
+plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, "grey70")
 
 label_ccg <- function(df){
   
@@ -746,7 +746,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   # What happens when you have a rate which does not come directly from (spells/population)?
   # This situation (qipp) works only because the population has been derived (from Spells/DSRate)
  
-  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
+  plotFunnels <- funnel[[1]] %>% convert_dsr_100k() %>% filter(fnlLimit == "threeSigma") # only 3 sigma
   plotUnits   <- funnel[[2]] %>% 
     left_join(ipFunnelPoints %>% filter(Strategy == ipPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k() %>% label_ccg()
@@ -820,7 +820,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
                       , fnlMaxEvents = NULL
   ) 
 
-  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
+  plotFunnels <- funnel[[1]] %>% convert_dsr_100k() %>% filter(fnlLimit == "threeSigma")
   plotUnits   <- funnel[[2]] %>% 
     left_join(aeFunnelPoints %>% filter(Strategy == aePlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k()
@@ -890,7 +890,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
                       , fnlMaxEvents = NULL
   ) 
 
-  plotFunnels <- funnel[[1]] %>% convert_dsr_100k()
+  plotFunnels <- funnel[[1]] %>% convert_dsr_100k() %>% filter(fnlLimit == "threeSigma") # only 3 sigma
   plotUnits   <- funnel[[2]] %>% 
     left_join(opFunnelPoints %>% filter(Strategy == opPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k()
@@ -1050,9 +1050,9 @@ for(i in seq_along(opPlottableStrategies$Strategy)){
 # Summary tables -------------------------------------------------------------
 setwd(baseDir)
 
-summ_ipFunnelPoints    <- ip    %>% filter(FYear == f_year) 
-summ_opFunnelPoints    <- op    %>% filter(FYear == f_year)
-summ_aeFunnelPoints    <- ae    %>% filter(FYear == f_year)
+summ_ipFunnelPoints    <- ip  %>% filter(FYear == f_year) 
+summ_opFunnelPoints    <- op  %>% filter(FYear == f_year)
+summ_aeFunnelPoints    <- ae  %>% filter(FYear == f_year)
 
 summ_ipFunnelSummary <- summ_ipFunnelPoints %>% funnel_summary
 summ_aeFunnelSummary <- summ_aeFunnelPoints %>% funnel_summary
@@ -1243,7 +1243,7 @@ savingsIP <- summaryOutputIP %>%
   ) %>% 
   filter(Strategy != "Readmissions_v1", Strategy != "Canc_Op_v1")  %>% 
   # gather(level, saving, 2:4)  %>% 
-left_join(labels_ip, by = c("Strategy")) %>% 
+  left_join(labels_ip, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy)
 
 
@@ -1573,7 +1573,6 @@ plot_savings_op <- ggplot(savingsOP, aes(reorder(Opportunity, average), average)
   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
   ylab("Potential savings (millions of pounds)")+
   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
-
 
 
 
