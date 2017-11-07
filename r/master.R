@@ -60,9 +60,9 @@ qipp_ccgs  <- c(# Alphabetical:
 
 # Parameters 2 -------------------------------------------------------------
 
-ip_colours <- c("#c52828", "darkviolet")
-ae_colours <- c("#187B91", "darkviolet")
-op_colours <- c("dodgerblue", "darkviolet")
+ip_colours <- c("#EC6555", "#EC6555") # SU red
+ae_colours <- c("#91F5AD", "#91F5AD") # teal deer, alternative #75BBA7
+op_colours <- c("#5881c1", "#5881c1") # SU blue
 
 # Funnel
 funnelParameters <- tibble(
