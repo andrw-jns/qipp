@@ -1125,24 +1125,24 @@ labels_ip <- summaryOutputIP %>%
   mutate(Opportunity = c("ACS Acute",
                          "ACS Chronic",
                          "ACS Vaccine",
-                         "Alcohol [25% to 75%]",
-                         "Alcohol [5% to 25%]",
-                         "Alcohol [75% to 100%]",
+                         "Alcohol (25% to 75%)",
+                         "Alcohol (5% to 25%)",
+                         "Alcohol (75% to 100%)",
                          "",
-                         "EOLC [3-14 days]",
-                         "EOLC [0-2 days]",
+                         "EOLC (3-14 days)",
+                         "EOLC (0-2 days)",
                          "Falls",
-                         "Frail Elderly [occasional]",
-                         "Frail Elderly [usual]",
+                         "Frail Elderly (occasional)",
+                         "Frail Elderly (usual)",
                          "Medically Unexplained",
                          "Meds Explicit",
                          "Meds Implicit AntiDiab",
                          "Meds Implicit Benzo",
                          "Meds Implicit Diuretics",
                          "Meds Implicit NSAIDs",
-                         "Obesity [largely]",
-                         "Obesity [marginal]",
-                         "Obesity [somewhat]",
+                         "Obesity (largely)",
+                         "Obesity (marginal)",
+                         "Obesity (somewhat)",
                          "PLCV Cosmetic",
                          "PLCV Alternative",
                          "PLCV Ineffective",
@@ -1150,10 +1150,10 @@ labels_ip <- summaryOutputIP %>%
                          "MH admissions from ED",
                          "",
                          "Self-harm",
-                         "Smoking [large]",
-                         "Smoking [somewhat]",
-                         "Zero LOS [adult]",
-                         "Zero LOS [child]"))
+                         "Smoking (large)",
+                         "Smoking (somewhat)",
+                         "Zero LOS (adult)",
+                         "Zero LOS (child)"))
 
 
 # IP tbl summary -----------------------------------------------------
@@ -1161,37 +1161,46 @@ labels_ip <- summaryOutputIP %>%
 summ_ip_summ_out <- summaryOutputIP %>%
   ungroup %>%
   filter(!Strategy %in% c("Canc_Op_v1", "Readmissions_v1")) %>%
-  select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
+  select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>%
+  mutate(Costs_Rounded = Costs_Rounded / 1000) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
-  `colnames<-`(c("Strategy", "Activity", "Spend 2016-17",
+  `colnames<-`(c("Strategy", "Admissions", "2016-17 Spend (000s)",
                  "Rate", "Rate of Change")) %>% 
   left_join(labels_ip, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy)
 
+summ_ip_summ_out[4:5][summ_ip_summ_out[4:5] == "Not Significant"] <- "-"
+
+
+
+flexify_summary <- function(df){
+  
+  data    <- vanilla.table(df)
+ 
+  data[,] <- textProperties(font.family = "Segoe UI", font.size = 10)
+  data[to = "header"]      <-  textProperties(font.size = 10, font.family = "Segoe UI", font.weight = "bold")
+  
+  data[, 1]                <- parLeft()
+  data[, 1, to = "header"] <- parLeft()
+  
+  data[, 4:5]                <- parLeft()
+  data[, 4:5, to = "header"] <- parLeft()
+  
+  data <- setFlexTableBorders(data
+                              , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                              , inner.horizontal = borderProperties( style = "solid", color = "grey80"  )
+                              , outer.vertical = borderProperties( width = 2, color = "white"  )
+                              , outer.horizontal = borderProperties( width = 2, color = "grey30"  )
+  )
+  
+  data
+  }
+
+flex_ip_summ <- flexify_summary(summ_ip_summ_out)
 
 # add footnote "compared to CCGs in the West Midlands"
-
-flex_ip_summ    <- setZebraStyle(vanilla.table(summ_ip_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
-
-# black and white
-# flex_ip_summ    <- vanilla.table(summ_ip_summ_out)
-
-
-flex_ip_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
-flex_ip_summ[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
-
-flex_ip_summ[, 1]                <- parLeft()
-flex_ip_summ[, 1, to = "header"] <- parLeft()
-
-
-flex_ip_summ <- setFlexTableBorders(flex_ip_summ
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
 
 
 # IP cost summary ----------------------------------------------------
@@ -1201,35 +1210,44 @@ summ_ip_cost_out <- # head(
   ungroup %>%
   filter(!Strategy %in% c("Canc_Op_v1", "Readmissions_v1")) %>%
   select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
-  mutate(Costs_Rounded =  pound(Costs_Rounded)
+  mutate(Costs_Rounded = Costs_Rounded/ 1000,
+         Average_SavingsIf_Rounded = Average_SavingsIf_Rounded / 1000,
+         TopQuartile_SavingsIf_Rounded = TopQuartile_SavingsIf_Rounded/ 1000) %>% 
+  mutate(Costs_Rounded = pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
   ) %>% 
-  `colnames<-`(c("Strategy", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile")) %>% 
+  `colnames<-`(c("Strategy", "2016-17 Spend (000s)", "Savings if Average (000s)",
+                 "Savings if Top Quartile (000s)")) %>% 
   left_join(labels_ip, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy)
 
 # add footnote "compared to CCGs in the West Midlands"
 
-flex_ip_cost    <-  setZebraStyle(vanilla.table(summ_ip_cost_out), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
-flex_ip_cost[,] <-  textProperties(font.family = "Segoe UI"
-                                   , font.size = 12)
 
-flex_ip_cost[to = "header"]  <-  textProperties(font.size = 14,
-                                                font.family = "Segoe UI")
+flexify_costs <- function(df){
+  
+  data    <-  vanilla.table(df)
+  data[,] <-  textProperties(font.family = "Segoe UI" , font.size = 10)
+  
+  data[to = "header"]  <-  textProperties(font.size = 10, font.family = "Segoe UI", font.weight = "bold")
+  
+  data[, 1]                <- parLeft()
+  data[, 1, to = "header"] <- parLeft()
+  
+  
+  data <- setFlexTableBorders(data
+                              , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                              , inner.horizontal = borderProperties( style = "solid", color = "grey80"  )
+                              , outer.vertical = borderProperties( width = 2, color = "white"  )
+                              , outer.horizontal = borderProperties( width = 2, color = "grey30"  )
+  )
+  
+  
+  data
+}
 
-flex_ip_cost[, 1]                <- parLeft()
-flex_ip_cost[, 1, to = "header"] <- parLeft()
-
-
-flex_ip_cost <- setFlexTableBorders(flex_ip_cost
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
-
+flex_ip_cost <- flexify_costs(summ_ip_cost_out)
 
 
 # IP savings plot -----------------------------------------------
@@ -1315,29 +1333,18 @@ labels_ae <- summaryOutputAE %>%
 summ_ae_summ_out <- summaryOutputAE %>%
   ungroup %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
+  mutate(Costs_Rounded = Costs_Rounded/ 1000) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
   right_join(labels_ae, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) %>% 
-  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
+  `colnames<-`(c("Opportunity", "Activity", "2016-17 Spend (000s)",
                  "Rate", "Rate of Change"))
 
-flex_ae_summ    <- setZebraStyle(vanilla.table(summ_ae_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+summ_ae_summ_out[4:5][summ_ae_summ_out[4:5] == "Not Significant"] <- "-"
 
-flex_ae_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
-flex_ae_summ[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
-
-flex_ae_summ[, 1]                <- parLeft()
-flex_ae_summ[, 1, to = "header"] <- parLeft()
-
-
-flex_ae_summ <- setFlexTableBorders(flex_ae_summ
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
+flex_ae_summ <- flexify_summary(summ_ae_summ_out)
 
 
 # AE cost summary ----------------------------------------------------
@@ -1346,34 +1353,20 @@ summ_ae_cost_out <- # head(
   summaryOutputAE %>%
   ungroup %>%
   select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
+  mutate(Costs_Rounded = Costs_Rounded/ 1000,
+         Average_SavingsIf_Rounded = Average_SavingsIf_Rounded / 1000,
+         TopQuartile_SavingsIf_Rounded = TopQuartile_SavingsIf_Rounded/ 1000) %>% 
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
   ) %>% 
   left_join(labels_ae, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) %>% 
-  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile")) 
+  `colnames<-`(c("Opportunity", "2016-17 Spend (000s)", "Savings if Average (000s)",
+                 "Savings if Top Quartile (000s)")) 
 # add footnote "compared to CCGs in the West Midlands"
 
-
-flex_ae_cost    <-  setZebraStyle(vanilla.table(summ_ae_cost_out), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
-flex_ae_cost[,] <-  textProperties(font.family = "Segoe UI"
-                                 , font.size = 12)
-
-flex_ae_cost[to = "header"]  <-  textProperties(font.size = 14,
-                                              font.family = "Segoe UI")
-
-flex_ae_cost[, 1]                <- parLeft()
-flex_ae_cost[, 1, to = "header"] <- parLeft()
-
-
-flex_ae_cost <- setFlexTableBorders(flex_ae_cost
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
+flex_ae_cost    <- flexify_costs(summ_ae_cost_out)
 
 
 
@@ -1452,10 +1445,10 @@ labels_op <- summaryOutputOP %>%
   ungroup() %>% 
   select(Strategy) %>% 
   mutate(Opportunity = c("Consultant-Consultant Refer",
-                         "GP referred Medical [adult]",
-                         "GP referred Medical [child]",
-                         "GP referred Surg [adult]",
-                         "GP referred Surg [child]",
+                         "GP referred Medical (adult)",
+                         "GP referred Medical (child)",
+                         "GP referred Surg (adult)",
+                         "GP referred Surg (child)",
                          ""
   ))
 
@@ -1468,29 +1461,19 @@ summ_op_summ_out <- summaryOutputOP %>%
   filter(!Strategy %in% c("PLCV_v1")) %>%
   ungroup %>%
   select(Strategy, SpellsRounded, Costs_Rounded, Significance, RocSignificance) %>% 
+  mutate(Costs_Rounded = Costs_Rounded/ 1000) %>% 
   mutate(SpellsRounded = scales::comma(SpellsRounded),
          Costs_Rounded =  pound(Costs_Rounded)
   ) %>% 
   left_join(labels_op, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) %>% 
-  `colnames<-`(c("Opportunity", "Activity", "Spend 2016-17",
+  `colnames<-`(c("Opportunity", "Activity", "2016-17 Spend (000s)",
                  "Rate", "Rate of Change")) 
 
-flex_op_summ    <- setZebraStyle(vanilla.table(summ_op_summ_out), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+summ_op_summ_out[4:5][summ_op_summ_out[4:5] == "Not Significant"] <- "-"
 
-flex_op_summ[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
-flex_op_summ[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+flex_op_summ <- flexify_summary(summ_op_summ_out)
 
-flex_op_summ[, 1]                <- parLeft()
-flex_op_summ[, 1, to = "header"] <- parLeft()
-
-
-flex_op_summ <- setFlexTableBorders(flex_op_summ
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
 
 
 # OP cost summary ----------------------------------------------------
@@ -1499,6 +1482,9 @@ summ_op_cost_out <- summaryOutputOP %>%
   filter(!Strategy %in% c("PLCV_v1")) %>%
   ungroup %>%
   select(Strategy, Costs_Rounded, Average_SavingsIf_Rounded, TopQuartile_SavingsIf_Rounded) %>% 
+  mutate(Costs_Rounded = Costs_Rounded/ 1000,
+         Average_SavingsIf_Rounded = Average_SavingsIf_Rounded / 1000,
+         TopQuartile_SavingsIf_Rounded = TopQuartile_SavingsIf_Rounded/ 1000) %>% 
   mutate(Costs_Rounded =  pound(Costs_Rounded)
          , Average_SavingsIf_Rounded =  pound(Average_SavingsIf_Rounded)
          , TopQuartile_SavingsIf_Rounded =  pound(TopQuartile_SavingsIf_Rounded)
@@ -1506,28 +1492,12 @@ summ_op_cost_out <- summaryOutputOP %>%
   left_join(labels_op, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) %>%
 # add footnote "compared to CCGs in the West Midlands"
-  `colnames<-`(c("Opportunity", "Spend 2016-17", "Total Savings if Average",
-                 "Total Savings if Top Quartile")) 
+  `colnames<-`(c("Opportunity", "2016-17 Spend (000s)", "Savings if Average (000s)",
+                 "Savings if Top Quartile (000s)")) 
 
+# add footnote "compared to CCGs in the West Midlands"
 
-flex_op_cost    <-  setZebraStyle(vanilla.table(summ_op_cost_out), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
-flex_op_cost[,] <-  textProperties(font.family = "Segoe UI"
-                                 , font.size = 12)
-
-flex_op_cost[to = "header"]  <-  textProperties(font.size = 14,
-                                              font.family = "Segoe UI")
-
-flex_op_cost[, 1]                <- parLeft()
-flex_op_cost[, 1, to = "header"] <- parLeft()
-
-
-flex_op_cost <- setFlexTableBorders(flex_op_cost
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
-
+flex_op_cost    <- flexify_costs(summ_op_cost_out)
 
 
 # OP savings plot -----------------------------------------------
