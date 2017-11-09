@@ -61,7 +61,7 @@ qipp_ccgs  <- c(# Alphabetical:
 # Parameters 2 -------------------------------------------------------------
 
 ip_colours <- c("#EC6555", "#EC6555") # SU red
-ae_colours <- c("#91F5AD", "#91F5AD") # teal deer, alternative #75BBA7
+ae_colours <- c("#91F5AD", "#91F5AD") # teal deer, alternative #75BBA7 ; "#91F5AD"
 op_colours <- c("#5881c1", "#5881c1") # SU blue
 
 # Funnel
@@ -119,7 +119,7 @@ plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y
                 get(quote_y),
                 group = 1
               )
-              , alpha = 0.4
+              , alpha = 0.2
               , fill = colour_block # "#c52828" # SWB Red: # '#c52828' - original red
               )+
     geom_line(data = active_df,
@@ -1192,7 +1192,7 @@ flexify_summary <- function(df){
                               , inner.vertical = borderProperties( style = "dashed", color = "white" )
                               , inner.horizontal = borderProperties( style = "solid", color = "grey80"  )
                               , outer.vertical = borderProperties( width = 2, color = "white"  )
-                              , outer.horizontal = borderProperties( width = 2, color = "grey30"  )
+                              , outer.horizontal = borderProperties( width = 1, color = "grey30"  )
   )
   
   data
@@ -1240,7 +1240,7 @@ flexify_costs <- function(df){
                               , inner.vertical = borderProperties( style = "dashed", color = "white" )
                               , inner.horizontal = borderProperties( style = "solid", color = "grey80"  )
                               , outer.vertical = borderProperties( width = 2, color = "white"  )
-                              , outer.horizontal = borderProperties( width = 2, color = "grey30"  )
+                              , outer.horizontal = borderProperties( width = 1, color = "grey30"  )
   )
   
   
