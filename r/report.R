@@ -28,12 +28,13 @@ setwd("C:/2017_projects/qipp_extra")
 
 qipp_report <- pptx(title = "qipp_one", template = "su_brand5.pptx")
 
+filename <- "draft_slides_16.pptx" # the document to produce
 
 # 0: TITLE --------------------------------------------------------------
 
 
 qipp_report <- addSlide(qipp_report, "title" ) %>%
-  addTitle(value = "Identifying potential QIPP opportunities") %>%
+  addTitle(value = "Identifying Potential Opportunities to Reduce Acute Hospital Activity") %>%
   addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
 
 
@@ -52,7 +53,7 @@ qipp_report <- addSlide(qipp_report, "title" ) %>%
 
 qipp_report <- addSlide(qipp_report, "poster") %>%
   addImage("qipp_photo_inpatient.png") %>%
-  addTitle("Inpatients")
+  addTitle("Inpatient Opportunities")
 
 
 # 3: IP  TABLES------------------------------------------------------------
@@ -63,12 +64,12 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
   addFooter("NB. Rate, and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("Inpatient Cost Summary*") %>%
+  addTitle("Potential Savings") %>%
   addFlexTable(flex_ip_cost)
 # add footnote?
 
 qipp_report <- addSlide(qipp_report, "contentA") %>% 
-  addTitle("Potential Savings by Opportunity*") %>%  # "ACS Vaccine Preventable Conditions"
+  addTitle("Potential Savings by Opportunity") %>%  # "ACS Vaccine Preventable Conditions"
   addPlot(function() plot(plot_savings_ip)) 
 #   
 
@@ -78,7 +79,7 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
 for(i in seq(ipPlottableStrategies$Strategy)){
 
 qipp_report <- addSlide(qipp_report, "new_body_ip") %>% 
-  addTitle(stri_trans_totitle(ipPlottableStrategies$longName[i])) %>% 
+  addTitle(ipPlottableStrategies$longName[i]) %>% 
   addParagraph(ifelse(is.na(ipPlottableStrategies$sub_header[i]), " ", ipPlottableStrategies$sub_header[i])) %>% 
   addImage(
     paste0(baseDir, "output/", i, "_trend_", ipPlottableStrategies$Strategy[i], ".png")
@@ -106,18 +107,18 @@ qipp_report <- addSlide(qipp_report, "new_body_ip") %>%
 
 qipp_report <- addSlide(qipp_report, "poster") %>%
   addImage("qipp_photo_inpatient.png") %>% 
-  addTitle("ED") 
+  addTitle("Emergency Department Opportunities") 
 
 
 # 4: AE TABLES ------------------------------------------------------------
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("ED Summary Table") %>%
+  addTitle("Emergency Department Summary Table") %>%
   addFlexTable(flex_ae_summ) %>% 
   addFooter("NB. Rate, and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("ED Cost Summary") %>%
+  addTitle("Potential Savings") %>%
   addFlexTable(flex_ae_cost)
 
 qipp_report <- addSlide(qipp_report, "contentA") %>% 
@@ -132,7 +133,7 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
 for(i in seq(aePlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body_ae") %>% 
-    addTitle(stri_trans_totitle(aePlottableStrategies$longName[i])) %>% 
+    addTitle(aePlottableStrategies$longName[i]) %>% 
     addParagraph(ifelse(is.na(aePlottableStrategies$sub_header[i]), " ", aePlottableStrategies$sub_header[i])) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_trend_", aePlottableStrategies$Strategy[i], ".png")
@@ -160,7 +161,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
 
 qipp_report <- addSlide(qipp_report, "poster") %>%
   addImage("qipp_photo_inpatient.png") %>% 
-  addTitle("Outpatients") 
+  addTitle("Outpatient Opportunities") 
 
 
 # 5. TABLES OP ------------------------------------------------------------
@@ -171,11 +172,11 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
   addFooter("NB. Rate, and rate of change vs Comparator CCGs")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("Outpatient Cost Summary") %>%
+  addTitle("Potential Savings") %>%
   addFlexTable(flex_op_cost)
 
 qipp_report <- addSlide(qipp_report, "contentA") %>% 
-  addTitle("Savings by Opportunity*") %>%  # "ACS Vaccine Preventable Conditions"
+  addTitle("Savings by Opportunity") %>%  # "ACS Vaccine Preventable Conditions"
   addPlot(function() plot(plot_savings_op)) 
 #   
 
@@ -186,7 +187,7 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
 for(i in seq(opPlottableStrategies$Strategy)){
   
   qipp_report <- addSlide(qipp_report, "new_body_op") %>% 
-    addTitle(stri_trans_totitle(opPlottableStrategies$longName[i])) %>% 
+    addTitle(opPlottableStrategies$longName[i]) %>% 
     addParagraph(ifelse(is.na(opPlottableStrategies$sub_header[i]), " ", opPlottableStrategies$sub_header[i])) %>% 
     addImage(
       paste0(baseDir, "output/", i, "_trend_", opPlottableStrategies$Strategy[i], ".png")
@@ -206,7 +207,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
 }
 
 
-filename <- "draft_slides_14.pptx" # the document to produce
+
 # # TEST write qipp_report 
 writeDoc(qipp_report, filename)
 
