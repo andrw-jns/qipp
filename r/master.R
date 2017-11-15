@@ -480,6 +480,42 @@ tmp_final <- bind_rows(tmp3, tmp4) %>%
 
 activeStrategies <- bind_cols(test, tmp_final)
 
+"NOW COMES A REAL BODGE:"
+
+obes_some <- pull(activeStrategies[22,13])
+obes_wh   <- pull(activeStrategies[21,13])
+
+activeStrategies[22,13] <- obes_wh
+activeStrategies[21,13] <- obes_some
+
+
+plcv_aes <- pull(activeStrategies[31,13])
+plcv_cost <- pull(activeStrategies[33,13])
+plcv_ineff <- pull(activeStrategies[30,13])
+plcv_harm <- pull(activeStrategies[32,13])
+
+
+activeStrategies[30,13] <- plcv_aes
+activeStrategies[31,13] <- plcv_cost
+activeStrategies[32,13] <- plcv_ineff
+activeStrategies[33,13] <- plcv_harm
+
+
+med_ad <- pull(activeStrategies[36,13])
+med_child <- pull(activeStrategies[38,13])
+surg_ad <- pull(activeStrategies[35,13])
+surg_child <- pull(activeStrategies[37,13])
+
+
+activeStrategies[35,13] <- med_ad
+activeStrategies[36,13] <- med_child
+activeStrategies[37,13] <- surg_ad
+activeStrategies[38,13] <- surg_child
+
+
+
+
+
 # trial <- activeStrategies %>% select(Strategy, oldName)
 
 # How many strategies for each type of data
@@ -1284,7 +1320,7 @@ plot_the_savings <- function(df){
     scale_fill_manual(
       name = "line Colour"
       ,values=c(myline1 = "#5881c1", myline2 = "#5881c1")
-      , labels=c("Savings if average", "Savings if top quartile"))+
+      , labels=c("Savings if average", "Additional savings if top quartile"))+
     # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
     #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
     ylab("Potential savings (£ millions)")+
