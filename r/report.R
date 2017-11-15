@@ -10,6 +10,7 @@
 
 # notes --------------------------------------------------------------
 
+"THIS SHOULD PERHAPS BE IN THE QIPP DIRECTORY"
 # MAY OCCASIONALLY BE USEFUL TO SOFT WRAP TEXT IN THIS SCRIPT: 
 # TOOLS -> GLOBAL OPTIONS -> CODE 
 
@@ -24,11 +25,13 @@ library(ReporteRs)
 library(stringr)
 library(stringi)
 
+filename <- "draft_slides_18.pptx" # the document to produce
+
 setwd("C:/2017_projects/qipp_extra")
 
 qipp_report <- pptx(title = "qipp_one", template = "su_brand5.pptx")
 
-filename <- "draft_slides_16.pptx" # the document to produce
+
 
 # 0: TITLE --------------------------------------------------------------
 
@@ -36,7 +39,6 @@ filename <- "draft_slides_16.pptx" # the document to produce
 qipp_report <- addSlide(qipp_report, "title" ) %>%
   addTitle(value = "Identifying Potential Opportunities to Reduce Acute Hospital Activity") %>%
   addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
-
 
 
 # *** ADD ONE-OFF POPULATION DIFFERENCE ------------------------------
@@ -58,10 +60,10 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 
 # 3: IP  TABLES------------------------------------------------------------
 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("Inpatient Summary Table") %>%
+qipp_report <- addSlide(qipp_report, "content_footer") %>%
+  addTitle("Inpatient Summary") %>%
   addFlexTable(flex_ip_summ) %>% 
-  addFooter("NB. Rate, and rate of change vs Comparator CCGs")
+  addFooter("Note: Rate, and rate of change are measured relative to 18 other CCGs in the West Midlands. Low or high rates indicate that the values are lower/higher than we might expect given natural variation.")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Potential Savings") %>%
@@ -73,6 +75,9 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
   addPlot(function() plot(plot_savings_ip)) 
 #   
 
+# To fix misalignment:
+ip_link <- left_join(ipPlottableStrategies %>% select(Strategy),
+                     summaryOutputIP, by = "Strategy")
 
 # 3: IP  BODY ---------------------------------------------------------
 
@@ -90,11 +95,11 @@ qipp_report <- addSlide(qipp_report, "new_body_ip") %>%
   addImage(
     paste0(baseDir, "output/", i, "_roc_", ipPlottableStrategies$Strategy[i], ".png")
   ) %>% 
-  addParagraph(format(round(summaryOutputIP$Spells[i], -1), big.mark = ",")) %>% 
+  addParagraph(format(round(ip_link$Spells[i], -1), big.mark = ",")) %>% 
   # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","))) %>%
-  addParagraph(str_c("£", round(summaryOutputIP$Costs[i]/1e6, 1), "M")) %>% 
-  addParagraph(paste0(round(summaryOutputIP$propSpells[i]*100, 1), "%")) %>% 
-  addParagraph(paste0("£", format(round(summaryOutputIP$Costs[i]/summaryOutputIP$Spells[i], -1), big.mark = ","))) 
+  addParagraph(str_c("£", round(ip_link$Costs[i]/1e6, 1), "M")) %>% 
+  addParagraph(paste0(round(ip_link$propSpells[i]*100, 1), "%")) %>% 
+  addParagraph(paste0("£", format(round(ip_link$Costs[i]/ip_link$Spells[i], -1), big.mark = ","))) 
 
 }
 
@@ -112,10 +117,10 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 
 # 4: AE TABLES ------------------------------------------------------------
 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
-  addTitle("Emergency Department Summary Table") %>%
+qipp_report <- addSlide(qipp_report, "content_footer") %>%
+  addTitle("Emergency Department Summary") %>%
   addFlexTable(flex_ae_summ) %>% 
-  addFooter("NB. Rate, and rate of change vs Comparator CCGs")
+  addFooter("Note: Rate, and rate of change are measured relative to 18 other CCGs in the West Midlands. Low or high rates indicate that the values are lower/higher than we might expect given natural variation.")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Potential Savings") %>%
@@ -126,6 +131,10 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
   addPlot(function() plot(plot_savings_ae)) 
 #   
 
+
+# To fix misalignment:
+ae_link <- left_join(aePlottableStrategies %>% select(Strategy),
+                     summaryOutputAE, by = "Strategy")
 
 
 # 4: AE BODY ---------------------------------------------------------
@@ -144,11 +153,11 @@ for(i in seq(aePlottableStrategies$Strategy)){
     addImage(
       paste0(baseDir, "output/", i, "_roc_", aePlottableStrategies$Strategy[i], ".png")
     ) %>% 
-    addParagraph(format(round(summaryOutputAE$Spells[i], -1), big.mark = ",")) %>% 
+    addParagraph(format(round(ae_link$Spells[i], -1), big.mark = ",")) %>% 
     # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","))) %>%
-    addParagraph(str_c("£", round(summaryOutputAE$Costs[i]/1e6, 1), "M")) %>% 
-    addParagraph(paste0(round(summaryOutputAE$propSpells[i]*100, 1), "%")) %>% 
-    addParagraph(paste0("£", format(round(summaryOutputAE$Costs[i]/summaryOutputAE$Spells[i], -1), big.mark = ","))) 
+    addParagraph(str_c("£", round(ae_link$Costs[i]/1e6, 1), "M")) %>% 
+    addParagraph(paste0(round(ae_link$propSpells[i]*100, 1), "%")) %>% 
+    addParagraph(paste0("£", format(round(ae_link$Costs[i]/ae_link$Spells[i], -1), big.mark = ","))) 
   
 }
 
@@ -166,10 +175,10 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 
 # 5. TABLES OP ------------------------------------------------------------
 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
+qipp_report <- addSlide(qipp_report, "content_footer") %>%
   addTitle("Outpatient Summary Table") %>%
-  addFlexTable(flex_op_summ)%>% 
-  addFooter("NB. Rate, and rate of change vs Comparator CCGs")
+  addFlexTable(flex_op_summ) %>% 
+  addFooter("Note: Rate, and rate of change are measured relative to 18 other CCGs in the West Midlands. Low or high rates indicate that the values are lower/higher than we might expect given natural variation.")
 
 qipp_report <- addSlide(qipp_report, "contentA") %>%
   addTitle("Potential Savings") %>%
@@ -181,6 +190,8 @@ qipp_report <- addSlide(qipp_report, "contentA") %>%
 #   
 
 
+op_link <- left_join(opPlottableStrategies %>% select(Strategy),
+                     summaryOutputOP, by = "Strategy")
 
 # 5: BODY OP ---------------------------------------------------------
 
@@ -198,11 +209,11 @@ for(i in seq(opPlottableStrategies$Strategy)){
     addImage(
       paste0(baseDir, "output/", i, "_roc_", opPlottableStrategies$Strategy[i], ".png")
     ) %>% 
-    addParagraph(format(round(summaryOutputOP$Spells[i], -1), big.mark = ",")) %>% 
+    addParagraph(format(round(op_link$Spells[i], -1), big.mark = ",")) %>% 
     # addParagraph(str_c("£", format(round(summaryOutputIP$Costs[i], -3), big.mark = ","))) %>%
-    addParagraph(str_c("£", round(summaryOutputOP$Costs[i]/1e6, 1), "M")) %>% 
-    addParagraph(paste0(round(summaryOutputOP$propSpells[i]*100, 1), "%")) %>% 
-    addParagraph(paste0("£", format(round(summaryOutputOP$Costs[i]/summaryOutputOP$Spells[i], -1), big.mark = ","))) 
+    addParagraph(str_c("£", round(op_link$Costs[i]/1e6, 1), "M")) %>% 
+    addParagraph(paste0(round(op_link$propSpells[i]*100, 1), "%")) %>% 
+    addParagraph(paste0("£", format(round(op_link$Costs[i]/op_link$Spells[i], -1), big.mark = ","))) 
   
 }
 
