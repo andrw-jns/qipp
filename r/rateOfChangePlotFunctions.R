@@ -46,9 +46,9 @@ rocHierarchy <- expand.grid(
 #rocPoints - the points on the rate of change curves
 
 # Gather rate of change information for all years and all strategies
-roc_all <- . %>% # ip/op/ae object
-  group_by(CCGCode, Strategy, add = FALSE) %>%
-  mutate(RateOfChange_1 = (DSRate / lag(DSRate, 1)) -1 # 1213-1314
+roc_all <- . %>%
+  group_by(CCGCode, Strategy) %>%
+  mutate(RateOfChange_1 = (DSRate / lag(DSRate, 1)) -1
     , RateOfChange_2 = (DSRate / lag(DSRate, 2)) -1    # 1213-1415
     , RateOfChange_3 = (DSRate / lag(DSRate, 3)) -1    # 1213-1516
     , RateOfChange_4 = (DSRate / lag(DSRate, 4)) -1    # 1216-1217 # mostly interested in 4 which I think is what we get
@@ -57,6 +57,7 @@ roc_all <- . %>% # ip/op/ae object
   ungroup() %>%
   select(CCGCode, Strategy, FYear, starts_with("RateOfChange"), Spells) %>%
   gather(Periods, RateOfChange, -CCGCode, -Strategy, -FYear, -Spells, convert = TRUE) %>%
+  mutate(FYear = as.integer(FYear)) %>% 
   mutate(
     Periods = gsub("^RateOfChange_", "", Periods) %>% as.integer
     , From = ifelse(FYear == 201213, FYear, FYear - (Periods * 101))
