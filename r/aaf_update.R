@@ -7,6 +7,7 @@
 
 library(DBI)
 library(odbc)
+library(Rcpp)
 library(dbplyr) 
 library(stringr)
 library(tidyverse)
@@ -24,6 +25,7 @@ connect <- dbConnect(odbc::odbc(),
 
 
 # SQL  --------------------------------------------------------------
+"Note: cannot use GO statement in loops like the following"
 
 # 1. Create and populate table of SUS episodes with diagnoses:
 
@@ -189,8 +191,14 @@ sus_truncates <- map(sus_tables, function(df) df %>%
                        select(key, everything(), -DeathFlag , -EpisodeId, -SUSGeneratedIdentifier))  # 1617:, -aaf_wholly, -aaf_chronic, -aaf_acute))
 
 
-# Perhaps do these one at a time:
-tmp_long <- sus_truncates[[1]] %>% 
+
+# Note: Loop written for only 3 years here:
+
+for(i in 2:4){
+#   print(years[i])
+# }
+
+tmp_long <- sus_truncates[[i]] %>% 
   gather(diagnosis, code, matches("Diagnosis*")) %>%  # 4:17) %>% 
   filter(!is.na(code)) %>% # optional
   left_join(ref_wh, by = c("code" = "DiagnosisCode", "AgeGroup", "Gender")) %>% 
@@ -203,24 +211,28 @@ tmp_long <- sus_truncates[[1]] %>%
 
 
 # Take the maximum value (this takes a while ~ 11 mins):
-Sys.time()
+# Sys.time()
 tmp_long <- tmp_long %>% 
   group_by(key) %>% 
   summarise_at(vars(c("alc_wholly", "alc_acute", "alc_chronic")),
                funs(max(., na.rm = T)))
-Sys.time()
+# Sys.time()
 
 
 
 tmp_long[2:4][tmp_long[2:4] == "-Inf"|tmp_long[2:4] == 0] <- NA
 
-final_episode_lookup_1213 <- left_join(sus_tables[[1]] %>% select(key, 1 , 2), tmp_long, by = "key") %>% 
+final_episode_lookup <- left_join(sus_tables[[i]] %>% select(key, 1 , 2),
+                                  tmp_long,
+                                  by = "key") %>% 
   select(-key)
 
 "SHOULD SAVE THE RDS HERE"
 # saveRDS(final_episode_lookup_1617, "aaf_1617.RDS")
 # saveRDS(final_episode_lookup_1213, "aaf_1213.RDS")
-final_episode_lookup_1617 <- readRDS("aaf_1617.RDS")
+saveRDS(final_episode_lookup, paste0("aaf_", years[i], ".RDS"))
+
+#final_episode_lookup_1617 <- readRDS("aaf_1617.RDS")
 # *** ----------------------------------------------------------------
 
 
@@ -231,7 +243,6 @@ final_episode_lookup_1617 <- readRDS("aaf_1617.RDS")
 # https://github.com/r-dbi/odbc/issues/91
 
 # install.packages("Rcpp")
-library(Rcpp)
 # library(DBI)
 # library(odbc)
 # devtools::install_github("rstats-db/odbc@SQLTable")
@@ -242,14 +253,16 @@ library(Rcpp)
 
 # Need this to specify schema
 schema <- dbId(con = connect, 
-               name = "tbSUSIPAAF1617_NEW_GROUPS",
-               schema = "Working")
+               name = paste0("tbSUSIPAAF", years[i], "_NEW_GROUPS"),
+               schema = "Working"
+               )
 
 # This seems to take a while:
-dbWriteTable(connect, schema, final_episode_lookup_1617)
+dbWriteTable(connect, schema, final_episode_lookup)
 # dbWriteTable(connect, "Working.tbSUSIPAAF1213_NEW_GROUPS", final_episode_lookup_1213)
-rm(tmp_long, final_episode_lookup_1213)
+rm(tmp_long, final_episode_lookup, schema)
 gc()
+}
 # test:
 # dbWriteTable(connect, tabowl, mtcars[1:10,])
 
