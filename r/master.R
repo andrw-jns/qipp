@@ -397,20 +397,20 @@ label_ccg <- function(df){
   
   df %>%
     mutate(ccg_label =case_when(
-  .$CCGCode == "13P" ~ "Bcc",
-  .$CCGCode == "04X" ~ "Bsc",
+  .$CCGCode == "13P" ~ "BCC",
+  .$CCGCode == "04X" ~ "BSC",
   .$CCGCode == "04Y" ~ "Can",
   .$CCGCode == "05C" ~ "Dud",
-  .$CCGCode == "05D" ~ "Est",
+  .$CCGCode == "05D" ~ "ESt",
   .$CCGCode == "05F" ~ "Her",
-  .$CCGCode == "05G" ~ "Nst",
+  .$CCGCode == "05G" ~ "NSt",
   .$CCGCode == "05J" ~ "Red",
-  .$CCGCode == "05L" ~ "Swb",
+  .$CCGCode == "05L" ~ "SWB",
   .$CCGCode == "05N" ~ "Shr",
   .$CCGCode == "05P" ~ "Sol",
-  .$CCGCode == "05Q" ~ "Ses",
-  .$CCGCode == "05T" ~ "Swo",
-  .$CCGCode == "05V" ~ "Sas",
+  .$CCGCode == "05Q" ~ "SES",
+  .$CCGCode == "05T" ~ "SWo",
+  .$CCGCode == "05V" ~ "SaS",
   .$CCGCode == "05W" ~ "Sto",
   .$CCGCode == "05X" ~ "Tel",
   .$CCGCode == "05Y" ~ "Wal",
@@ -449,36 +449,43 @@ activeStrategies <- read_csv("listActiveStrategies.csv") %>%
   # left_join(new_strat_list, by = "id") %>% 
   arrange(id)
 
+activeStrategies$Strategy[activeStrategies$Strategy == "Alcohol_25pcto75pc_v3"]  <- "alc_wholly"
+activeStrategies$Strategy[activeStrategies$Strategy == "Alcohol_5pcto25pc_v3"]   <- "alc_chronic"
+activeStrategies$Strategy[activeStrategies$Strategy == "Alcohol_75pcto100pc_v3"] <- "alc_acute"
+
 # removing unused strategies (FUF, OP PLCV):
-test <- slice(activeStrategies, c(1:34, 39:45))
+activeStrategies <- slice(activeStrategies, c(1:34, 39:45))
 
 
 "Adapt (wrangle) new names master list:"
-tmp <- new_strat_list %>% 
-  select(id, oldName, shortName, longName, breakdownAvailable, matches("breakdown[1-5]"))
+strats_new <- new_strat_list %>% 
+  select(id, oldName, shortName, longName, breakdownAvailable, dplyr::matches("breakdown[1-5]"))
 
 # fix for alcohol
-tmp[2, 7:8] <- "should be updated to match indicator source"
+# tmp[2, 7:8] <- "should be updated to match indicator source"
 
+strats_new[2,6] <- "Wholly Attributable"
+strats_new[2,7] <- "Partially Attributable Chronic Conditions"
+strats_new[2,8] <- "Partially Attributable Acute Conditions"
 
-tmp2 <- gather(tmp, "breakdown", "sub_header", 6:10)
+strats_new2 <- gather(strats_new, "breakdown", "sub_header", dplyr::matches("breakdown[1-5]"))
 # tmp2 <- tmp2 %>% distinct(id, breakdown, .keep_all = T)
 
-tmp3 <- tmp2 %>% 
+strats_new3 <- strats_new2 %>% 
   filter(breakdownAvailable == 0) %>% 
   distinct(longName, .keep_all = T)
 
-tmp4 <- tmp2 %>% 
+strats_new4 <- strats_new2 %>% 
   filter(breakdownAvailable == 1) %>% 
   arrange(id) %>% 
   na.omit()
 
-tmp_final <- bind_rows(tmp3, tmp4) %>% 
+strats_new_final <- bind_rows(strats_new3, strats_new4) %>% 
   arrange(id)
 
 # This "join" is in fact a bind cols - so may not work in future:
 
-activeStrategies <- bind_cols(test, tmp_final)
+activeStrategies <- bind_cols(activeStrategies, strats_new_final)
 
 "NOW COMES A REAL BODGE:"
 
@@ -515,7 +522,6 @@ activeStrategies[38,13] <- surg_child
 
 
 
-
 # trial <- activeStrategies %>% select(Strategy, oldName)
 
 # How many strategies for each type of data
@@ -537,7 +543,7 @@ load_sus <- function(filenames_vector){ # eg. sus_csvs$ip
   map2_df(filenames_vector, cols, read_sus)
   }
 
-ipData <- load_sus(sus_csvs$ip)
+ipData <- read_rds("ipData.RDS") # load_sus(sus_csvs$ip)
 aeData <- load_sus(sus_csvs$ae)
 opData <- load_sus(sus_csvs$op)
 
@@ -581,9 +587,12 @@ removeInvalidCCGs <- . %>%
   inner_join(comparatorCCGs2, by = "CCGCode")
 
 
+# ipSmall <- read_rds(paste0(baseDir, "ipSmall.RDS"))
 ipSmall <- ipData %>% removeInvalidCCGs
 rm(ipData) # RAM saver!
 gc() # call after a large object has been removed
+"SET FYEAR AS INTEGER?"
+
 
 aeSmall <- aeData %>% removeInvalidCCGs
 opSmall <- opData %>% removeInvalidCCGs %>%
@@ -624,6 +633,47 @@ aeBase <- expand.grid(
   , stringsAsFactors = FALSE
 )
 
+
+# To deal with new AAFs: (there may be a more elegant way (back in SQL)?)
+"YES it's probably better to do this in the SQL. But for now..."
+process_ip <- function(df){
+  data <- df %>% 
+  select(-CCGDescription, -ShortName) %>%
+  gather(Strategy, Highlighted, -CCGCode, -Spells, -DSRate
+         , -FYear, -Costs, -DSCosts, -DSRateVar, -DSCostsVar
+         #, -alc_wholly, -alc_chronic, -alc_acute
+         , convert = T) %>%
+  filter(Highlighted == 1 | Highlighted > 0) %>% 
+  mutate(aaf_reduction_factor = NA)
+  
+  # where Strategy is alcohol, then replace "Spells" with "Highlighted" number:
+  # IN FACT NEED to reduce several cols by the ratio Highlighted/Spells
+  data2 <- data %>% 
+  filter(Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  mutate(aaf_reduction_factor = Highlighted/Spells) %>% 
+  mutate_at(vars(Spells, DSRate, Costs, DSCosts, DSRateVar, DSCostsVar),
+            funs(. * aaf_reduction_factor))
+  
+  data <- data %>% 
+    filter(!Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+    bind_rows(data2) %>% 
+    select(-Highlighted, aaf_reduction_factor) %>%
+    group_by(CCGCode, Strategy, FYear) %>%
+    summarise(
+      Spells = sum(Spells, na.rm = TRUE)
+      , DSRate = sum(DSRate, na.rm = TRUE)
+      , Costs = sum(Costs, na.rm = TRUE)
+      , DSCosts = sum(DSCosts, na.rm = TRUE)
+      , DSRateVar = sum(DSRateVar, na.rm = TRUE)
+      , DSCostsVar = sum(DSCostsVar, na.rm = TRUE)
+    ) %>%
+    ungroup() %>%
+    mutate(
+      DerivedPopulation = (Spells / DSRate) * personYears
+      , IsActiveCCG = ifelse(CCGCode == active_ccg, TRUE, FALSE)  
+    )
+}
+
 process <- . %>% 
   select(-CCGDescription, -ShortName) %>%
   gather(Strategy, Highlighted, -CCGCode, -Spells, -DSRate
@@ -646,7 +696,7 @@ process <- . %>%
   )
 
 # Process the small data
-ip <- ipSmall %>% process %>% right_join(ipBase, by = c("CCGCode", "Strategy", "FYear"))
+ip <- ipSmall %>% process_ip %>% right_join(ipBase, by = c("CCGCode", "Strategy", "FYear"))
 op <- opSmall %>% process %>% right_join(opBase, by = c("CCGCode", "Strategy", "FYear"))
 ae <- aeSmall %>% process %>% right_join(aeBase, by = c("CCGCode", "Strategy", "FYear"))
 
@@ -730,13 +780,96 @@ opRoCFunnels <- roc_funnels(opRoCSummary, funnelParameters$Smoothness, personYea
   
 
 # Trend  ---------------------------------------------------------
-ipTrendActive <- ipSmall %>% trend_active 
+# ipTrendActive <- ipSmall %>% trend_active 
 aeTrendActive <- aeSmall %>% trend_active 
 opTrendActive <- opSmall %>% trend_active 
 
-ipTrendComparators <- ipSmall %>% trend_comparators 
+# ipTrendActive <- zest3
+# ipTrendComparators <- zest_comp3
+
+# ipTrendComparators <- ipSmall %>% trend_comparators 
 aeTrendComparators <- aeSmall %>% trend_comparators 
 opTrendComparators <- opSmall %>% trend_comparators 
+
+# ipTrend adjustments for alcohol: (because ipSmall should really be changed):
+# Active CCG:
+ipTrend_adjust1 <- ipSmall %>% 
+  filter(CCGCode == active_ccg)  %>%
+  select(-DSCosts, -DSCostsVar, -Costs, -CCGDescription, -ShortName) %>%
+  gather(Strategy, Highlighted, -DSRate, -DSRateVar, -Spells, -CCGCode, -FYear, convert = T) %>% # filter(Highlighted == 1 | Highlighted > 0) %>% 
+  mutate(aaf_reduction_factor = NA)
+
+ipTrend_adjust2 <- ipTrend_adjust1 %>% 
+  filter(Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  mutate(aaf_reduction_factor = Highlighted/Spells) %>% 
+  mutate_at(vars(Spells, DSRate, DSRateVar),
+            funs(. * aaf_reduction_factor)) %>% 
+  mutate(Highlighted = if_else(is.na(Highlighted)| Highlighted == 0, 0, 1)) 
+
+ipTrendActive <- ipTrend_adjust1 %>%
+  filter(!Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  bind_rows(ipTrend_adjust2) %>% 
+  group_by(Strategy, FYear, Highlighted) %>%
+  summarise(
+    DSRate = sum(DSRate, na.rm = TRUE)
+    , DSRateVar = sum(DSRateVar, na.rm = TRUE) 
+    , Spells = sum(Spells, na.rm = TRUE)
+  )  %>%
+  filter(Highlighted == 1) %>%
+  select(-Highlighted) %>%
+  mutate(SpellsCIUpper = (Spells + 1 ) * (1 - 1 / (9 * (Spells + 1)) + trendCV / (3 * sqrt(Spells + 1))) ^ 3
+         , SpellsCILower = Spells * (1 - 1 / (9 * Spells) - trendCV / (3 * sqrt(Spells))) ^ 3
+         , DSRateCIUpper = DSRate + sqrt(DSRateVar / Spells) * (SpellsCIUpper - Spells)
+         , DSRateCILower = DSRate + sqrt(DSRateVar / Spells) * (SpellsCILower - Spells)
+         , Group = activeCCGInfo$CCGDescription)
+
+# Comparators
+
+ipTrend_adjust__comp1 <- ipSmall %>% 
+  select(-DSCosts, -DSCostsVar, -Costs, -CCGDescription, -ShortName) %>%
+  gather(Strategy, Highlighted, -DSRate, -DSRateVar, -Spells, -CCGCode, -FYear, convert = T) %>% # filter(Highlighted == 1 | Highlighted > 0) %>% 
+  mutate(aaf_reduction_factor = NA)
+
+
+ipTrend_adjust__comp2 <- ipTrend_adjust__comp1 %>% 
+  filter(Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  mutate(aaf_reduction_factor = Highlighted/Spells) %>% 
+  mutate_at(vars(Spells, DSRate, DSRateVar),
+            funs(. * aaf_reduction_factor)) %>% 
+  mutate(Highlighted = if_else(is.na(Highlighted)| Highlighted == 0, 0, 1)) 
+
+
+ipTrendComparators <- ipTrend_adjust__comp1 %>%
+  filter(!Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  bind_rows(ipTrend_adjust__comp2) %>%
+  select(-aaf_reduction_factor) %>% 
+  group_by(Strategy, FYear, CCGCode, Highlighted) %>%
+  summarise(
+    DSRate = sum(DSRate, na.rm = TRUE)
+    , DSRateVar = sum(DSRateVar, na.rm = TRUE) 
+    , Spells = sum(Spells, na.rm = TRUE)
+  )  %>%
+  filter(Highlighted == 1) %>%
+  select(-Highlighted)%>%
+  mutate(DerivedPopulation = (Spells / DSRate) * personYears) %>%
+  group_by(Strategy, FYear, add = FALSE) %>%
+  summarise(
+    Average = sum(Spells, na.rm = TRUE) / sum(DerivedPopulation, na.rm = TRUE) * personYears
+    , TopQuartile = quantile(DSRate, 0.25, na.rm = TRUE)
+    , TopDecile = quantile(DSRate, 0.1, na.rm = TRUE)
+    , MaxDSRate = max(DSRate, na.rm = TRUE)
+    , MinDSRate = min(DSRate, na.rm = TRUE)
+  ) %>%
+  gather(Type, DSRate, -Strategy, -FYear, convert = TRUE) %>%
+  mutate(TypeNumber = ifelse(Type == "MinDSRate", 1,
+                             ifelse(Type == "TopDecile", 2, 
+                                    ifelse(Type =="TopQuartile", 3,
+                                           ifelse(Type == "Average", 4, 5))))) %>%
+  arrange(Strategy, FYear, TypeNumber) %>%
+  group_by(Strategy, FYear) %>%
+  mutate(Low = DSRate, High = lead(DSRate, 1)) %>%
+  filter(TypeNumber != 5)
+
 
 # Cost [KEEP]-----------------------------------
 
@@ -1133,7 +1266,29 @@ flex_comparat <- setFlexTableBorders(flex_comparat
 
 # Inpatient ---------------------------------------------------------------
 
-totalActivityIP <- ipSmall %>% total_activity
+totalActivityIP <- ipSmall %>%
+  filter(FYear == f_year & CCGCode == active_ccg) %>%
+  select(-DSRate, - DSRateVar, -DSCosts, -DSCostsVar, -FYear, - CCGCode, -CCGDescription, -ShortName ) %>% 
+  gather(Strategy, Highlighted,  -Spells, -Costs, convert = T) %>%
+  mutate(aaf_reduction_factor = NA)
+
+totalActivityIP1 <- totalActivityIP %>% 
+  filter(Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  mutate(aaf_reduction_factor = Highlighted/Spells) %>% 
+  mutate_at(vars(Spells, Costs),
+            funs(. * aaf_reduction_factor)) %>% 
+  mutate(Highlighted = if_else(is.na(Highlighted)| Highlighted == 0, 0, 1)) 
+  
+  
+totalActivityIP<-  totalActivityIP %>% 
+  filter(!Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  bind_rows(totalActivityIP1) %>% 
+  filter(Highlighted == 1) %>% 
+  summarise(
+    Spells = sum(Spells, na.rm = TRUE)
+    , Costs = sum(Costs, na.rm = TRUE)
+  )
+
 savingsAnyOneIP <- ipTrendComparators %>% savings_any_one
 
 ipSignificance  <- significance_summary(summ_ipFunnelPoints, summ_ipFunnelFunnels, ipRoC, ipRoCFunnels)
@@ -1147,7 +1302,7 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
     ungroup() %>%
     select(Strategy, DSRateCIUpper, DSRateCILower)
     , by = "Strategy") %>%
-  left_join(ipCost %>%
+  left_join(ipCost %>% # is this actually needed now?s
     ungroup() %>%
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
@@ -1161,21 +1316,21 @@ labels_ip <- summaryOutputIP %>%
   mutate(Opportunity = c("ACS Acute",
                          "ACS Chronic",
                          "ACS Vaccine",
-                         "Alcohol (25% to 75%)",
-                         "Alcohol (5% to 25%)",
-                         "Alcohol (75% to 100%)",
+                         "Alcohol (wholly)",
+                         "Alcohol (partially - chronic)",
+                         "Alcohol (partially - acute)",
                          "",
-                         "EOLC (3-14 days)",
-                         "EOLC (0-2 days)",
+                         "End of Life Care (3-14 days)",
+                         "End of Life Care (0-2 days)",
                          "Falls",
                          "Frail Elderly (occasional)",
                          "Frail Elderly (usual)",
                          "Medically Unexplained",
-                         "Meds Explicit",
-                         "Meds Implicit AntiDiab",
-                         "Meds Implicit Benzo",
-                         "Meds Implicit Diuretics",
-                         "Meds Implicit NSAIDs",
+                         "Medicines - Explicit",
+                         "Medicines - Implicit AntiDiab",
+                         "Medicines - Implicit Benzo",
+                         "Medicines - Implicit Diuretics",
+                         "Medicines - Implicit NSAIDs",
                          "Obesity (largely)",
                          "Obesity (marginal)",
                          "Obesity (somewhat)",
@@ -1183,13 +1338,13 @@ labels_ip <- summaryOutputIP %>%
                          "PLCV Alternative",
                          "PLCV Ineffective",
                          "PLCV Risks",
-                         "MH admissions from ED",
+                         "Mental Health Admissions from ED",
                          "",
                          "Self-harm",
                          "Smoking (large)",
                          "Smoking (somewhat)",
-                         "Zero LOS (adult)",
-                         "Zero LOS (child)"))
+                         "Zero Length of Stay (adult)",
+                         "Zero Length of Stay (child)"))
 
 
 # IP tbl summary -----------------------------------------------------
