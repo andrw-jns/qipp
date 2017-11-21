@@ -31,7 +31,7 @@ library(ggrepel)
 
 baseDir  <- "C:/2017_projects/qipp/" # using here, now
 
-active_ccg <- "05J"
+active_ccg <- "06D"
 f_year     <- 201617
 first_year <- 201213
 
@@ -1661,7 +1661,7 @@ summaryOutputAE <- aeSmall %>% summary_output(., savingsAnyOneAE, aeSignificance
 labels_ae <- summaryOutputAE %>%
   ungroup() %>% 
   select(Strategy) %>% 
-  mutate(Opportunity = c("Ambulance Treat",
+  mutate(Opportunity = c("Ambulance Conveyed, No Treatment",
                          "Frequent Attenders",
                          "Left Before Seen",
                          "Low Acuity ED"
@@ -1786,7 +1786,7 @@ summaryOutputOP <- opSmall %>% summary_output(., savingsAnyOneOP, opSignificance
 labels_op <- summaryOutputOP %>%
   ungroup() %>% 
   select(Strategy) %>% 
-  mutate(Opportunity = c("Consultant-Consultant Refer",
+  mutate(Opportunity = c("Consultant-Consultant Referral",
                          "GP referred Medical (adult)",
                          "GP referred Medical (child)",
                          "GP referred Surg (adult)",
