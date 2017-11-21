@@ -3,6 +3,7 @@
 " CREATE QIPP PACK"
 ###########################################################################
 
+setwd("C:/2017_projects/qipp")
 # ***** --------------------------------------------------------------
 "Use package check system: checkpoint? See email"
 "Code seems to be unaffected by update to dplyr 0.7 etc except summaries"
@@ -30,7 +31,7 @@ library(ggrepel)
 
 baseDir  <- "C:/2017_projects/qipp/" # using here, now
 
-active_ccg <- "05T"
+active_ccg <- "05J"
 f_year     <- 201617
 first_year <- 201213
 
@@ -60,9 +61,9 @@ qipp_ccgs  <- c(# Alphabetical:
 
 # Parameters 2 -------------------------------------------------------------
 
-ip_colours <- c("#EC6555", "#EC6555") # SU red
-ae_colours <- c("#91F5AD", "#91F5AD") # teal deer, alternative #75BBA7 ; "#91F5AD"
-op_colours <- c("#5881c1", "#5881c1") # SU blue
+ip_colour <- "#EC6555" # SU red
+ae_colour <- "#91F5AD" # teal deer, alternative #75BBA7 ; "#91F5AD"
+op_colour <- "#5881c1" # SU blue
 
 # Funnel
 funnelParameters <- tibble(
@@ -94,7 +95,7 @@ source_here <- function(name){
  source(here::here("r", name))
   }
 
-source_here("roundingAndChartLimitFunctions.R")
+# source_here("roundingAndChartLimitFunctions.R")
 source_here("roundingAndChartLimitFunctions.R")
 source_here("funnelPlotFunctions.R")
 source_here("trendPlotFunctions.R")
@@ -397,20 +398,20 @@ label_ccg <- function(df){
   
   df %>%
     mutate(ccg_label =case_when(
-  .$CCGCode == "13P" ~ "BCC",
-  .$CCGCode == "04X" ~ "BSC",
+  .$CCGCode == "13P" ~ "Bcc",
+  .$CCGCode == "04X" ~ "Bsc",
   .$CCGCode == "04Y" ~ "Can",
   .$CCGCode == "05C" ~ "Dud",
-  .$CCGCode == "05D" ~ "ESt",
+  .$CCGCode == "05D" ~ "Est",
   .$CCGCode == "05F" ~ "Her",
-  .$CCGCode == "05G" ~ "NSt",
+  .$CCGCode == "05G" ~ "Nst",
   .$CCGCode == "05J" ~ "Red",
-  .$CCGCode == "05L" ~ "SWB",
+  .$CCGCode == "05L" ~ "Swb",
   .$CCGCode == "05N" ~ "Shr",
   .$CCGCode == "05P" ~ "Sol",
-  .$CCGCode == "05Q" ~ "SES",
-  .$CCGCode == "05T" ~ "SWo",
-  .$CCGCode == "05V" ~ "SaS",
+  .$CCGCode == "05Q" ~ "Ses",
+  .$CCGCode == "05T" ~ "Swo",
+  .$CCGCode == "05V" ~ "Sas",
   .$CCGCode == "05W" ~ "Sto",
   .$CCGCode == "05X" ~ "Tel",
   .$CCGCode == "05Y" ~ "Wal",
@@ -465,8 +466,8 @@ strats_new <- new_strat_list %>%
 # tmp[2, 7:8] <- "should be updated to match indicator source"
 
 strats_new[2,6] <- "Wholly Attributable"
-strats_new[2,7] <- "Partially Attributable Chronic Conditions"
-strats_new[2,8] <- "Partially Attributable Acute Conditions"
+strats_new[2,7] <- "Partially Attributable - Chronic Conditions"
+strats_new[2,8] <- "Partially Attributable - Acute Conditions"
 
 strats_new2 <- gather(strats_new, "breakdown", "sub_header", dplyr::matches("breakdown[1-5]"))
 # tmp2 <- tmp2 %>% distinct(id, breakdown, .keep_all = T)
@@ -519,7 +520,8 @@ activeStrategies[36,13] <- med_child
 activeStrategies[37,13] <- surg_ad
 activeStrategies[38,13] <- surg_child
 
-
+activeStrategies[40:41,10] <- "No Overnight Stay, No Procedure, Discharged"
+activeStrategies[29,10]    <- "Ambulance Conveyed, No Investigations, Not Admitted"
 
 
 # trial <- activeStrategies %>% select(Strategy, oldName)
@@ -527,6 +529,7 @@ activeStrategies[38,13] <- surg_child
 # How many strategies for each type of data
 numberOfStrategies <- activeStrategies %>% 
   count(TableType)
+
 
 # Load sus data
 
@@ -873,7 +876,49 @@ ipTrendComparators <- ipTrend_adjust__comp1 %>%
 
 # Cost [KEEP]-----------------------------------
 
-ipCost <- ipSmall %>% cost_ds 
+ipCost <- ipSmall %>% 
+  filter(FYear == f_year) %>%
+  select(-DSRate, -DSRateVar, -CCGDescription, -ShortName) %>%
+  gather(Strategy, Highlighted, -CCGCode, -Spells, -Costs, -DSCosts, -DSCostsVar, convert = T) %>%
+  mutate(Highlighted = as.numeric(Highlighted)) %>% 
+  mutate(aaf_reduction_factor = NA)
+
+ipCost2 <- ipCost %>% 
+  filter(Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  # mutate(Highlighted = as.numeric(Highlighted)) %>% 
+  mutate(aaf_reduction_factor = Highlighted/Spells) %>% 
+  mutate_at(vars(Spells, Costs, DSCosts, DSCostsVar),
+            funs(. * aaf_reduction_factor)) %>% 
+  mutate(Highlighted = if_else(is.na(Highlighted)| Highlighted == 0, 0, 1)) 
+
+ipCost <- ipCost %>% 
+  filter(!Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  bind_rows(ipCost2) %>% 
+  select(-aaf_reduction_factor) %>% 
+  group_by(CCGCode, Strategy, Highlighted) %>%
+  summarise(
+    Spells = sum(Spells, na.rm = TRUE)
+    , Costs = sum(Costs, na.rm = TRUE)
+    , DSCosts = sum(DSCosts, na.rm = TRUE)
+    , DSCostsVar = sum(DSCostsVar, na.rm = TRUE)
+  ) %>%
+  filter(Highlighted == 1) %>%
+  select(-Highlighted) %>%
+  left_join(ccgPopulation, by = "CCGCode") %>%
+  mutate(
+    CostPerHead = Costs / Population
+    , SpellsHigh = (Spells + 1) * (1 - 1/(9 * (Spells + 1)) + trendCV / (3 * sqrt(Spells + 1))) ^ 3
+    , SpellsLow = Spells * (1 - 1/(9 * Spells) - trendCV / (3 * sqrt(Spells))) ^ 3
+    , CostsHigh = (Costs + 1) * (1 - 1/(9 * (Costs + 1)) + trendCV / (3 * sqrt(Costs + 1))) ^ 3
+    , CostsLow = Costs * (1 - 1/(9 * Costs) - trendCV / (3 * sqrt(Costs))) ^ 3
+    , DSCostsCIUpper = DSCosts + sqrt(DSCostsVar / Costs) * (CostsHigh - Costs)
+    , DSCostsCILower = DSCosts + sqrt(DSCostsVar / Costs) * (CostsLow - Costs)    
+    , DSCostsPerHead = DSCosts / 100000
+    , DSCostsPerHeadUpper = DSCostsCIUpper / 100000
+    , DSCostsPerHeadLower = DSCostsCILower / 100000
+    , IsActiveCCG = CCGCode == active_ccg) %>%
+  left_join(allCCGs, by = "CCGCode")
+
 aeCost <- aeSmall %>% cost_ds 
 opCost <- opSmall %>% cost_ds 
 
@@ -922,7 +967,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   " SUGGEST THIS JOIN IS INCORPORATED IN FUNCTION funl_data"
   " SUGGEST NEW NAME funl_data instead of funl_Data"
   
-  plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = ip_colours[1])
+  plot_ip_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = ip_colour[1])
   
 
 # Draw roc plot ------------------------------------------------------
@@ -935,7 +980,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
   plotRocSummary <- ipRoCSummary %>%
     filter(Strategy == ipPlottableStrategies$Strategy[i])
  
-  plot_ip_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = ip_colours[2])
+  plot_ip_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = ip_colour[1])
   
   
 # Draw trend plots --------------------------------------------------------
@@ -951,7 +996,7 @@ for(i in seq(ipPlottableStrategies$Strategy)){
                                    "DSRate",
                                    plotTrendActive$DSRate,
                                    plotTrendComparators$DSRate,
-                                   colour_block = ip_colours[1])
+                                   colour_block = ip_colour[1])
    
 # ***** -----------------------------------------------------
 }
@@ -994,7 +1039,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
     left_join(aeFunnelPoints %>% filter(Strategy == aePlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k()
   
-  plot_ae_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = ae_colours[1])
+  plot_ae_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = ae_colour[1])
  
   
   # Draw roc plot ------------------------------------------------------
@@ -1007,7 +1052,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
   plotRocSummary <- aeRoCSummary %>%
     filter(Strategy == aePlottableStrategies$Strategy[i])
   
-  plot_ae_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = ae_colours[2])
+  plot_ae_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = ae_colour)
   
   
   
@@ -1022,7 +1067,7 @@ for(i in seq(aePlottableStrategies$Strategy)){
                                    "DSRate",
                                    plotTrendActive$DSRate,
                                    plotTrendComparators$DSRate,
-                                   colour_block = ae_colours[1])
+                                   colour_block = ae_colour[1])
   
   
 # ***** ------------------------------------------------------------
@@ -1064,7 +1109,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
     left_join(opFunnelPoints %>% filter(Strategy == opPlottableStrategies$Strategy[i]), by = "CCGCode") %>%
     convert_dsr_100k()
   
-  plot_op_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = op_colours[1])
+  plot_op_fun[[i]] <- plot_fun(plotFunnels, plotUnits, colour_block = op_colour[1])
   
 
   # Draw roc plot ------------------------------------------------------
@@ -1077,7 +1122,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
   plotRocSummary <- opRoCSummary %>%
     filter(Strategy == opPlottableStrategies$Strategy[i])
   
-  plot_op_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = op_colours[2])
+  plot_op_roc[[i]] <-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, colour_block = op_colour[1])
   
   
 
@@ -1092,7 +1137,7 @@ for(i in seq(opPlottableStrategies$Strategy)){
                                    "DSRate",
                                    plotTrendActive$DSRate,
                                    plotTrendComparators$DSRate,
-                                   colour_block = op_colours[1])
+                                   colour_block = op_colour[1])
   
 # ***** ---------------------------------------------------
 }
@@ -1232,33 +1277,33 @@ summ_aeFunnelFunnels <- funnel_funnels(summ_aeFunnelSummary, funnelParameters$Sm
 summ_opFunnelFunnels <- funnel_funnels(summ_opFunnelSummary, funnelParameters$Smoothness, personYears)
 
 
-# Comparator table
+# Comparator table (needs to include all, though?)
 
-comparatorsOut <- comparatorCCGs2 %>%
-  filter(CCGCode != active_ccg) %>%
-  select(CCGCode, CCGDescription)
-
-flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
-
-
-flex_comparat    <- vanilla.table(comparatorsOut)
-
-
-
-flex_comparat[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
-flex_comparat[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
-
-# align left
-flex_comparat[, ]                <- parLeft()
-flex_comparat[, , to = "header"] <- parLeft()
-
-# borders
-flex_comparat <- setFlexTableBorders(flex_comparat
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
+# comparatorsOut <- comparatorCCGs2 %>%
+#   filter(CCGCode != active_ccg) %>%
+#   select(CCGCode, CCGDescription)
+# 
+# flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+# 
+# 
+# flex_comparat    <- vanilla.table(comparatorsOut)
+# 
+# 
+# 
+# flex_comparat[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+# flex_comparat[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+# 
+# # align left
+# flex_comparat[, ]                <- parLeft()
+# flex_comparat[, , to = "header"] <- parLeft()
+# 
+# # borders
+# flex_comparat <- setFlexTableBorders(flex_comparat
+#                                     , inner.vertical = borderProperties( style = "dashed", color = "white" )
+#                                     , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+#                                     , outer.vertical = borderProperties( width = 2, color = "white"  )
+#                                     , outer.horizontal = borderProperties( width = 2, color = "white"  )
+# )
 
 
 #  *****--------------------------------------------------------------
@@ -1266,34 +1311,57 @@ flex_comparat <- setFlexTableBorders(flex_comparat
 
 # Inpatient ---------------------------------------------------------------
 
-totalActivityIP <- ipSmall %>%
-  filter(FYear == f_year & CCGCode == active_ccg) %>%
-  select(-DSRate, - DSRateVar, -DSCosts, -DSCostsVar, -FYear, - CCGCode, -CCGDescription, -ShortName ) %>% 
-  gather(Strategy, Highlighted,  -Spells, -Costs, convert = T) %>%
-  mutate(aaf_reduction_factor = NA)
+totalActivityIP <- total_activity(ipSmall)
 
-totalActivityIP1 <- totalActivityIP %>% 
-  filter(Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
-  mutate(aaf_reduction_factor = Highlighted/Spells) %>% 
-  mutate_at(vars(Spells, Costs),
-            funs(. * aaf_reduction_factor)) %>% 
-  mutate(Highlighted = if_else(is.na(Highlighted)| Highlighted == 0, 0, 1)) 
-  
-  
-totalActivityIP<-  totalActivityIP %>% 
-  filter(!Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
-  bind_rows(totalActivityIP1) %>% 
-  filter(Highlighted == 1) %>% 
-  summarise(
-    Spells = sum(Spells, na.rm = TRUE)
-    , Costs = sum(Costs, na.rm = TRUE)
-  )
-
-savingsAnyOneIP <- ipTrendComparators %>% savings_any_one
+savingsAnyOneIP <- ipTrendComparators %>% savings_any_one()
 
 ipSignificance  <- significance_summary(summ_ipFunnelPoints, summ_ipFunnelFunnels, ipRoC, ipRoCFunnels)
 
-summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance, totalActivityIP) %>%
+
+summaryOutputIP <- ipSmall %>%
+  filter(FYear == f_year & CCGCode == active_ccg) %>%
+  select(-FYear, -DSRateVar, -DSCosts, -DSCostsVar, -CCGCode, -CCGDescription, -ShortName) %>%
+  gather(Strategy, Highlighted,  -Spells, -Costs, -DSRate, convert = T) %>%
+  mutate(aaf_reduction_factor = NA)
+
+summaryOutputIP2 <- summaryOutputIP %>% 
+  filter(Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  mutate(aaf_reduction_factor = Highlighted/Spells) %>% 
+  mutate_at(vars(Spells, DSRate, Costs),
+            funs(. * aaf_reduction_factor)) %>% 
+  mutate(Highlighted = if_else(is.na(Highlighted)| Highlighted == 0, 0, 1)) 
+
+summaryOutputIP3 <- summaryOutputIP %>% 
+  filter(!Strategy %in% c("alc_wholly", "alc_chronic", "alc_acute")) %>% 
+  bind_rows(summaryOutputIP2) %>% 
+  select(-aaf_reduction_factor) %>% 
+  group_by(Strategy, Highlighted) %>%
+  summarise_all(
+    funs(sum(., na.rm = TRUE))
+    #, Spells, Costs, DSRate
+  ) %>%
+  filter(Highlighted == 1) %>%
+  select(-Highlighted) %>%
+  left_join(savingsAnyOneIP, by = "Strategy") %>%
+  mutate_at(vars(Average, TopQuartile, TopDecile),
+            funs(
+              Comparators = (.)
+              , SavingsIf = (Costs - (. / DSRate) * Costs)) #generate savings if average
+  ) %>%
+  mutate_at(vars(matches("_SavingsIf")), funs(ifelse( . < 0 , 0, .))) %>% # remove negative savings
+  mutate(
+    SpellsRounded = roundTo(Spells, 10)
+    , propSpells = Spells / totalActivityIP$Spells) %>%
+  mutate_at(vars(matches("_SavingsIf"), Costs), 
+            funs(
+              Actual = (.)
+              , Rounded = roundTo(., 1000)
+            )) %>%
+  left_join(activeStrategies, by = "Strategy") %>%
+  select(-StrategyType) %>%
+  left_join(ipSignificance, by ="Strategy") %>% 
+
+# summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance, totalActivityIP) %>%
   group_by(ReviewNumber, add = FALSE) %>%
   mutate(ReviewDupe = row_number()) %>%
   mutate(ReviewDupe = paste0(ReviewNumber, ReviewDupe)) %>%
@@ -1307,6 +1375,7 @@ summaryOutputIP <- ipSmall %>% summary_output(., savingsAnyOneIP, ipSignificance
     select(CCGCode, Strategy, DSCostsPerHead)
     , by = c("CCGCode", "Strategy"))
 
+summaryOutputIP <- summaryOutputIP3
 
 # IP labels for charts / tables------------------------------------------
 
@@ -1456,10 +1525,11 @@ savingsIP <- summaryOutputIP %>%
   select(Opportunity, everything(), -Strategy)
 
 
-plot_the_savings <- function(df){
+
+plot_the_savings <- function(df, pod_colour){
   
   ggplot(df, aes(reorder(Opportunity, average), average))+
-    geom_bar(stat = "identity",  aes(fill = "myline1"))+
+    geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
     geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
     # geom_bar(stat = "identity", position = "stack") +
     coord_flip()+
@@ -1474,7 +1544,7 @@ plot_the_savings <- function(df){
           legend.background = element_rect(fill = "white"))+
     scale_fill_manual(
       name = "line Colour"
-      ,values=c(myline1 = "#5881c1", myline2 = "#5881c1")
+      ,values=c(myline1 = pod_colour, myline2 = pod_colour)
       , labels=c("Savings if average", "Additional savings if top quartile"))+
     # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
     #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
@@ -1486,7 +1556,7 @@ plot_the_savings <- function(df){
   
 }
   
-plot_savings_ip <- plot_the_savings(savingsIP)   
+plot_savings_ip <- plot_the_savings(savingsIP, ip_colour)   
 
 
 # so have multiple variables again.
@@ -1605,7 +1675,7 @@ savingsAE <- summaryOutputAE %>%
   left_join(labels_ae, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) 
 
-plot_savings_ae <- plot_the_savings(savingsAE)
+plot_savings_ae <- plot_the_savings(savingsAE, ae_colour)
 
 # basic name adjust
 # savingsAE$Strategy <-  savingsAE$Strategy %>% 
@@ -1744,7 +1814,7 @@ savingsOP <- summaryOutputOP %>%
 #   str_replace_all("\\_"," ") %>%
 #   str_trim()
 
-plot_savings_op <- plot_the_savings(savingsOP)
+plot_savings_op <- plot_the_savings(savingsOP, op_colour)
 
 # so have multiple variables again.
 # error in stacked  bars! should not be stacked
@@ -1831,25 +1901,25 @@ activeCCGInfo$CCGDescription
 
 
 # JOYPLOTS? OF RATES ----------------------------------------
-setwd("C:/2017_projects/")
-saveRDS(ipSmall, "ipSmall.RDS")
-
-ipSmall <- read_rds("ipSmall.RDS")
-
-tmp_summary <- ipSmall %>%
-  filter(FYear == f_year) %>%
-  select(-FYear, -DSRateVar, -DSCosts, -DSCostsVar) %>%
-  gather(Strategy, Highlighted,  -Spells, -Costs, -DSRate, -CCGCode,  -CCGDescription, -ShortName, convert = T) %>% 
-  group_by(Strategy, CCGCode ,CCGDescription, ShortName, Highlighted) %>%
-  summarise_all(
-    funs(sum(., na.rm = TRUE))
-  ) %>%
-  filter(Highlighted == 1) %>%
-  select(-Highlighted) %>% 
-  filter(Strategy == "ACS_Acute_v3")
-
-# Binwidth calculated using Freedman-Diaconis rule:
-# 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3))
-
-ggplot(tmp_summary, aes(DSRate))+
-  geom_freqpoly(binwidth = 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3)))
+# setwd("C:/2017_projects/")
+# saveRDS(ipSmall, "ipSmall.RDS")
+# 
+# ipSmall <- read_rds("ipSmall.RDS")
+# 
+# tmp_summary <- ipSmall %>%
+#   filter(FYear == f_year) %>%
+#   select(-FYear, -DSRateVar, -DSCosts, -DSCostsVar) %>%
+#   gather(Strategy, Highlighted,  -Spells, -Costs, -DSRate, -CCGCode,  -CCGDescription, -ShortName, convert = T) %>% 
+#   group_by(Strategy, CCGCode ,CCGDescription, ShortName, Highlighted) %>%
+#   summarise_all(
+#     funs(sum(., na.rm = TRUE))
+#   ) %>%
+#   filter(Highlighted == 1) %>%
+#   select(-Highlighted) %>% 
+#   filter(Strategy == "ACS_Acute_v3")
+# 
+# # Binwidth calculated using Freedman-Diaconis rule:
+# # 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3))
+# 
+# ggplot(tmp_summary, aes(DSRate))+
+#   geom_freqpoly(binwidth = 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3)))
