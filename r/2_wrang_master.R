@@ -132,7 +132,7 @@ process <- . %>%
   )
 
 # Process the small data
-ip <- ipSmall %>% process %>% right_join(ipBase, by = c("CCGCode", "Strategy", "FYear"))
+ip <- ipSmall %>% process_ip %>% right_join(ipBase, by = c("CCGCode", "Strategy", "FYear"))
 op <- opSmall %>% process %>% right_join(opBase, by = c("CCGCode", "Strategy", "FYear"))
 ae <- aeSmall %>% process %>% right_join(aeBase, by = c("CCGCode", "Strategy", "FYear"))
 
