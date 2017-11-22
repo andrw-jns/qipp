@@ -57,7 +57,7 @@ wrangle_saveif <- function(df_av, df_tquart){
 plot_saveif <- function(df, opportunity, average, t_quartile, pod_colour){
   
   ggplot(df, aes(reorder(opportunity, average), average))+
-    geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+    geom_bar(stat = "identity", aes(fill = "myline1"))+
     geom_bar(aes(opportunity, t_quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
     # geom_bar(stat = "identity", position = "stack") +
     coord_flip()+
@@ -92,26 +92,26 @@ conditional_worcs <- function(df){
   data <- flexerize_stp(df)
   
   data[df$`Redditch and Bromsgrove CCG` == "Low", 2] = chprop(myCellProps, background.color = rag_colours[6])
-  data[df$`Redditch and Bromsgrove CCG` == "Not Significant", 2] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
+  data[df$`Redditch and Bromsgrove CCG` == "-", 2] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
   data[df$`Redditch and Bromsgrove CCG` == "High", 2] = chprop(myCellProps, background.color = rag_colours[4])
   
   
   data[df$`South Worcestershire CCG` == "Low", 3] = chprop(myCellProps, background.color = rag_colours[6])
-  data[df$`South Worcestershire CCG` == "Not Significant", 3] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
+  data[df$`South Worcestershire CCG` == "-", 3] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
   data[df$`South Worcestershire CCG` == "High", 3] = chprop(myCellProps, background.color = rag_colours[4])
   
   
   data[df$`Wyre Forest CCG` == "Low", 4] = chprop(myCellProps, background.color = rag_colours[6])
-  data[df$`Wyre Forest CCG` == "Not Significant", 4] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
+  data[df$`Wyre Forest CCG` == "-", 4] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
   data[df$`Wyre Forest CCG` == "High", 4] = chprop(myCellProps, background.color = rag_colours[4])
   
   
   
   setFlexTableBorders(data
                       , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                      , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+                      , inner.horizontal = borderProperties( style = "solid", color = "grey80"  )
                       , outer.vertical = borderProperties( width = 2, color = "white"  )
-                      , outer.horizontal = borderProperties( width = 2, color = "white"  )
+                      , outer.horizontal = borderProperties( width = 1, color = "grey30"  )
   )
   
   

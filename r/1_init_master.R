@@ -235,7 +235,6 @@ activeStrategies[38,13] <- surg_child
 activeStrategies[40:41,10] <- "No Overnight Stay, No Procedure, Discharged"
 activeStrategies[29,10]    <- "Ambulance Conveyed, No Investigations, Not Admitted"
 
-
 # trial <- activeStrategies %>% select(Strategy, oldName)
 
 # How many strategies for each type of data

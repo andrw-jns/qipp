@@ -10,7 +10,7 @@
 
 # notes --------------------------------------------------------------
 
-"THIS SHOULD PERHAPS BE IN THE QIPP DIRECTORY"
+"THIS WOULD BE MUCH EASIER IN THE QIPP DIRECTORY"
 # MAY OCCASIONALLY BE USEFUL TO SOFT WRAP TEXT IN THIS SCRIPT: 
 # TOOLS -> GLOBAL OPTIONS -> CODE 
 
@@ -25,7 +25,7 @@ library(ReporteRs)
 library(stringr)
 library(stringi)
 
-filename <- "draft_slides_18.pptx" # the document to produce
+filename <- "draft_slides_20.pptx" # the document to produce
 
 setwd("C:/2017_projects/qipp_extra")
 
@@ -37,7 +37,7 @@ qipp_report <- pptx(title = "qipp_one", template = "su_brand5.pptx")
 
 
 qipp_report <- addSlide(qipp_report, "title" ) %>%
-  addTitle(value = "Identifying Potential Opportunities to Reduce Acute Hospital Activity") %>%
+  addTitle(value = "Identifying Opportunities to Reduce Acute Hospital Activity") %>%
   addSubtitle(str_c("Prepared for ", activeCCGInfo$CCGNameMinusCCG, " Clinical Commissioning Group"))
 
 
@@ -63,16 +63,20 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 qipp_report <- addSlide(qipp_report, "content_footer") %>%
   addTitle("Inpatient Summary") %>%
   addFlexTable(flex_ip_summ) %>% 
-  addFooter("Note: Rate, and rate of change are measured relative to 18 other CCGs in the West Midlands. Low or high rates indicate that the values are lower/higher than we might expect given natural variation.")
+  addFooter("Notes: Rate and rate of change comparisons are with other West Midlands CCGs.")
 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
+qipp_report <- addSlide(qipp_report, "content_footer_2") %>%
   addTitle("Potential Savings") %>%
-  addFlexTable(flex_ip_cost)
+  addFlexTable(flex_ip_cost)%>% 
+  addFooter("Notes: Savings estimates are the total savings achievable if activity for a particular sub-group was reduced from its current level to the average or top quartile of other West Midlands CCGs.")
+
 # add footnote?
 
-qipp_report <- addSlide(qipp_report, "contentA") %>% 
+qipp_report <- addSlide(qipp_report, "content_footer_2") %>% 
   addTitle("Potential Savings by Opportunity") %>%  # "ACS Vaccine Preventable Conditions"
-  addPlot(function() plot(plot_savings_ip)) 
+  addPlot(function() plot(plot_savings_ip))%>% 
+  addFooter("Notes: Savings estimates are the total savings achievable if activity for a particular sub-group was reduced from its current level to the average or top quartile of other West Midlands CCGs.")
+
 #   
 
 # To fix misalignment:
@@ -120,15 +124,19 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 qipp_report <- addSlide(qipp_report, "content_footer") %>%
   addTitle("Emergency Department Summary") %>%
   addFlexTable(flex_ae_summ) %>% 
-  addFooter("Note: Rate, and rate of change are measured relative to 18 other CCGs in the West Midlands. Low or high rates indicate that the values are lower/higher than we might expect given natural variation.")
+  addFooter("Notes: Rate and rate of change comparisons are with other West Midlands CCGs.")
 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
+qipp_report <- addSlide(qipp_report, "content_footer_2") %>%
   addTitle("Potential Savings") %>%
-  addFlexTable(flex_ae_cost)
+  addFlexTable(flex_ae_cost) %>% 
+  addFooter("Notes: Savings estimates are the total savings achievable if activity for a particular sub-group was reduced from its current level to the average or top quartile of other West Midlands CCGs.")
 
-qipp_report <- addSlide(qipp_report, "contentA") %>% 
+
+qipp_report <- addSlide(qipp_report, "content_footer_2") %>% 
   addTitle("Savings by Opportunity") %>%  # "ACS Vaccine Preventable Conditions"
-  addPlot(function() plot(plot_savings_ae)) 
+  addPlot(function() plot(plot_savings_ae)) %>% 
+  addFooter("Notes: Savings estimates are the total savings achievable if activity for a particular sub-group was reduced from its current level to the average or top quartile of other West Midlands CCGs.")
+
 #   
 
 
@@ -178,16 +186,20 @@ qipp_report <- addSlide(qipp_report, "poster") %>%
 qipp_report <- addSlide(qipp_report, "content_footer") %>%
   addTitle("Outpatient Summary Table") %>%
   addFlexTable(flex_op_summ) %>% 
-  addFooter("Note: Rate, and rate of change are measured relative to 18 other CCGs in the West Midlands. Low or high rates indicate that the values are lower/higher than we might expect given natural variation.")
+  addFooter("Notes: Rate and rate of change comparisons are with other West Midlands CCGs.")
 
-qipp_report <- addSlide(qipp_report, "contentA") %>%
+qipp_report <- addSlide(qipp_report, "content_footer_2") %>%
   addTitle("Potential Savings") %>%
-  addFlexTable(flex_op_cost)
+  addFlexTable(flex_op_cost) %>% 
+  addFooter("Notes: Savings estimates are the total savings achievable if activity for a particular sub-group was reduced from its current level to the average or top quartile of other West Midlands CCGs.")
 
-qipp_report <- addSlide(qipp_report, "contentA") %>% 
+
+
+qipp_report <- addSlide(qipp_report, "content_footer_2") %>% 
   addTitle("Savings by Opportunity") %>%  # "ACS Vaccine Preventable Conditions"
-  addPlot(function() plot(plot_savings_op)) 
-#   
+  addPlot(function() plot(plot_savings_op)) %>% 
+  addFooter("Notes: Savings estimates are the total savings achievable if activity for a particular sub-group was reduced from its current level to the average or top quartile of other West Midlands CCGs.")
+
 
 
 op_link <- left_join(opPlottableStrategies %>% select(Strategy),

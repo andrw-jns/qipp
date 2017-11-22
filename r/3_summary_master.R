@@ -1,11 +1,10 @@
 
 # Summaries  ---------------------------------------------------------
-
 setwd(baseDir)
 
-summ_ipFunnelPoints    <- ip    %>% filter(FYear == f_year) 
-summ_opFunnelPoints    <- op    %>% filter(FYear == f_year)
-summ_aeFunnelPoints    <- ae    %>% filter(FYear == f_year)
+summ_ipFunnelPoints    <- ip  %>% filter(FYear == f_year) 
+summ_opFunnelPoints    <- op  %>% filter(FYear == f_year)
+summ_aeFunnelPoints    <- ae  %>% filter(FYear == f_year)
 
 summ_ipFunnelSummary <- summ_ipFunnelPoints %>% funnel_summary
 summ_aeFunnelSummary <- summ_aeFunnelPoints %>% funnel_summary
@@ -16,10 +15,12 @@ summ_aeFunnelFunnels <- funnel_funnels(summ_aeFunnelSummary, funnelParameters$Sm
 summ_opFunnelFunnels <- funnel_funnels(summ_opFunnelSummary, funnelParameters$Smoothness, personYears)
 
 
+
 # Inpatient ---------------------------------------------------------------
 
-totalActivityIP <- ipSmall %>% total_activity
-savingsAnyOneIP <- ipTrendComparators %>% savings_any_one
+totalActivityIP <- total_activity(ipSmall)
+
+savingsAnyOneIP <- ipTrendComparators %>% savings_any_one()
 
 ipSignificance  <- significance_summary(summ_ipFunnelPoints, summ_ipFunnelFunnels, ipRoC, ipRoCFunnels)
 
@@ -83,6 +84,7 @@ summaryOutputIP3 <- summaryOutputIP %>%
 
 summaryOutputIP <- summaryOutputIP3
 
+
 # IP labels for charts / tables------------------------------------------
 
 
@@ -126,6 +128,7 @@ labels_ip <- summaryOutputIP %>%
 
 # IP tbl summary -----------------------------------------------------
 
+
 summ_ip_summ_out <- summaryOutputIP %>%
   ungroup %>%
   filter(!Strategy %in% c("Canc_Op_v1", "Readmissions_v1")) %>%
@@ -140,6 +143,7 @@ summ_ip_summ_out <- summaryOutputIP %>%
   select(Opportunity, everything(), -Strategy)
 
 summ_ip_summ_out[4:5][summ_ip_summ_out[4:5] == "Not Significant"] <- "-"
+
 
 
 # IP cost summary ----------------------------------------------------
