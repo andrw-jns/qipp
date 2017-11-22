@@ -6,14 +6,7 @@
 setwd("C:/2017_projects/qipp")
 # ***** --------------------------------------------------------------
 "Use package check system: checkpoint? See email"
-"Code seems to be unaffected by update to dplyr 0.7 etc except summaries"
-"which now updated to use mutate_at() etc."
-"Check colour blind friendly"
-"Fix size of savings plots"
-"Savings plots don't really give enough detail - must be used in
-conjunction with funnels to work out where easiest savings are"
-"GP referrals v1 vs v2? Strategy (from SQL vs oldName)"
-
+"QIPP EXTRA should be subdirectory of this one"
 # Packages ----------------------------------------------------------------
 
 library(here)
@@ -95,201 +88,21 @@ source_here <- function(name){
  source(here::here("r", name))
   }
 
-# source_here("roundingAndChartLimitFunctions.R")
 source_here("roundingAndChartLimitFunctions.R")
+source_here("plot_functions_2017.R")
 source_here("funnelPlotFunctions.R")
 source_here("trendPlotFunctions.R")
 source_here("costPlotFunctions.R")
 source_here("summaryFunctions.R") 
 source_here("theme_strategy.R")
 
-#setwd("C:/2017_projects/funnel/funnel/")
+
 source("C:/2017_projects/funnel/funnel/funlplotr20171024.R")
 # to hopefully get the newest version of the funnel plot code.
 
 # This - believe it or not - works like a function : pound()
 pound <- dollar_format(prefix = "£")
 
-
-plot_trend <- function(active_df, comparator_df, quote_y, active_y, comparator_y, colour_block, comparator = T){
-  
-  p <- ggplot()+
-    geom_area(data = active_df,
-              aes(
-                FYearIntToChar(FYear),
-                get(quote_y),
-                group = 1
-              )
-              , alpha = 0.2
-              , fill = colour_block # "#c52828" # SWB Red: # '#c52828' - original red
-              )+
-    geom_line(data = active_df,
-              aes(
-                FYearIntToChar(FYear), 
-                get(quote_y),
-                group = 1
-              ),
-              alpha = 0.8
-              , colour = colour_block
-              , size = 1
-    )+
-    # Semi transparent points:
-    geom_point(data = active_df,
-              aes(
-                FYearIntToChar(FYear), 
-                get(quote_y),
-                group = 1
-              ),
-              alpha = 0.2
-              , colour = colour_block
-              , size = 3
-    )+
-    # Highlighted points:
-    geom_point(data = active_df %>% 
-                 filter(FYear == f_year),
-               aes(
-                 FYearIntToChar(FYear), 
-                 get(quote_y),
-                 group = 1
-               )
-               , colour = colour_block
-               , size = 3
-    )+
-    ylim(0, 1.2*max(active_y, comparator_y))+
-    theme_strategy()+
-    theme(panel.background = element_rect(fill = "white"),
-          # plot.subtitle = element_text(face = "italic"),
-          axis.title = element_blank())+
-    labs(y = paste0("DSR per ",
-                    scales::comma(funnelParameters$RatePerPeople)," population"),
-         title = paste0("Trend in Directly Standardised Rate, ",
-                        str_sub(rocParameters$From ,1, 4), "-",
-                        str_sub(rocParameters$From ,5, 6), " to "
-                        , str_sub(rocParameters$To ,1, 4), "-",
-                        str_sub(rocParameters$To ,5, 6))
-         , subtitle = "DSR per 100k population [Vertical Axis]")+
-    scale_x_discrete(expand = c(0.02,0.0))
-
-  if(comparator == T){
-    
-    p + geom_line(data = comparator_df %>% 
-                    filter(Type == "Average"),
-                  aes(
-                    FYearIntToChar(FYear), 
-                    get(quote_y),
-                    group = 1
-                  )
-                  # ,linetype = "longdash"
-                  , alpha = 0.8
-    )+ 
-    geom_segment(data = comparator_df,
-                 aes(
-                   y = 0.1*max(comparator_y), yend = 0.1*max(comparator_y),
-                   x = 4.05, xend = 4.25
-                 )
-    )+
-    geom_text(data = comparator_df,
-              aes(x = 4.6, y = 0.1*max(comparator_y),
-                  label ="W.M. average",
-                  family = "Segoe UI",
-                  fontface = "plain"),
-               size = 2.5)
-    
-      
-  } else {
-    p  + geom_line(data = comparator_df,
-                   aes(
-                     FYearIntToChar(FYear), 
-                     get(quote_y),
-                     group = 1
-                   )
-                   # ,linetype = "longdash"
-                   , alpha = 0.8
-    )
-  }
-}
-
-plot_trend(plotTrendActive,
-           plotTrendComparators,
-           "DSRate",
-           plotTrendActive$DSRate,
-           plotTrendComparators$DSRate)
-
-plot_cost  <- function(df){
-  ggplot(df) +
-    geom_bar(aes(x = ShortName, y = DSCostsPerHead, fill = IsActiveCCG), stat = "identity") +
-    geom_text(
-      aes(
-        x = ShortName
-        , y = 1.01 * DSCostsPerHead # for label
-        , family = "Segoe UI Light"
-        , label = stringr::str_c("£", df$for_label)
-        , hjust = 0
-      )
-      , size = 3) +
-    coord_flip() +
-    # scale_fill_manual(values = colourBlindPalette[c("green", "red")] %>% unname) +
-    scale_y_continuous(labels = pound, limits = c(0,101)) +
-    expand_limits(y = c(min(pretty(df$DSCostsPerHead)), max(pretty(df$DSCostsPerHead))*1.05)) +
-    labs(x = NULL, y = NULL, title = "Directly Standardised Costs per head of Population") +
-    theme_strategy()+
-    theme(legend.position = "none")+
-    # theme(panel.grid.major = element_blank())+
-    scale_fill_grey(start = 0.6)
-}
-
-plot_fun   <- function(df_funnels, df_units, colour_block){
-  
-  ggplot(df_funnels) +
-    geom_line(aes(x = n, y = fnlLow, group = fnlLimit), linetype = "44") +
-    geom_line(aes(x = n, y = fnlHigh, group = fnlLimit), linetype = "44") +
-    geom_segment(aes(  x    = min(n)
-                       , xend = max(n)
-                       , y    = target
-                       , yend = target))+
-    #geom_hline(aes(yintercept = target)) +
-    geom_point(data = df_units, aes(x = DerivedPopulation, y = DSRate, colour = IsActiveCCG), size = 3)+
-    geom_text(data = df_funnels
-              , aes(x = 0.75*max(n), y = min(fnlLow, df_units$DSRate), label = "Standardised population 2016-17")
-              # , vjust = "bottom"
-              # , hjust = "right"
-              , family = "Segoe UI"
-              , size  = 2.5
-              , fontface  = "plain"
-              , color = "grey30"
-               )+
-    geom_text_repel(data = df_units
-      , aes(x = DerivedPopulation
-            , y = DSRate
-            , label = ccg_label
-           )
-      , alpha = 0.5
-
-      #, fontface = 'bold'
-      , size = 3
-      # box.padding = unit(0.25, "lines"),
-      # point.padding = unit(0.5, "lines")
-      # , nudge_y = -0.00050
-      ) +
-    scale_x_continuous(labels = scales::comma
-                       #, limits = c(0, 1000000) # forced x to 1M
-    )+
-    scale_y_continuous(labels = scales::comma)+
-    theme_strategy()+
-    theme(legend.position = "none"
-          , axis.title = element_blank()
-          #, plot.subtitle = element_text(face = "italic")
-          )+
-    labs(
-      x = paste0("Standardised population ", FYearIntToChar(f_year))
-      , subtitle = paste0("DSR per 100k population [Vertical Axis]")  # , scales::comma(funnelParameters$RatePerPeople)," population")
-      , title = paste0("Directly Standardised Rate, ", FYearIntToChar(f_year))
-    )+
-    scale_color_manual(values = c("grey70", colour_block))
-
-}
-
-x <- plot_fun(plotFunnels, plotUnits)
 
 convert_dsr_100k <- function(df) { # For DSR funnel
   if("target" %in% colnames(df)){
@@ -301,98 +114,6 @@ convert_dsr_100k <- function(df) { # For DSR funnel
   }
 } 
 
-plot_roc <- function(funnel_df, points_df, summary_df, colour_block){
-  
-  ggplot(data = funnel_df) +
-    geom_line(aes(x = Denominator, y = ThreeSigmaLower ), colour = "black", linetype =  44) +
-    # geom_line(aes(x = Denominator, y = TwoSigmaLower   ), colour = "black" , linetype = 44) +
-    # geom_line(aes(x = Denominator, y = TwoSigmaHigher  ), colour = "black" , linetype = 44) +
-    geom_line(aes(x = Denominator, y = ThreeSigmaHigher), colour = "black", linetype =  44) +
-    geom_segment(aes(x      = min(Denominator)
-                     , xend = max(Denominator)
-                     , y    = AverageRateOfChange
-                     , yend = AverageRateOfChange))+
-    geom_point(
-      data = points_df
-      , aes(x = SpellsInBaseYear,
-            y = RateOfChange, colour = IsActiveCCG)
-      , size = 3
-    )+
-    geom_text(data = summary_df
-              , aes(x = max(NewMaxSpells), y = min(NewMinRateOfChange), label = "Related activity 2012-13")
-              , vjust = "bottom"
-              , hjust = "right"
-              , family = "Segoe UI"
-              , size  = 2.5
-              , fontface  = "plain"
-              , color = "grey30"
-    )+
-    geom_text_repel(data = points_df
-                    , aes(x = SpellsInBaseYear,
-                          y = RateOfChange
-                          , label = ccg_label
-                    )
-                    , alpha = 0.5
-                    #, fontface = 'bold'
-                    , size = 3
-                    # box.padding = unit(0.25, "lines"),
-                    # point.padding = unit(0.5, "lines")
-                    # , nudge_y = -0.00050
-    ) +
-    scale_x_continuous(
-      labels = scales::comma
-      , limits = c(summary_df$NewMinSpells, summary_df$NewMaxSpells)) +
-    scale_y_continuous(
-      labels = scales::percent
-      , limits = c(summary_df$NewMinRateOfChange, summary_df$NewMaxRateOfChange)) +
-    labs(
-      x = paste0("Related spells "
-                 , points_df %>% 
-                   filter(IsActiveCCG) %>% 
-                   ungroup() %>% 
-                   select(From) %>% 
-                   unlist %>% unname %>% 
-                   FYearIntToChar)
-      , y = paste0("Percentage change")
-      , title = 
-        paste0("Percentage Change in Directly Standardised Rate, "
-               , points_df %>% 
-                 filter(IsActiveCCG) %>% 
-                 ungroup() %>% 
-                 select(From) %>% 
-                 unlist %>% unname %>% 
-                 FYearIntToChar
-               , " to "
-               , points_df %>% 
-                 filter(IsActiveCCG) %>% 
-                 ungroup() %>% 
-                 select(FYear) %>% 
-                 unlist %>% unname %>% 
-                 FYearIntToChar)
-    ) +
-    # scale_y_continuous(limits = c(0.8*min(plotRocPoints$RateOfChange)
-    #                               , 1.2*max(plotRocPoints$RateOfChange)
-    # )
-    # , labels = scales::comma)+
-    theme_strategy()+
-    theme(legend.position = "none",
-          axis.title = element_blank()
-          # plot.subtitle = element_text(face = "italic"),
-          # panel.background = element_rect(fill = "#E6E6FA")
-          )+
-    labs(
-      # x = paste0("Rate of Change between ", FYearIntToChar(f_year))
-      subtitle = "Percentage change in DSR [Vertical Axis]"
-      #, title = paste0("Ratio of Follow-ups to First Appointments ", FYearIntToChar(f_year))
-    )+
-    scale_color_manual(values = c("grey70", colour_block))
-  
-  #69D2E7,#A7DBD8,#E0E4CC,#F38630,#FA6900,#69D2E7,#A7DBD8,#E0E4CC
-  #"grey70", '#c52828'
-  #"#69D2E7", '#FA6900'
-}
-
-plot_roc(plotRocFunnels, plotRocPoints, plotRocSummary, "grey70")
 
 label_ccg <- function(df){
   
@@ -426,112 +147,16 @@ label_ccg <- function(df){
 
 # Load data ---------------------------------------------------------------
 setwd(paste0(baseDir, "data"))
-
 "Take care to note whether data was handled by PowerShell"
 
-"Now do some wrangling to add new set of names to activeStrategies:"
-
-"WARNING: THIS IS A MANUAL PROCESS"
-"FOUNDATIONS (THE FORMAT OF THE SOURCE CSV) COULD BE IMPROVED IN FUTURE"
-# manually assign ids (based on matching old strats to master list with names):
-id_ref <- c(1,   1,   1,  2,  2,  2, 26, 25, 29,  5, 8,
-            7,  24,  33, 33, 33, 33, 35, 23,  6,  9,
-            9,   9,   9,  9, 28, 28, 28, 28, 11, 12,
-            14, 14,  NA, 13, 32, 32, 32, 32, 13, 13,     # OP PLCV = NA
-            10,  39, 39,  4,  3)
-
-new_strat_list <- qippStrategiesMasterList_csv <- read_excel("C:/2017_projects/qipp/data/qippStrategiesMasterList.xlsx") %>% 
-  filter(id %in% id_ref)
-
-
-activeStrategies <- read_csv("listActiveStrategies.csv") %>% 
-  # manually assign ids (based on matching old strats to master list with names)
-  mutate(id = id_ref) %>% 
-  # left_join(new_strat_list, by = "id") %>% 
-  arrange(id)
-
-activeStrategies$Strategy[activeStrategies$Strategy == "Alcohol_25pcto75pc_v3"]  <- "alc_wholly"
-activeStrategies$Strategy[activeStrategies$Strategy == "Alcohol_5pcto25pc_v3"]   <- "alc_chronic"
-activeStrategies$Strategy[activeStrategies$Strategy == "Alcohol_75pcto100pc_v3"] <- "alc_acute"
-
-# removing unused strategies (FUF, OP PLCV):
-activeStrategies <- slice(activeStrategies, c(1:34, 39:45))
-
-
-"Adapt (wrangle) new names master list:"
-strats_new <- new_strat_list %>% 
-  select(id, oldName, shortName, longName, breakdownAvailable, dplyr::matches("breakdown[1-5]"))
-
-# fix for alcohol
-# tmp[2, 7:8] <- "should be updated to match indicator source"
-
-strats_new[2,6] <- "Wholly Attributable"
-strats_new[2,7] <- "Partially Attributable - Chronic Conditions"
-strats_new[2,8] <- "Partially Attributable - Acute Conditions"
-
-strats_new2 <- gather(strats_new, "breakdown", "sub_header", dplyr::matches("breakdown[1-5]"))
-# tmp2 <- tmp2 %>% distinct(id, breakdown, .keep_all = T)
-
-strats_new3 <- strats_new2 %>% 
-  filter(breakdownAvailable == 0) %>% 
-  distinct(longName, .keep_all = T)
-
-strats_new4 <- strats_new2 %>% 
-  filter(breakdownAvailable == 1) %>% 
-  arrange(id) %>% 
-  na.omit()
-
-strats_new_final <- bind_rows(strats_new3, strats_new4) %>% 
-  arrange(id)
-
-# This "join" is in fact a bind cols - so may not work in future:
-
-activeStrategies <- bind_cols(activeStrategies, strats_new_final)
-
-"NOW COMES A REAL BODGE:"
-
-obes_some <- pull(activeStrategies[22,13])
-obes_wh   <- pull(activeStrategies[21,13])
-
-activeStrategies[22,13] <- obes_wh
-activeStrategies[21,13] <- obes_some
-
-
-plcv_aes <- pull(activeStrategies[31,13])
-plcv_cost <- pull(activeStrategies[33,13])
-plcv_ineff <- pull(activeStrategies[30,13])
-plcv_harm <- pull(activeStrategies[32,13])
-
-
-activeStrategies[30,13] <- plcv_aes
-activeStrategies[31,13] <- plcv_cost
-activeStrategies[32,13] <- plcv_ineff
-activeStrategies[33,13] <- plcv_harm
-
-
-med_ad <- pull(activeStrategies[36,13])
-med_child <- pull(activeStrategies[38,13])
-surg_ad <- pull(activeStrategies[35,13])
-surg_child <- pull(activeStrategies[37,13])
-
-
-activeStrategies[35,13] <- med_ad
-activeStrategies[36,13] <- med_child
-activeStrategies[37,13] <- surg_ad
-activeStrategies[38,13] <- surg_child
-
-activeStrategies[40:41,10] <- "No Overnight Stay, No Procedure, Discharged"
-activeStrategies[29,10]    <- "Ambulance Conveyed, No Investigations, Not Admitted"
-
-
-# trial <- activeStrategies %>% select(Strategy, oldName)
+source_here("active_strategies_mess.R")
 
 # How many strategies for each type of data
 numberOfStrategies <- activeStrategies %>% 
   count(TableType)
 
 
-# Load sus data
+# Load sus data:
 
 sus_regex <- tibble(ip = "IP[0-9]{4}.csv", op = "OP[0-9]{4}.csv", ae = "AE[0-9]{4}.csv")
 sus_csvs  <- map(sus_regex, function(x) list.files(pattern = x))
@@ -546,7 +171,7 @@ load_sus <- function(filenames_vector){ # eg. sus_csvs$ip
   map2_df(filenames_vector, cols, read_sus)
   }
 
-ipData <- read_rds("ipData.RDS") # load_sus(sus_csvs$ip)
+ipData <- read_rds("ipData.RDS") # Comes from new method. Old: load_sus(sus_csvs$ip)
 aeData <- load_sus(sus_csvs$ae)
 opData <- load_sus(sus_csvs$op)
 
@@ -556,7 +181,7 @@ opData <- load_sus(sus_csvs$op)
 
 allCCGs <- read_excel("CCG Index.xlsx", sheet = "England") %>%
   filter(CCGActiveDate <= "2014-04-01") %>% 
-  # we're still using the old 3x Newcastle CCGs 
+  # Note : we're still using the old 3x Newcastle CCGs 
   select(CCGCode, CCGDescription, ShortName) %>%
   mutate(CCGDescription  = stringr::str_c(CCGDescription, " CCG"))
   
@@ -567,11 +192,6 @@ ccgPopulation <- read_csv("CCGPopulation.csv", skip = 1)
 
 # *****chckpnt**** -----------------------------------------------------------------
 
-# CCG selections
-# comparatorCCGs2 <- allCCGs %>%
-#   filter(CCGCode %in% qipp_ccgs,
-#          CCGCode != active_ccg)
-
 activeCCGInfo <- allCCGs %>% 
   filter(CCGCode == active_ccg) %>% 
   mutate(CCGNameMinusCCG = stringr::str_replace(CCGDescription, " CCG", "")) # %>% 
@@ -579,7 +199,6 @@ activeCCGInfo <- allCCGs %>%
 
 
 # Munge data ---------------------------------------------------------------
-# setwd(paste0(baseDir, "data"))
 
 comparatorCCGs2 <- allCCGs %>% 
   filter(CCGCode %in% qipp_ccgs)
@@ -594,23 +213,16 @@ removeInvalidCCGs <- . %>%
 ipSmall <- ipData %>% removeInvalidCCGs
 rm(ipData) # RAM saver!
 gc() # call after a large object has been removed
-"SET FYEAR AS INTEGER?"
 
 
 aeSmall <- aeData %>% removeInvalidCCGs
 opSmall <- opData %>% removeInvalidCCGs %>%
   select(-starts_with("FUF"))
 
-# opSmallFUF <- opData %>%
-#   select(
-#     DSRate, DSRateVar, DSCosts, DSCostsVar, Attendances, Costs, FYear, CCGCode
-#     , starts_with("FUF")) %>% removeInvalidCCGs 
 
-
-# I'm going to call attendances Spells so that I can reuse functions
+# JS: I'm going to call attendances Spells so that I can reuse functions
 colnames(aeSmall)    <- gsub("Attendances", "Spells", colnames(aeSmall))
 colnames(opSmall)    <- gsub("Attendances", "Spells", colnames(opSmall))
-# colnames(opSmallFUF) <- gsub("Attendances", "Spells", colnames(opSmallFUF))
 
 
 # How many rows should there be? 
@@ -637,8 +249,7 @@ aeBase <- expand.grid(
 )
 
 
-# To deal with new AAFs: (there may be a more elegant way (back in SQL)?)
-"YES it's probably better to do this in the SQL. But for now..."
+# To deal with new AAFs: 
 process_ip <- function(df){
   data <- df %>% 
   select(-CCGDescription, -ShortName) %>%
@@ -791,11 +402,7 @@ opRoCFunnels <- roc_funnels(opRoCSummary, funnelParameters$Smoothness, personYea
 aeTrendActive <- aeSmall %>% trend_active 
 opTrendActive <- opSmall %>% trend_active 
 
-# ipTrendActive <- zest3
-# ipTrendComparators <- zest_comp3
-
 # ipTrendComparators <- ipSmall %>% trend_comparators 
-
 
 # aeTrendComparators with Wolves 1213 ambulance removed
 aeTrendComparators <- aeSmall %>%
@@ -837,12 +444,12 @@ aeTrendComparators <- aeSmall %>%
 
 
 
-
-
 opTrendComparators <- opSmall %>% trend_comparators 
 
-# ipTrend adjustments for alcohol: (because ipSmall should really be changed):
+
+
 # Active CCG:
+# ipTrend adjustments for alcohol: (because ipSmall should really be changed):
 ipTrend_adjust1 <- ipSmall %>% 
   filter(CCGCode == active_ccg)  %>%
   select(-DSCosts, -DSCostsVar, -Costs, -CCGDescription, -ShortName) %>%
@@ -974,15 +581,11 @@ opCost <- opSmall %>% cost_ds
 
 # Inpatient plots ---------------------------------------------------------
 setwd(baseDir)
+
 ipPlottableStrategies <- activeStrategies %>%
   filter(TableType == "IP") %>%
   filter(Strategy != "Canc_Op_v1") %>%
   filter(Strategy != "Readmissions_v1")
-
-# trendColours <- c(scales::brewer_pal("seq", palette = "Blues")(6)[2:5], colourBlindPalette["red"] %>% unname)
-# names(trendColours) <- c("Minimum to 1st decile", "1st decile to 1st quartile", "1st quartile to average", "Average to max", activeCCGInfo$ShortName)
-
-# RColorBrewer::display.brewer.all(colorblindFriendly = T)
 
 plot_ip_fun   <- list()
 plot_ip_roc   <- list()
@@ -1576,7 +1179,7 @@ savingsIP <- summaryOutputIP %>%
 plot_the_savings <- function(df, pod_colour){
   
   ggplot(df, aes(reorder(Opportunity, average), average))+
-    geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
+    geom_bar(stat = "identity", aes(fill = "myline1"))+
     geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
     # geom_bar(stat = "identity", position = "stack") +
     coord_flip()+
