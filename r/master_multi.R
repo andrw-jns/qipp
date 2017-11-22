@@ -1,6 +1,7 @@
 ############################################################################
 " RUN QIPP FOR STP SUMMARY TABLES"
 ###########################################################################
+setwd("C:/2017_projects/qipp")
 
 source_here <- function(name){
   source(here::here("r", name))
@@ -35,25 +36,25 @@ format_savings <- function(strats_pod, pod_df){
                       mutate(total = rowSums(.)) %>% 
                       mutate_all(funs(pound)) %>%  
                       mutate_all(funs(comma))) %>% 
-    `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
-    mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total"), funs(str_replace_all(.,"[:alpha:]", "")))
+    `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "Worcs total")) %>% 
+    mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ",""), "Worcs total"), funs(str_replace_all(.,"[:alpha:]", "")))
 }
 
 
 
 wrangle_saveif <- function(df_av, df_tquart){
   
-  bind_cols(df_av %>% select(Opportunity, `STP total`),
-            df_tquart %>% select(`STP total`)) %>%
+  bind_cols(df_av %>% select(Opportunity, `Worcs total`),
+            df_tquart %>% select(`Worcs total`)) %>%
     rename(opportunity = Opportunity,
-           average     = `STP total`,
-           t_quartile  = `STP total1`) %>%
+           average     = `Worcs total`,
+           t_quartile  = `Worcs total1`) %>%
     mutate_at(vars(c("average", "t_quartile")), funs(str_replace_all(.,"[:alpha:]|,|£", ""))) %>%
     mutate_at(vars(c("average", "t_quartile")), funs(as.numeric))
 }
 
 
-plot_saveif <- function(df, opportunity, average, t_quartile){
+plot_saveif <- function(df, opportunity, average, t_quartile, pod_colour){
   
   ggplot(df, aes(reorder(opportunity, average), average))+
     geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
@@ -61,8 +62,9 @@ plot_saveif <- function(df, opportunity, average, t_quartile){
     # geom_bar(stat = "identity", position = "stack") +
     coord_flip()+
     theme_strategy_large()+
-    scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
-                       , position = "top")+
+    scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-3, digits = 1)
+                       , position = "top"
+                       , expand = c(0,0))+
     # scale_y_continuous(labels = scales::comma_format())
     theme(legend.title = element_blank(),
           axis.title.y = element_blank(),
@@ -70,20 +72,24 @@ plot_saveif <- function(df, opportunity, average, t_quartile){
           legend.background = element_rect(fill = "white"))+
     scale_fill_manual(
       name = "line Colour",
-      values = c(myline1 = "lightblue", myline2 = "lightblue"),
-      labels = c("Savings if Average", "Savings if Top Quartile"))+
+      values = c(myline1 = pod_colour, myline2 = pod_colour),
+      labels = c("Savings if average", "Additional savings if top quartile"))+
     # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
     #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-    ylab("Potential savings (millions of pounds)")+
-    guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
-}
+    ylab("Potential savings (£ millions)")+
+    guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2))))+ # the second alpha does not have to relate
+    theme(# panel.grid.major = element_blank(),
+      panel.background = element_blank())+
+    scale_x_discrete(expand = c(0,0))
+    
+    }
 
 
 conditional_worcs <- function(df){
   
   rag_colours <- RColorBrewer::brewer.pal(9, "RdYlGn")
   
-  data <- flexerize_gold(df)
+  data <- flexerize_stp(df)
   
   data[df$`Redditch and Bromsgrove CCG` == "Low", 2] = chprop(myCellProps, background.color = rag_colours[6])
   data[df$`Redditch and Bromsgrove CCG` == "Not Significant", 2] = chprop(myCellProps, background.color = alpha(rag_colours[4], 0.2))
@@ -153,18 +159,18 @@ source_here("3_summary_master.R")
   
   # tmp dfs (for iteration) --------------------------------------------
   
-  spend_ip  <- summ_ip_cost_out %>% select(col = `Spend 2016-17`)
-  spend_ae  <- summ_ae_cost_out %>% select(col = `Spend 2016-17`)
-  spend_op  <- summ_op_cost_out %>% select(col = `Spend 2016-17`)
+  spend_ip  <- summ_ip_cost_out %>% select(col = `2016-17 Spend (000s)`)
+  spend_ae  <- summ_ae_cost_out %>% select(col = `2016-17 Spend (000s)`)
+  spend_op  <- summ_op_cost_out %>% select(col = `2016-17 Spend (000s)`)
   
-  av_save_ip  <- summ_ip_cost_out %>% select(col = `Total Savings if Average`)
-  av_save_ae  <- summ_ae_cost_out %>% select(col = `Total Savings if Average`)
-  av_save_op  <- summ_op_cost_out %>% select(col = `Total Savings if Average`)
+  av_save_ip  <- summ_ip_cost_out %>% select(col = `Savings if Average (000s)`)
+  av_save_ae  <- summ_ae_cost_out %>% select(col = `Savings if Average (000s)`)
+  av_save_op  <- summ_op_cost_out %>% select(col = `Savings if Average (000s)`)
   
   
-  top_save_ip <- summ_ip_cost_out %>% select(col = `Total Savings if Top Quartile`)
-  top_save_ae <- summ_ae_cost_out %>% select(col = `Total Savings if Top Quartile`)
-  top_save_op <- summ_op_cost_out %>% select(col = `Total Savings if Top Quartile`)
+  top_save_ip <- summ_ip_cost_out %>% select(col = `Savings if Top Quartile (000s)`)
+  top_save_ae <- summ_ae_cost_out %>% select(col = `Savings if Top Quartile (000s)`)
+  top_save_op <- summ_op_cost_out %>% select(col = `Savings if Top Quartile (000s)`)
   
   
   rate_comparison_ip <- summ_ip_summ_out  %>% select(col = Rate)
@@ -221,12 +227,42 @@ source_here("3_summary_master.R")
 
 # *** ----------------------------------------------------------------
 
+flexerize_stp <- function(df){
+  
+  table <- vanilla.table(df)
+  
+  table[,] <- textProperties(font.family = "Segoe UI", font.size = 10)
+  table[to = "header"]      <-  textProperties(font.size = 10, font.family = "Segoe UI", font.weight = "bold")
+  
+  table[, 1]                <- parLeft()
+  table[, 1, to = "header"] <- parLeft()
+  
+  # data[, 4:5]                <- parLeft()
+  # data[, 4:5, to = "header"] <- parLeft()
+  
+  
+  table <- setFlexTableBorders(table
+                               , inner.vertical = borderProperties( style = "dashed", color = "white" )
+                               , inner.horizontal = borderProperties( style = "solid", color = "grey80"  )
+                               , outer.vertical = borderProperties( width = 2, color = "white"  )
+                               , outer.horizontal = borderProperties( width = 1, color = "grey30"  )
+  )
+  
+  table
+}
+
 
 # STP: Spend ---------------------------------------------------------
 
 final_spend_ip  <- format_savings(strats_ip, stp_spend_ip)
 final_spend_ae  <- format_savings(strats_ae, stp_spend_ae)
 final_spend_op  <- format_savings(strats_op, stp_spend_op)
+
+# flextables:
+
+flex_spend_ip <- flexerize_stp(final_spend_ip)
+flex_spend_ae <- flexerize_stp(final_spend_ae)
+flex_spend_op <- flexerize_stp(final_spend_op)
 
 
 # STP: Savings Av ----------------------------------------------------
@@ -235,25 +271,25 @@ final_av_ip  <- format_savings(strats_ip, stp_avg_ip)
 final_av_ae  <- format_savings(strats_ae, stp_avg_ae)
 final_av_op  <- format_savings(strats_op, stp_avg_op)
 
+# flextables:
+
+flex_av_ip    <- flexerize_stp(final_av_ip)
+flex_av_ae    <- flexerize_stp(final_av_ae)
+flex_av_op    <- flexerize_stp(final_av_op)
+
+
 # STP: Savings TQ ----------------------------------------------------
 
 final_top_ip <- format_savings(strats_ip, stp_top_qrt_ip)
 final_top_ae <- format_savings(strats_ae, stp_top_qrt_ae)
 final_top_op <- format_savings(strats_op, stp_top_qrt_op)
 
+# flextables:
 
-# STP: Rate comparison ------------------------------------------------
+flex_top_ip   <- flexerize_stp(final_top_ip)
+flex_top_ae   <- flexerize_stp(final_top_ae)
+flex_top_op   <- flexerize_stp(final_top_op)
 
-final_rates_ip <- format_rates_n_roc(strats_ip, stp_rates_ip)
-final_rates_ae <- format_rates_n_roc(strats_ae, stp_rates_ae)
-final_rates_op <- format_rates_n_roc(strats_op, stp_rates_op)
-
-
-# STP: Roc comparison -------------------------------------------------
-
-final_roc_ip <- format_rates_n_roc(strats_ip, stp_roc_ip)
-final_roc_ae <- format_rates_n_roc(strats_ae, stp_roc_ae)
-final_roc_op <- format_rates_n_roc(strats_op, stp_roc_op)
 
 
 # STP: Potential savings plots ---------------------------------------
@@ -262,65 +298,32 @@ final_saveif_ip <- wrangle_saveif(final_av_ip, final_top_ip)
 final_saveif_ae <- wrangle_saveif(final_av_ae, final_top_ae)
 final_saveif_op <- wrangle_saveif(final_av_op, final_top_op)
 
-plot_saveif_ip <- plot_saveif(final_saveif_ip, opportunity, average, t_quartile)
-plot_saveif_ae <- plot_saveif(final_saveif_ae, opportunity, average, t_quartile)
-plot_saveif_op <- plot_saveif(final_saveif_op, opportunity, average, t_quartile)
+plot_saveif_ip <- plot_saveif(final_saveif_ip, opportunity, average, t_quartile, ip_colour)
+plot_saveif_ae <- plot_saveif(final_saveif_ae, opportunity, average, t_quartile, ae_colour)
+plot_saveif_op <- plot_saveif(final_saveif_op, opportunity, average, t_quartile, op_colour)
 
 
 # *** ----------------------------------------------------------------
-
-# *** ----------------------------------------------------------------
-
-
-# FLEXTABLES-------------------------------------------------
-
-flexerize_gold <- function(df){
-  
-  table <- setZebraStyle(vanilla.table(df), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
-  
-  table[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
-  table[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
-  
-  table[, 1]                <- parLeft()
-  table[, 1, to = "header"] <- parLeft()
-  
-  
-  table <- setFlexTableBorders(table
-                               , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                               , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                               , outer.vertical = borderProperties( width = 2, color = "white"  )
-                               , outer.horizontal = borderProperties( width = 2, color = "white"  )
-  )
-  
-  table
-}
-
-
-# Spend --------------------------------------------------------------
-
-flex_spend_ip <- flexerize_gold(final_spend_ip)
-flex_spend_ae <- flexerize_gold(final_spend_ae)
-flex_spend_op <- flexerize_gold(final_spend_op)
-
-# IP Tables --------------------------------------------------
-
-flex_av_ip    <- flexerize_gold(final_av_ip)
-flex_top_ip   <- flexerize_gold(final_top_ip)
-
-# AE Tables ----------------------------------------------------------
-
-flex_av_ae    <- flexerize_gold(final_av_ae)
-flex_top_ae   <- flexerize_gold(final_top_ae)
-
-
-# OP Tables ----------------------------------------------------------
-
-flex_av_op    <- flexerize_gold(final_av_op)
-flex_top_op   <- flexerize_gold(final_top_op)
-
 
 
 # RAG Tables ---------------------------------------------------------
+
+# Rate comparison 
+
+final_rates_ip <- format_rates_n_roc(strats_ip, stp_rates_ip)
+final_rates_ae <- format_rates_n_roc(strats_ae, stp_rates_ae)
+final_rates_op <- format_rates_n_roc(strats_op, stp_rates_op)
+
+# summ_op_summ_out[4:5][summ_op_summ_out[4:5] == "Not Significant"] <- "-"
+
+# STP: Roc comparison 
+
+final_roc_ip <- format_rates_n_roc(strats_ip, stp_roc_ip)
+final_roc_ae <- format_rates_n_roc(strats_ae, stp_roc_ae)
+final_roc_op <- format_rates_n_roc(strats_op, stp_roc_op)
+
+
+# flextables:
 
 myCellProps <- cellProperties()
 
@@ -332,13 +335,14 @@ flex_roc_ip <- conditional_worcs(final_roc_ip)
 flex_roc_ae <- conditional_worcs(final_roc_ae)
 flex_roc_op <- conditional_worcs(final_roc_op)
 
+# *** ----------------------------------------------------------------
 
 
 #  Treemap----------------------------------------------------------
 
 tmp_tree <- stp_spend_ip %>% 
-  select(Opportunity, `STP total`) %>% 
-  mutate(cost = as.numeric(str_replace_all(`STP total`, c("£|,"), ""))) 
+  select(Opportunity, `Worcs total`) %>% 
+  mutate(cost = as.numeric(str_replace_all(`Worcs total`, c("£|,"), ""))) 
 
 tree_wrangle <- bind_cols(strats_ip,
                 stp_spend_ip %>%
@@ -348,7 +352,7 @@ tree_wrangle <- bind_cols(strats_ip,
                   mutate(total = rowSums(.))) %>% 
                   # mutate_all(funs(pound)) %>%  
                   # mutate_all(funs(comma))) %>% 
-        `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "STP total")) %>% 
+        `colnames<-`(c("Opportunity", str_replace_all(loop_df$CCG16NM, "NHS ",""), "Worcs total")) %>% 
         mutate_at(vars(str_replace_all(loop_df$CCG16NM, "NHS ","")), funs(str_replace_all(.,"[:alpha:]", ""))) 
 
 
@@ -358,7 +362,7 @@ tree_wrangle <- bind_cols(strats_ip,
 library(treemap)
 treemap(tree_wrangle, #Your data frame object
         index = c("Opportunity"),  #A list of your categorical variables
-        vSize = "STP total",  #This is your quantitative variable
+        vSize = "Worcs total",  #This is your quantitative variable
         type  = "index", #Type sets the organization and color scheme of your treemap
         palette = "Set3",  #Select your color palette from the RColorBrewer presets or make your own.
         title = "", #Customize your title
