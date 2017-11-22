@@ -24,8 +24,8 @@ EXECUTE [Working].[sp_QuincyAdHoc]
       @SQL 						output 	
 	, @objectSchema				= 'Working'		--The schema of the output object name
 	, @objectName				= 'vwQIPP_PbR_IP1415'			-- A suffix to add to the view where you want the output to go. NULL assumes you don't want to create an object.					
-    , @DateFrom 				= '2014-04-01' 	-- The dates you want determine the tables to be queried
-    , @DateTo 					= '2015-03-31'	-- The dates you want determine the tables to be queried
+    , @DateFrom 				= '2016-04-01' 	-- The dates you want determine the tables to be queried
+    , @DateTo 					= '2017-03-31'	-- The dates you want determine the tables to be queried
 	, @dataSourceIN 			= 'PbR'			-- Indicates the database that will be used (options: 'SUS', 'HES', 'PbR')
 	, @tableTypeIn 				= 'IP'			-- The type of table that you want, e.g. 'IP', 'OP', 'AE' 
 	, @variableType 			= '1'			-- Where do you want the variables to be in your query 1 = case, 2 = sum(case), 3 = Where (multiple strategies separated by AND), 4 = Where (multiple strategies separated by OR)
@@ -40,7 +40,7 @@ EXECUTE [Working].[sp_QuincyAdHoc]
 	, @includeStrategies		= '1'			-- 0 or NULL = Exclude, 1 = Include (from Input.tbStrategies where isAdHoc = '0')
 	, @includeStrategiesAdHoc	= '1'			-- 0 or NULL = Exclude, 1 = Include (from Input.tbStrategies where isAdHoc = '0')
 	, @includeFYearColumn		= '1'			-- 0 or NULL = Exclude, 1 = Include
-	, @debug					= '0'			-- If 0, execute the SQL. If 1, print the SQL to the console.  
+	, @debug					= '1'			-- If 0, execute the SQL. If 1, print the SQL to the console.  
 	
 	
 GO
