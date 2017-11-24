@@ -3,7 +3,7 @@
 " CREATE QIPP PACK"
 ###########################################################################
 
-setwd("C:/2017_projects/qipp")
+# setwd("C:/2017_projects/qipp")
 # ***** --------------------------------------------------------------
 "Use package check system: checkpoint? See email"
 "QIPP EXTRA should be subdirectory of this one"
@@ -24,7 +24,7 @@ library(ggrepel)
 
 baseDir  <- "C:/2017_projects/qipp/" # using here, now
 
-active_ccg <- "06D"
+active_ccg <- "05Q"
 f_year     <- 201617
 first_year <- 201213
 
@@ -927,35 +927,6 @@ summ_aeFunnelFunnels <- funnel_funnels(summ_aeFunnelSummary, funnelParameters$Sm
 summ_opFunnelFunnels <- funnel_funnels(summ_opFunnelSummary, funnelParameters$Smoothness, personYears)
 
 
-# Comparator table (needs to include all, though?)
-
-# comparatorsOut <- comparatorCCGs2 %>%
-#   filter(CCGCode != active_ccg) %>%
-#   select(CCGCode, CCGDescription)
-# 
-# flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
-# 
-# 
-# flex_comparat    <- vanilla.table(comparatorsOut)
-# 
-# 
-# 
-# flex_comparat[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
-# flex_comparat[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
-# 
-# # align left
-# flex_comparat[, ]                <- parLeft()
-# flex_comparat[, , to = "header"] <- parLeft()
-# 
-# # borders
-# flex_comparat <- setFlexTableBorders(flex_comparat
-#                                     , inner.vertical = borderProperties( style = "dashed", color = "white" )
-#                                     , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-#                                     , outer.vertical = borderProperties( width = 2, color = "white"  )
-#                                     , outer.horizontal = borderProperties( width = 2, color = "white"  )
-# )
-
-
 #  *****--------------------------------------------------------------
 
 
@@ -1084,6 +1055,17 @@ summ_ip_summ_out <- summaryOutputIP %>%
 summ_ip_summ_out[4:5][summ_ip_summ_out[4:5] == "Not Significant"] <- "-"
 
 
+# fn: add spacer column
+add_spacer_ip <- . %>% 
+  mutate(` `= " ") %>% 
+  select(Opportunity, Admissions, `2016-17 Spend (000s)`, ` `, everything())
+
+# other pods
+add_spacer <- . %>% 
+  mutate(` `= "     ") %>% 
+  select(Opportunity, Activity, `2016-17 Spend (000s)`, ` `, everything())
+
+summ_ip_summ_out <-  summ_ip_summ_out %>% add_spacer_ip()
 
 flexify_summary <- function(df){
   
@@ -1095,8 +1077,8 @@ flexify_summary <- function(df){
   data[, 1]                <- parLeft()
   data[, 1, to = "header"] <- parLeft()
   
-  data[, 4:5]                <- parLeft()
-  data[, 4:5, to = "header"] <- parLeft()
+  data[, 5:6]                <- parLeft()
+  data[, 5:6, to = "header"] <- parLeft()
   
   data <- setFlexTableBorders(data
                               , inner.vertical = borderProperties( style = "dashed", color = "white" )
@@ -1176,7 +1158,7 @@ savingsIP <- summaryOutputIP %>%
 
 
 
-plot_the_savings <- function(df, pod_colour){
+plot_the_savings_ip <- function(df, pod_colour){
   
   ggplot(df, aes(reorder(Opportunity, average), average))+
     geom_bar(stat = "identity", aes(fill = "myline1"))+
@@ -1206,33 +1188,7 @@ plot_the_savings <- function(df, pod_colour){
   
 }
   
-plot_savings_ip <- plot_the_savings(savingsIP, ip_colour)   
-
-
-# so have multiple variables again.
-# error in stacked  bars! should not be stacked
-# ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-# plot_savings_ip <- ggplot(savingsIP, aes(reorder(Opportunity, average), average))+
-#   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-#   geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
-#   # geom_bar(stat = "identity", position = "stack") +
-#   coord_flip()+
-#   theme_strategy_large()+
-#   scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
-#                      , position = "top")+
-#   # scale_y_continuous(labels = scales::comma_format())
-#   theme(legend.title = element_blank(),
-#         axis.title.y = element_blank(),
-#         legend.position = c(0.82, 0.18),
-#         legend.background = element_rect(fill = "white"))+
-#   scale_fill_manual(
-#     name = "line Colour"
-#     ,values=c(myline1 = "#5881c1", myline2 = "#5881c1")
-#                     , labels=c("Savings if Average", "Savings if Top Quartile"))+
-#   # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
-#   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-#   ylab("Potential savings (millions of pounds)")+
-#   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+plot_savings_ip <- plot_the_savings_ip(savingsIP, ip_colour)   
 
 
 # ***** --------------------------------------------------------------
@@ -1287,6 +1243,8 @@ summ_ae_summ_out <- summaryOutputAE %>%
 
 summ_ae_summ_out[4:5][summ_ae_summ_out[4:5] == "Not Significant"] <- "-"
 
+summ_ae_summ_out <- summ_ae_summ_out %>% add_spacer()
+
 flex_ae_summ <- flexify_summary(summ_ae_summ_out)
 
 
@@ -1325,40 +1283,35 @@ savingsAE <- summaryOutputAE %>%
   left_join(labels_ae, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy) 
 
-plot_savings_ae <- plot_the_savings(savingsAE, ae_colour)
 
-# basic name adjust
-# savingsAE$Strategy <-  savingsAE$Strategy %>% 
-#   str_replace_all("v[0-9]?", "") %>%
-#   str_replace_all("\\_"," ") %>%
-#   str_trim()
+plot_the_savings_other <- function(df, pod_colour){
+  
+  ggplot(df, aes(reorder(Opportunity, average), average))+
+    geom_bar(stat = "identity", aes(fill = "myline1"))+
+    geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
+    # geom_bar(stat = "identity", position = "stack") +
+    coord_flip()+
+    theme_strategy_large()+
+    scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
+                       , position = "top"
+                       , expand = c(0,0))+
+    theme(legend.title = element_blank(),
+          legend.background = element_rect(fill = "white"),
+          legend.position  = "bottom",
+          axis.title.y = element_blank(),
+          # legend.position = c(0.82, 0.18),
+          panel.background = element_blank())+
+    scale_fill_manual(
+      name = "line Colour"
+      ,values=c(myline1 = pod_colour, myline2 = pod_colour)
+      , labels=c("Savings if average", "Additional savings if top quartile"))+
+    ylab("Potential savings (£ millions)")+
+    guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2))))+ # the second alpha does not have to relate
+    scale_x_discrete(expand = c(0,0))
+  
+}
 
-"Can make this plot a function?"
-# # so have multiple variables again.
-# # error in stacked  bars! should not be stacked
-# # ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-# plot_savings_ae <- ggplot(savingsAE, aes(reorder(Opportunity, average), average))+
-#   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-#   geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
-#   # geom_bar(stat = "identity", position = "stack") +
-#   coord_flip()+
-#   theme_strategy_large()+
-#   scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
-#                      , position = "top")+
-#   # scale_y_continuous(labels = scales::comma_format())
-#   theme(legend.title = element_blank(),
-#         axis.title.y = element_blank(),
-#         legend.position = c(0.82, 0.18),
-#         legend.background = element_rect(fill = "white"))+
-#   scale_fill_manual(
-#     name = "line Colour"
-#     ,values=c(myline1 = "lightblue", myline2 = "lightblue")
-#     , labels=c("Savings if Average", "Savings if Top Quartile"))+
-#   # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
-#   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-#   ylab("Potential savings (millions of pounds)")+
-#   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
-
+plot_savings_ae <- plot_the_savings_other(savingsAE, ae_colour)
 
 # ***** --------------------------------------------------------------
 
@@ -1417,6 +1370,8 @@ summ_op_summ_out <- summaryOutputOP %>%
 
 summ_op_summ_out[4:5][summ_op_summ_out[4:5] == "Not Significant"] <- "-"
 
+summ_op_summ_out <- summ_op_summ_out %>% add_spacer()
+
 flex_op_summ <- flexify_summary(summ_op_summ_out)
 
 
@@ -1458,86 +1413,87 @@ savingsOP <- summaryOutputOP %>%
   left_join(labels_op, by = c("Strategy")) %>% 
   select(Opportunity, everything(), -Strategy)
 
-# basic name adjust
-# savingsOP$Strategy <-  savingsOP$Strategy %>% 
-#   str_replace_all("v[0-9]?", "") %>%
-#   str_replace_all("\\_"," ") %>%
-#   str_trim()
 
-plot_savings_op <- plot_the_savings(savingsOP, op_colour)
-
-# so have multiple variables again.
-# error in stacked  bars! should not be stacked
-# ggplot(savingsIP, aes(reorder(Strategy, saving), saving, fill = level))+  
-# plot_savings_op <- ggplot(savingsOP, aes(reorder(Opportunity, average), average))+
-#   geom_bar(stat = "identity", colour = "black", aes(fill = "myline1"))+
-#   geom_bar(aes(Opportunity, quartile, fill = "myline2"), stat = "identity", alpha = 0.4)+
-#   # geom_bar(stat = "identity", position = "stack") +
-#   coord_flip()+
-#   theme_strategy_large()+
-#   scale_y_continuous(labels = scales::unit_format(unit = "", scale = 1e-6, digits = 1)
-#                      , position = "top")+
-#   # scale_y_continuous(labels = scales::comma_format())
-#   theme(legend.title = element_blank(),
-#         axis.title.y = element_blank(),
-#         legend.position = c(0.82, 0.18),
-#         legend.background = element_rect(fill = "white"))+
-#   scale_fill_manual(
-#     name = "line Colour"
-#     ,values=c(myline1 = "lightblue", myline2 = "lightblue")
-#     , labels=c("Savings if Average", "Savings if Top Quartile"))+
-#   # scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")
-#   #                   , labels=c("Savings if Top Decile", "Savings if Top Quartile", "Savings if Average"))+
-#   ylab("Potential savings (millions of pounds)")+
-#   guides(fill = guide_legend(override.aes = list(alpha = c(1, 0.2)))) # the second alpha does not have to relate
+plot_savings_op <- plot_the_savings_other(savingsOP, op_colour)
 
 
 
 #  *****--------------------------------------------------------------
 
+# Comparator table ---------------------------------------------------
+"needs to include all, though?"
+
+# comparatorsOut <- comparatorCCGs2 %>%
+#   filter(CCGCode != active_ccg) %>%
+#   select(CCGCode, CCGDescription)
+# 
+# flex_comparat    <- setZebraStyle(vanilla.table(comparatorsOut), odd = alpha("goldenrod1", 0.4), even = alpha("goldenrod1", 0.2))
+# 
+# 
+# flex_comparat    <- vanilla.table(comparatorsOut)
+# 
+# 
+# 
+# flex_comparat[,] <- textProperties(font.family = "Segoe UI", font.size = 12)
+# flex_comparat[to = "header"]      <-  textProperties(font.size = 14, font.family = "Segoe UI")
+# 
+# # align left
+# flex_comparat[, ]                <- parLeft()
+# flex_comparat[, , to = "header"] <- parLeft()
+# 
+# # borders
+# flex_comparat <- setFlexTableBorders(flex_comparat
+#                                     , inner.vertical = borderProperties( style = "dashed", color = "white" )
+#                                     , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+#                                     , outer.vertical = borderProperties( width = 2, color = "white"  )
+#                                     , outer.horizontal = borderProperties( width = 2, color = "white"  )
+# )
+
+
+
 
 # Population differences ---------------------------------------------
-
-
-# For comparison
-setwd(paste0(baseDir, "data"))
-ccg_regist <- read_csv("ccg-reg-patients.csv",
-                       col_types = cols_only(CCG_CODE = "c", TOTAL_ALL = "i"))
-
-
-pop_comparisons <- ccgPopulation %>%
-  left_join(ccg_regist, by = c("CCGCode" = "CCG_CODE")) %>%
-  right_join(comparatorCCGs2, by = "CCGCode") %>%
-  select(CCGDescription, everything(), - CCGCode, -ShortName) %>%
-  mutate(reg_minus_res = TOTAL_ALL - Population) %>%
-  rename(resident = Population, registered = TOTAL_ALL) %>%
-  mutate(greater = ifelse(reg_minus_res > 0, "registered", "resident")) %>%
-  mutate(diff_magnitude = abs(reg_minus_res)) %>%
-  select(-reg_minus_res) %>%
-  mutate(res_over_reg = round(resident/registered, 2)*100) %>%
-  arrange(res_over_reg)
-  # mutate(flag = ifelse(res_over_reg <0.95 | res_over_reg > 1.05, "!", "")) %>% 
-
-
-
-
-flex_pop    <-  setZebraStyle(vanilla.table(pop_comparisons), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
-flex_pop[,] <-  textProperties(font.family = "Segoe UI"
-                                   , font.size = 12)
-
-flex_pop[to = "header"]  <-  textProperties(font.size = 14,
-                                                font.family = "Segoe UI")
-
-flex_pop[, 1]                <- parLeft()
-flex_pop[, 1, to = "header"] <- parLeft()
-
-
-flex_pop <- setFlexTableBorders(flex_pop
-                                    , inner.vertical = borderProperties( style = "dashed", color = "white" )
-                                    , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
-                                    , outer.vertical = borderProperties( width = 2, color = "white"  )
-                                    , outer.horizontal = borderProperties( width = 2, color = "white"  )
-)
+# 
+# 
+# # For comparison
+# setwd(paste0(baseDir, "data"))
+# ccg_regist <- read_csv("ccg-reg-patients.csv",
+#                        col_types = cols_only(CCG_CODE = "c", TOTAL_ALL = "i"))
+# 
+# 
+# pop_comparisons <- ccgPopulation %>%
+#   left_join(ccg_regist, by = c("CCGCode" = "CCG_CODE")) %>%
+#   right_join(comparatorCCGs2, by = "CCGCode") %>%
+#   select(CCGDescription, everything(), - CCGCode, -ShortName) %>%
+#   mutate(reg_minus_res = TOTAL_ALL - Population) %>%
+#   rename(resident = Population, registered = TOTAL_ALL) %>%
+#   mutate(greater = ifelse(reg_minus_res > 0, "registered", "resident")) %>%
+#   mutate(diff_magnitude = abs(reg_minus_res)) %>%
+#   select(-reg_minus_res) %>%
+#   mutate(res_over_reg = round(resident/registered, 2)*100) %>%
+#   arrange(res_over_reg)
+#   # mutate(flag = ifelse(res_over_reg <0.95 | res_over_reg > 1.05, "!", "")) %>% 
+# 
+# 
+# 
+# 
+# flex_pop    <-  setZebraStyle(vanilla.table(pop_comparisons), odd = alpha("dodgerblue2", 0.15), even = alpha("dodgerblue2", 0.1))
+# flex_pop[,] <-  textProperties(font.family = "Segoe UI"
+#                                    , font.size = 12)
+# 
+# flex_pop[to = "header"]  <-  textProperties(font.size = 14,
+#                                                 font.family = "Segoe UI")
+# 
+# flex_pop[, 1]                <- parLeft()
+# flex_pop[, 1, to = "header"] <- parLeft()
+# 
+# 
+# flex_pop <- setFlexTableBorders(flex_pop
+#                                     , inner.vertical = borderProperties( style = "dashed", color = "white" )
+#                                     , inner.horizontal = borderProperties( style = "dashed", color = "white"  )
+#                                     , outer.vertical = borderProperties( width = 2, color = "white"  )
+#                                     , outer.horizontal = borderProperties( width = 2, color = "white"  )
+# )
 
 
 # write_csv(pop_comparisons, "population_comparisons.csv")
@@ -1548,28 +1504,3 @@ flex_pop <- setFlexTableBorders(flex_pop
 cat("Ends")
 activeCCGInfo$CCGDescription
 
-
-
-# JOYPLOTS? OF RATES ----------------------------------------
-# setwd("C:/2017_projects/")
-# saveRDS(ipSmall, "ipSmall.RDS")
-# 
-# ipSmall <- read_rds("ipSmall.RDS")
-# 
-# tmp_summary <- ipSmall %>%
-#   filter(FYear == f_year) %>%
-#   select(-FYear, -DSRateVar, -DSCosts, -DSCostsVar) %>%
-#   gather(Strategy, Highlighted,  -Spells, -Costs, -DSRate, -CCGCode,  -CCGDescription, -ShortName, convert = T) %>% 
-#   group_by(Strategy, CCGCode ,CCGDescription, ShortName, Highlighted) %>%
-#   summarise_all(
-#     funs(sum(., na.rm = TRUE))
-#   ) %>%
-#   filter(Highlighted == 1) %>%
-#   select(-Highlighted) %>% 
-#   filter(Strategy == "ACS_Acute_v3")
-# 
-# # Binwidth calculated using Freedman-Diaconis rule:
-# # 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3))
-# 
-# ggplot(tmp_summary, aes(DSRate))+
-#   geom_freqpoly(binwidth = 2*IQR(tmp_summary$DSRate)*(length(tmp_summary$DSRate)^(-1/3)))
