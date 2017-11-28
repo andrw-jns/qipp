@@ -9,7 +9,7 @@
 "Use package check system: checkpoint / packrat. See details:"
 # https://github.com/RevolutionAnalytics/checkpoint/wiki
 library(checkpoint)
-checkpoint(snapshotDate = "2017-10-01")
+checkpoint(snapshotDate = "2017-10-01", checkpointLocation = "C:/R_default_wdir")
 
 # Packages ----------------------------------------------------------------
 
