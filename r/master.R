@@ -4,18 +4,23 @@
 ###########################################################################
 
 # setwd("C:/2017_projects/qipp")
+# https://github.com/RevolutionAnalytics/checkpoint/wiki
 # ***** --------------------------------------------------------------
-"Use package check system: checkpoint? See email"
-"QIPP EXTRA should be subdirectory of this one"
+"Use package check system: checkpoint / packrat. See details:"
+# https://github.com/RevolutionAnalytics/checkpoint/wiki
+library(checkpoint)
+checkpoint(snapshotDate = "2017-10-01")
+
 # Packages ----------------------------------------------------------------
+
 
 library(here)
 library(readxl)
-library(scales, warn.conflicts = FALSE)
+library(stringr)
 library(testthat)
 library(extrafont) # for theme_strategy.
-library(stringr)
 library(ReporteRs)
+library(scales, warn.conflicts = FALSE)
 suppressPackageStartupMessages(library(tidyverse))
 library(ggrepel)
 
