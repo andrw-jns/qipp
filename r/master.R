@@ -592,7 +592,9 @@ ipPlottableStrategies <- activeStrategies %>%
   filter(Strategy != "Canc_Op_v1") %>%
   filter(Strategy != "Readmissions_v1")
 
-plot_ip_fun   <- list()
+
+"FASTER IF YOU PRE-ALLOCATE LENGTH of list with vector('list', length)"
+plot_ip_fun   <- list() 
 plot_ip_roc   <- list()
 plot_ip_trend <- list()
 
